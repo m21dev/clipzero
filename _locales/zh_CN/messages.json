@@ -1,0 +1,489 @@
+{
+  "extDescription": {
+    "message": "AI 聊天与社交网页隐私助手，支持上传匿名重命名、EXIF/GPS/SVG/PDF 元数据清理、画布遮盖与可逆密钥脱敏。"
+  },
+  "cmdToggleEnabled": {
+    "message": "在当前标签页暂停或恢复 ClipZero"
+  },
+  "cmdToggleStrict": {
+    "message": "切换重命名全部文件（含自定义文件名与文档）"
+  },
+  "cmdToggleExif": {
+    "message": "切换无损清除 EXIF、GPS 与 SVG 元数据"
+  },
+  "cmdToggleRedact": {
+    "message": "切换上传前画布遮盖工具"
+  },
+  "cmdToggleSecrets": {
+    "message": "切换粘贴密钥与令牌保护"
+  },
+  "cmdToggleToast": {
+    "message": "显示或隐藏页面确认提示"
+  },
+  "cmdToggleSave": {
+    "message": "记住或清除当前网站设置"
+  },
+  "popupChecking": {
+    "message": "正在检测标签页…"
+  },
+  "popupStandbyBadge": {
+    "message": "未启用"
+  },
+  "popupActiveBadge": {
+    "message": "已启用"
+  },
+  "popupPausedBadge": {
+    "message": "已暂停"
+  },
+  "popupStandbyTitle": {
+    "message": "当前页面不支持"
+  },
+  "popupStandbyBanner": {
+    "message": "请切换到受支持的 AI 聊天、社交或网页邮箱标签页调整设置。\n快捷键仅在这些标签页生效。"
+  },
+  "popupReloadBadge": {
+    "message": "请刷新"
+  },
+  "popupReloadTitle": {
+    "message": "需要刷新当前标签页"
+  },
+  "popupReloadBanner": {
+    "message": "ClipZero 已更新。\n请刷新一次当前标签页（F5）以启用全部新开关。"
+  },
+  "popupReloadBtn": {
+    "message": "刷新标签页"
+  },
+  "popupTabReloadTitle": {
+    "message": "需要刷新 · $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupTabReloadBanner": {
+    "message": "此标签页在 ClipZero 启用前已打开。\n请刷新一次以开启上传与粘贴保护。\n（若刷新后仍如此，请打开 about:addons → ClipZero → 在受限制的网站上运行 → 允许。）"
+  },
+  "popupPermBadge": {
+    "message": "权限"
+  },
+  "popupPermTitle": {
+    "message": "需要授权 ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBanner": {
+    "message": "Firefox 尚未授予 $COUNT$ 个受支持网站的权限。\n允许一次即可在这些网站自动启用保护。",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBtn": {
+    "message": "允许缺少的网站 ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSaved": {
+    "message": "$PREFIX$_… · 已保存于此站",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSession": {
+    "message": "$PREFIX$_… · 仅限本次会话",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleReset": {
+    "message": "$PREFIX$_… · 已重置（损坏）",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitlePaused": {
+    "message": "已在 $PREFIX$_… 暂停",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "optEnabledTitle": {
+    "message": "上传时重命名"
+  },
+  "optEnabledDesc": {
+    "message": "粘贴、拖放及文件选择"
+  },
+  "optStrictTitle": {
+    "message": "重命名全部文件"
+  },
+  "optStrictDesc": {
+    "message": "包含自定义文件名及文档附件"
+  },
+  "optExifTitle": {
+    "message": "清除元数据"
+  },
+  "optExifDesc": {
+    "message": "JPEG EXIF/GPS、PNG、WebP、SVG 与 PDF 清理"
+  },
+  "optRedactTitle": {
+    "message": "上传前遮盖隐私"
+  },
+  "optRedactDesc": {
+    "message": "在画布上永久遮挡敏感区域"
+  },
+  "optSecretsTitle": {
+    "message": "保护密钥与令牌"
+  },
+  "optSecretsDesc": {
+    "message": "粘贴时自动脱敏密钥、银行卡、IBAN 与 URL"
+  },
+  "optPiiTitle": {
+    "message": "隐藏联系方式与 IP"
+  },
+  "optPiiDesc": {
+    "message": "粘贴时自动脱敏邮箱、电话与 IP 地址"
+  },
+  "popupMoreSettings": {
+    "message": "更多设置"
+  },
+  "optOptimizeTitle": {
+    "message": "缩放超大图片"
+  },
+  "optOptimizeDesc": {
+    "message": "限制最长边不超过 2048 px"
+  },
+  "optToastTitle": {
+    "message": "显示提示"
+  },
+  "optToastDesc": {
+    "message": "重命名后显示简短确认"
+  },
+  "optSaveTitle": {
+    "message": "记住此网站"
+  },
+  "optSaveDesc": {
+    "message": "仅在当前域名保存设置"
+  },
+  "optDebugTitle": {
+    "message": "调试日志"
+  },
+  "optDebugDesc": {
+    "message": "在开发者控制台输出脱敏追踪日志"
+  },
+  "optCustomWordsTitle": {
+    "message": "自定义隐藏词"
+  },
+  "optCustomWordsDesc": {
+    "message": "使用逗号分隔公司、客户或项目名称"
+  },
+  "optCustomWordsPlaceholder": {
+    "message": "AcmeCorp, ProjectTitan, 张三"
+  },
+  "tokensDetectedCopyTitle": {
+    "message": "已复制脱敏占位符"
+  },
+  "tokensDetectedCopySub": {
+    "message": "是否将该次复制还原为原始真实内容？"
+  },
+  "tokensRestoreClipBtn": {
+    "message": "还原原文"
+  },
+  "tokensRestoredClipTitle": {
+    "message": "已还原原文到剪贴板"
+  },
+  "popupShortcutsBtn": {
+    "message": "键盘快捷键…"
+  },
+  "popupShortcutsFallback": {
+    "message": "打开 about:addons → ClipZero → 管理扩展快捷键"
+  },
+  "popupNotSet": {
+    "message": "未设置"
+  },
+  "toastFilesWord": {
+    "message": "个文件"
+  },
+  "hintPause": {
+    "message": "暂停"
+  },
+  "hintAll": {
+    "message": "全部"
+  },
+  "hintExif": {
+    "message": "元数据"
+  },
+  "hintRedact": {
+    "message": "遮盖"
+  },
+  "hintSecrets": {
+    "message": "密钥"
+  },
+  "hintNotice": {
+    "message": "提示"
+  },
+  "hintSave": {
+    "message": "保存"
+  },
+  "toastActiveTitle": {
+    "message": "ClipZero 已启用"
+  },
+  "toastActiveSub": {
+    "message": "上传文件时将自动匿名化"
+  },
+  "toastPausedTitle": {
+    "message": "ClipZero 已暂停"
+  },
+  "toastPausedSub": {
+    "message": "保留原始文件名"
+  },
+  "toastStrictOnTitle": {
+    "message": "重命名全部 · 开"
+  },
+  "toastStrictOnSub": {
+    "message": "自定义文件名与文档也将重命名"
+  },
+  "toastStrictOffTitle": {
+    "message": "重命名全部 · 关"
+  },
+  "toastStrictOffSub": {
+    "message": "保留自定义文件名与文档原名"
+  },
+  "toastExifOnTitle": {
+    "message": "清除元数据 · 开启"
+  },
+  "toastExifOnSub": {
+    "message": "EXIF、GPS 与 SVG 清理已启用"
+  },
+  "toastExifOffTitle": {
+    "message": "清除元数据 · 关闭"
+  },
+  "toastExifOffSub": {
+    "message": "已恢复零延迟直传模式"
+  },
+  "toastRedactOnTitle": {
+    "message": "画布遮盖 · 开启"
+  },
+  "toastRedactOnSub": {
+    "message": "上传图片前可框选永久遮挡敏感区域"
+  },
+  "toastRedactOffTitle": {
+    "message": "画布遮盖 · 关闭"
+  },
+  "toastRedactOffSub": {
+    "message": "图片直接上传，不显示预览框"
+  },
+  "toastSecretsOnTitle": {
+    "message": "密钥保护 · 开启"
+  },
+  "toastSecretsOnSub": {
+    "message": "粘贴 API 密钥、令牌与链接凭据时自动脱敏"
+  },
+  "toastSecretsOffTitle": {
+    "message": "密钥保护 · 关闭"
+  },
+  "toastSecretsOffSub": {
+    "message": "粘贴的密钥保持原样"
+  },
+  "toastPiiOnTitle": {
+    "message": "联系与 IP 保护 · 开启"
+  },
+  "toastPiiOnSub": {
+    "message": "粘贴邮箱、电话与 IP 时自动脱敏"
+  },
+  "toastPiiOffTitle": {
+    "message": "联系与 IP 保护 · 关闭"
+  },
+  "toastPiiOffSub": {
+    "message": "联系方式与 IP 保持原样"
+  },
+  "toastDebugOnTitle": {
+    "message": "调试日志 · 开启"
+  },
+  "toastDebugOnSub": {
+    "message": "已启用开发者控制台脱敏追踪日志"
+  },
+  "toastDebugOffTitle": {
+    "message": "调试日志 · 关闭"
+  },
+  "toastDebugOffSub": {
+    "message": "控制台追踪日志已静音"
+  },
+  "toastOptimizeOnTitle": {
+    "message": "2048 px 上限 · 开"
+  },
+  "toastOptimizeOnSub": {
+    "message": "大图已自动限制在 2048 px 内"
+  },
+  "toastOptimizeOffTitle": {
+    "message": "2048 px 上限 · 关"
+  },
+  "toastOptimizeOffSub": {
+    "message": "保留图片原始分辨率"
+  },
+  "toastToastOnTitle": {
+    "message": "提示 · 开"
+  },
+  "toastToastOnSub": {
+    "message": "已开启上传确认提示"
+  },
+  "toastToastOffTitle": {
+    "message": "提示 · 关"
+  },
+  "toastToastOffSub": {
+    "message": "静默模式"
+  },
+  "toastSaveOnTitle": {
+    "message": "已为当前网站保存"
+  },
+  "toastSaveOnSub": {
+    "message": "设置仅保存在当前域名"
+  },
+  "toastSaveOffTitle": {
+    "message": "仅限本次会话"
+  },
+  "toastSaveOffSub": {
+    "message": "已清除该网站保存的设置"
+  },
+  "toastStorageResetTitle": {
+    "message": "网站设置已重置"
+  },
+  "toastStorageResetSub": {
+    "message": "已清除损坏或不兼容的保存数据"
+  },
+  "toastSecretsMaskedTitle": {
+    "message": "已保护敏感信息"
+  },
+  "toastSecretsMaskedSub": {
+    "message": "项密钥凭据已在粘贴前脱敏"
+  },
+  "toastSecretsReviewBtn": {
+    "message": "查看"
+  },
+  "secretsModalTitle": {
+    "message": "已拦截敏感凭据"
+  },
+  "secretsModalSub": {
+    "message": "粘贴内容仍保持脱敏。取消勾选要放行的项，或单次粘贴原文。"
+  },
+  "secretsShowBtn": {
+    "message": "显示"
+  },
+  "secretsHideBtn": {
+    "message": "隐藏"
+  },
+  "secretsKeepBtn": {
+    "message": "保持脱敏"
+  },
+  "secretsApplyBtn": {
+    "message": "应用所选"
+  },
+  "secretsCopySelectedBtn": {
+    "message": "复制所选"
+  },
+  "secretsPasteRawBtn": {
+    "message": "单次粘贴原文"
+  },
+  "secretsCopyRawBtn": {
+    "message": "复制原文"
+  },
+  "secretsRestoredTitle": {
+    "message": "已粘贴原文"
+  },
+  "secretsRestoredSub": {
+    "message": "密钥保护仍处于开启状态"
+  },
+  "secretsCopiedTitle": {
+    "message": "已复制原文"
+  },
+  "secretsChangedNotice": {
+    "message": "聊天框中的已贴内容已变更，如需原文请手动复制。"
+  },
+  "redactModalTitle": {
+    "message": "上传前遮盖敏感信息"
+  },
+  "redactModalHint": {
+    "message": "拖拽或按 N/+ 框选 · 方向键移动 · Shift+方向键缩放 · Del 删除 · Enter 上传"
+  },
+  "redactModalHintBatch": {
+    "message": "拖拽或按 N/+ 框选 · 方向键/Shift 调整 · Del 删除 · PgUp/PgDn 切图 · Enter 上传"
+  },
+  "redactBtnAddBox": {
+    "message": "+ 遮挡框"
+  },
+  "redactBtnPrev": {
+    "message": "上一张"
+  },
+  "redactBtnNext": {
+    "message": "下一张"
+  },
+  "redactBtnSkip": {
+    "message": "跳过"
+  },
+  "redactBtnInclude": {
+    "message": "包含"
+  },
+  "redactSkippedTag": {
+    "message": "已跳过"
+  },
+  "redactBtnUndo": {
+    "message": "撤销"
+  },
+  "redactBtnClear": {
+    "message": "清空"
+  },
+  "redactBtnCancel": {
+    "message": "取消"
+  },
+  "redactBtnSend": {
+    "message": "上传"
+  },
+  "redactModeCover": {
+    "message": "遮盖"
+  },
+  "redactModeOutline": {
+    "message": "框选"
+  },
+  "redactModePen": {
+    "message": "画笔"
+  },
+  "redactColorBlack": {
+    "message": "黑色"
+  },
+  "redactColorWhite": {
+    "message": "白色"
+  },
+  "redactColorRed": {
+    "message": "红色"
+  },
+  "redactColorBlue": {
+    "message": "蓝色"
+  },
+  "redactColorGreen": {
+    "message": "绿色"
+  },
+  "redactColorYellow": {
+    "message": "黄色"
+  },
+  "popupSupportBtn": {
+    "message": "赞助支持 · GitHub Sponsors"
+  },
+  "popupTabProtection": {
+    "message": "隐私保护"
+  }
+}

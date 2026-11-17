@@ -1,0 +1,489 @@
+{
+  "extDescription": {
+    "message": "Renomme vos fichiers, nettoie EXIF/GPS, SVG et PDF, masque sur canvas et protège les secrets sur IA et réseaux sociaux."
+  },
+  "cmdToggleEnabled": {
+    "message": "Mettre en pause ou reprendre ClipZero sur cet onglet"
+  },
+  "cmdToggleStrict": {
+    "message": "Basculer le renommage complet (noms propres et documents)"
+  },
+  "cmdToggleExif": {
+    "message": "Basculer le nettoyage sans perte EXIF, GPS et SVG"
+  },
+  "cmdToggleRedact": {
+    "message": "Basculer l’outil de masquage visuel avant envoi"
+  },
+  "cmdToggleSecrets": {
+    "message": "Basculer la protection des clés et jetons au collage"
+  },
+  "cmdToggleToast": {
+    "message": "Afficher ou masquer la notification de confirmation"
+  },
+  "cmdToggleSave": {
+    "message": "Mémoriser ou oublier les réglages sur ce site"
+  },
+  "popupChecking": {
+    "message": "Vérification de l’onglet…"
+  },
+  "popupStandbyBadge": {
+    "message": "Inactif"
+  },
+  "popupActiveBadge": {
+    "message": "Actif"
+  },
+  "popupPausedBadge": {
+    "message": "En pause"
+  },
+  "popupStandbyTitle": {
+    "message": "Indisponible sur cette page"
+  },
+  "popupStandbyBanner": {
+    "message": "Ouvrez un onglet compatible (IA, réseau social ou messagerie) pour régler ces options.\nLes raccourcis s’appliquent à ces onglets."
+  },
+  "popupReloadBadge": {
+    "message": "Actualiser"
+  },
+  "popupReloadTitle": {
+    "message": "Rechargement requis"
+  },
+  "popupReloadBanner": {
+    "message": "ClipZero a été mis à jour.\nActualisez cet onglet (F5) une fois pour activer tous les réglages."
+  },
+  "popupReloadBtn": {
+    "message": "Actualiser l’onglet"
+  },
+  "popupTabReloadTitle": {
+    "message": "Actualisation requise · $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupTabReloadBanner": {
+    "message": "Cet onglet était déjà ouvert avant l’activation de ClipZero.\nActualisez-le une fois pour protéger vos envois et collages.\n(Si le message reste après actualisation : about:addons → ClipZero → Exécuter sur les sites avec restrictions → Autoriser.)"
+  },
+  "popupPermBadge": {
+    "message": "Accès"
+  },
+  "popupPermTitle": {
+    "message": "Autorisations requises ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBanner": {
+    "message": "Firefox n’a pas encore accordé l’accès sur $COUNT$ site(s) compatible(s).\nAutorisez l’accès une fois pour activer la protection partout.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBtn": {
+    "message": "Autoriser les sites manquants ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSaved": {
+    "message": "$PREFIX$_… · Enregistré ici",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSession": {
+    "message": "$PREFIX$_… · Session actuelle",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleReset": {
+    "message": "$PREFIX$_… · Réinitialisé (corrompu)",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitlePaused": {
+    "message": "En pause sur $PREFIX$_…",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "optEnabledTitle": {
+    "message": "Renommer à l’envoi"
+  },
+  "optEnabledDesc": {
+    "message": "Collage, glisser-déposer et sélecteur"
+  },
+  "optStrictTitle": {
+    "message": "Tout renommer"
+  },
+  "optStrictDesc": {
+    "message": "Noms propres et documents"
+  },
+  "optExifTitle": {
+    "message": "Nettoyer les métadonnées"
+  },
+  "optExifDesc": {
+    "message": "JPEG EXIF/GPS, PNG, WebP, SVG et PDF"
+  },
+  "optRedactTitle": {
+    "message": "Masquer avant l’envoi"
+  },
+  "optRedactDesc": {
+    "message": "Cacher les zones sensibles sur canvas"
+  },
+  "optSecretsTitle": {
+    "message": "Protéger clés et jetons"
+  },
+  "optSecretsDesc": {
+    "message": "Masque secrets, cartes, IBAN et URL au collage"
+  },
+  "optPiiTitle": {
+    "message": "Masquer contacts et IP"
+  },
+  "optPiiDesc": {
+    "message": "E-mails, téléphones et IP au collage"
+  },
+  "popupMoreSettings": {
+    "message": "Plus d’options"
+  },
+  "optOptimizeTitle": {
+    "message": "Réduire les grandes images"
+  },
+  "optOptimizeDesc": {
+    "message": "Bord max limité à 2048 px"
+  },
+  "optToastTitle": {
+    "message": "Afficher l’avis"
+  },
+  "optToastDesc": {
+    "message": "Brève confirmation à l’écran"
+  },
+  "optSaveTitle": {
+    "message": "Mémoriser ce site"
+  },
+  "optSaveDesc": {
+    "message": "Conserver les réglages sur ce domaine"
+  },
+  "optDebugTitle": {
+    "message": "Journaux de débogage"
+  },
+  "optDebugDesc": {
+    "message": "Traces anonymisées dans DevTools"
+  },
+  "optCustomWordsTitle": {
+    "message": "Mots masqués personnalisés"
+  },
+  "optCustomWordsDesc": {
+    "message": "Noms, clients ou projets séparés par des virgules"
+  },
+  "optCustomWordsPlaceholder": {
+    "message": "AcmeCorp, ProjetTitan, Jean Dupont"
+  },
+  "tokensDetectedCopyTitle": {
+    "message": "Jetons masqués copiés"
+  },
+  "tokensDetectedCopySub": {
+    "message": "Restaurer les valeurs réelles dans le presse-papiers ?"
+  },
+  "tokensRestoreClipBtn": {
+    "message": "Restaurer l’original"
+  },
+  "tokensRestoredClipTitle": {
+    "message": "Originaux restaurés"
+  },
+  "popupShortcutsBtn": {
+    "message": "Raccourcis clavier…"
+  },
+  "popupShortcutsFallback": {
+    "message": "Ouvrez about:addons → ClipZero → Gérer les raccourcis"
+  },
+  "popupNotSet": {
+    "message": "Aucun"
+  },
+  "toastFilesWord": {
+    "message": "fichiers"
+  },
+  "hintPause": {
+    "message": "pause"
+  },
+  "hintAll": {
+    "message": "tout"
+  },
+  "hintExif": {
+    "message": "métadonnées"
+  },
+  "hintRedact": {
+    "message": "masquer"
+  },
+  "hintSecrets": {
+    "message": "clés"
+  },
+  "hintNotice": {
+    "message": "avis"
+  },
+  "hintSave": {
+    "message": "sauver"
+  },
+  "toastActiveTitle": {
+    "message": "ClipZero actif"
+  },
+  "toastActiveSub": {
+    "message": "Les envois seront anonymisés"
+  },
+  "toastPausedTitle": {
+    "message": "ClipZero en pause"
+  },
+  "toastPausedSub": {
+    "message": "Noms d’origine conservés"
+  },
+  "toastStrictOnTitle": {
+    "message": "Tout renommer · OUI"
+  },
+  "toastStrictOnSub": {
+    "message": "Noms personnalisés et documents renommés"
+  },
+  "toastStrictOffTitle": {
+    "message": "Tout renommer · NON"
+  },
+  "toastStrictOffSub": {
+    "message": "Noms personnalisés et documents conservés"
+  },
+  "toastExifOnTitle": {
+    "message": "Nettoyer métadonnées · OUI"
+  },
+  "toastExifOnSub": {
+    "message": "Nettoyage EXIF, GPS et SVG activé"
+  },
+  "toastExifOffTitle": {
+    "message": "Nettoyer métadonnées · NON"
+  },
+  "toastExifOffSub": {
+    "message": "Envoi instantané sans délai rétabli"
+  },
+  "toastRedactOnTitle": {
+    "message": "Masquage canvas · OUI"
+  },
+  "toastRedactOnSub": {
+    "message": "Tracez des zones à masquer avant l’envoi"
+  },
+  "toastRedactOffTitle": {
+    "message": "Masquage canvas · NON"
+  },
+  "toastRedactOffSub": {
+    "message": "Images envoyées directement sans aperçu"
+  },
+  "toastSecretsOnTitle": {
+    "message": "Garde des clés · OUI"
+  },
+  "toastSecretsOnSub": {
+    "message": "Clés API, jetons et URL masqués au collage"
+  },
+  "toastSecretsOffTitle": {
+    "message": "Garde des clés · NON"
+  },
+  "toastSecretsOffSub": {
+    "message": "Secrets collés conservés tels quels"
+  },
+  "toastPiiOnTitle": {
+    "message": "Contacts et IP · OUI"
+  },
+  "toastPiiOnSub": {
+    "message": "E-mails, téléphones et IP masqués au collage"
+  },
+  "toastPiiOffTitle": {
+    "message": "Contacts et IP · NON"
+  },
+  "toastPiiOffSub": {
+    "message": "Contacts et IP conservés tels quels"
+  },
+  "toastDebugOnTitle": {
+    "message": "Journaux · OUI"
+  },
+  "toastDebugOnSub": {
+    "message": "Traces anonymisées activées dans DevTools"
+  },
+  "toastDebugOffTitle": {
+    "message": "Journaux · NON"
+  },
+  "toastDebugOffSub": {
+    "message": "Traces console désactivées"
+  },
+  "toastOptimizeOnTitle": {
+    "message": "Limite 2048 px · OUI"
+  },
+  "toastOptimizeOnSub": {
+    "message": "Grandes images limitées à 2048 px"
+  },
+  "toastOptimizeOffTitle": {
+    "message": "Limite 2048 px · NON"
+  },
+  "toastOptimizeOffSub": {
+    "message": "Résolution d’origine conservée"
+  },
+  "toastToastOnTitle": {
+    "message": "Avis · OUI"
+  },
+  "toastToastOnSub": {
+    "message": "Confirmations activées"
+  },
+  "toastToastOffTitle": {
+    "message": "Avis · NON"
+  },
+  "toastToastOffSub": {
+    "message": "Mode silencieux"
+  },
+  "toastSaveOnTitle": {
+    "message": "Enregistré pour ce site"
+  },
+  "toastSaveOnSub": {
+    "message": "Réglages stockés uniquement sur ce domaine"
+  },
+  "toastSaveOffTitle": {
+    "message": "Session uniquement"
+  },
+  "toastSaveOffSub": {
+    "message": "Réglages du site effacés"
+  },
+  "toastStorageResetTitle": {
+    "message": "Réglages du site réinitialisés"
+  },
+  "toastStorageResetSub": {
+    "message": "Les données enregistrées corrompues ou incompatibles ont été effacées"
+  },
+  "toastSecretsMaskedTitle": {
+    "message": "Secrets masqués"
+  },
+  "toastSecretsMaskedSub": {
+    "message": "éléments sensibles remplacés avant collage"
+  },
+  "toastSecretsReviewBtn": {
+    "message": "Vérifier"
+  },
+  "secretsModalTitle": {
+    "message": "Secrets détectés"
+  },
+  "secretsModalSub": {
+    "message": "Le texte collé reste masqué. Décochez les éléments à autoriser ou collez l’original une fois."
+  },
+  "secretsShowBtn": {
+    "message": "Afficher"
+  },
+  "secretsHideBtn": {
+    "message": "Masquer"
+  },
+  "secretsKeepBtn": {
+    "message": "Garder masqué"
+  },
+  "secretsApplyBtn": {
+    "message": "Appliquer la sélection"
+  },
+  "secretsCopySelectedBtn": {
+    "message": "Copier la sélection"
+  },
+  "secretsPasteRawBtn": {
+    "message": "Coller l’original une fois"
+  },
+  "secretsCopyRawBtn": {
+    "message": "Copier l’original"
+  },
+  "secretsRestoredTitle": {
+    "message": "Original collé"
+  },
+  "secretsRestoredSub": {
+    "message": "La protection reste active"
+  },
+  "secretsCopiedTitle": {
+    "message": "Original copié"
+  },
+  "secretsChangedNotice": {
+    "message": "Le texte a changé dans le chat ; copiez l’original si besoin."
+  },
+  "redactModalTitle": {
+    "message": "Masquer avant l’envoi"
+  },
+  "redactModalHint": {
+    "message": "Glisser ou N/+ Boîte · Flèches déplacent · Maj+Flèches ajustent · Suppr retire · Entrée envoie"
+  },
+  "redactModalHintBatch": {
+    "message": "Glisser ou N/+ Boîte · Flèches/Maj ajustent · Suppr retire · PgPréc/Suiv change · Entrée envoie"
+  },
+  "redactBtnAddBox": {
+    "message": "+ Boîte"
+  },
+  "redactBtnPrev": {
+    "message": "Précédent"
+  },
+  "redactBtnNext": {
+    "message": "Suivant"
+  },
+  "redactBtnSkip": {
+    "message": "Ignorer"
+  },
+  "redactBtnInclude": {
+    "message": "Inclure"
+  },
+  "redactSkippedTag": {
+    "message": "Ignorée"
+  },
+  "redactBtnUndo": {
+    "message": "Annuler"
+  },
+  "redactBtnClear": {
+    "message": "Effacer"
+  },
+  "redactBtnCancel": {
+    "message": "Fermer"
+  },
+  "redactBtnSend": {
+    "message": "Envoyer"
+  },
+  "redactModeCover": {
+    "message": "Masquer"
+  },
+  "redactModeOutline": {
+    "message": "Encadrer"
+  },
+  "redactModePen": {
+    "message": "Crayon"
+  },
+  "redactColorBlack": {
+    "message": "Noir"
+  },
+  "redactColorWhite": {
+    "message": "Blanc"
+  },
+  "redactColorRed": {
+    "message": "Rouge"
+  },
+  "redactColorBlue": {
+    "message": "Bleu"
+  },
+  "redactColorGreen": {
+    "message": "Vert"
+  },
+  "redactColorYellow": {
+    "message": "Jaune"
+  },
+  "popupSupportBtn": {
+    "message": "Soutenir · GitHub Sponsors"
+  },
+  "popupTabProtection": {
+    "message": "Protection"
+  }
+}

@@ -1,0 +1,282 @@
+{
+  "manifest_version": 3,
+  "name": "ClipZero",
+  "version": "1.3.0",
+  "default_locale": "en",
+  "author": "m21dev",
+  "description": "__MSG_extDescription__",
+  "host_permissions": [
+    "https://gemini.google.com/*",
+    "https://aistudio.google.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://perplexity.ai/*",
+    "https://www.perplexity.ai/*",
+    "https://grok.com/*",
+    "https://chat.mistral.ai/*",
+    "https://lechat.mistral.ai/*",
+    "https://copilot.microsoft.com/*",
+    "https://poe.com/*",
+    "https://huggingface.co/*",
+    "https://chat.deepseek.com/*",
+    "https://chat.qwen.ai/*",
+    "https://chat.qwenlm.ai/*",
+    "https://kimi.com/*",
+    "https://www.kimi.com/*",
+    "https://kimi.ai/*",
+    "https://www.kimi.ai/*",
+    "https://kimi.moonshot.cn/*",
+    "https://chat.z.ai/*",
+    "https://chatglm.cn/*",
+    "https://www.chatglm.cn/*",
+    "https://doubao.com/*",
+    "https://www.doubao.com/*",
+    "https://yuanbao.tencent.com/*",
+    "https://yiyan.baidu.com/*",
+    "https://ernie.baidu.com/*",
+    "https://notebooklm.google.com/*",
+    "https://v0.dev/*",
+    "https://bolt.new/*",
+    "https://lovable.dev/*",
+    "https://openrouter.ai/*",
+    "https://duck.ai/*",
+    "https://facebook.com/*",
+    "https://www.facebook.com/*",
+    "https://m.facebook.com/*",
+    "https://messenger.com/*",
+    "https://www.messenger.com/*",
+    "https://instagram.com/*",
+    "https://www.instagram.com/*",
+    "https://web.whatsapp.com/*",
+    "https://web.telegram.org/*",
+    "https://discord.com/*",
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://reddit.com/*",
+    "https://www.reddit.com/*",
+    "https://www.linkedin.com/*",
+    "https://github.com/*",
+    "https://mail.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office.com/*",
+    "https://outlook.office365.com/*",
+    "https://outlook.cloud.microsoft/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';"
+  },
+  "icons": {
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_icon": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    },
+    "default_title": "ClipZero",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "scripts": [
+      "site_match.js",
+      "background.js"
+    ]
+  },
+  "commands": {
+    "toggle-enabled": {
+      "suggested_key": {
+        "default": "Alt+Shift+P",
+        "mac": "MacCtrl+Shift+P"
+      },
+      "description": "__MSG_cmdToggleEnabled__"
+    },
+    "toggle-strict": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "MacCtrl+Shift+S"
+      },
+      "description": "__MSG_cmdToggleStrict__"
+    },
+    "toggle-exif": {
+      "suggested_key": {
+        "default": "Alt+Shift+E",
+        "mac": "MacCtrl+Shift+E"
+      },
+      "description": "__MSG_cmdToggleExif__"
+    },
+    "toggle-redact": {
+      "suggested_key": {
+        "default": "Alt+Shift+B",
+        "mac": "MacCtrl+Shift+B"
+      },
+      "description": "__MSG_cmdToggleRedact__"
+    },
+    "toggle-secrets": {
+      "suggested_key": {
+        "default": "Alt+Shift+K",
+        "mac": "MacCtrl+Shift+K"
+      },
+      "description": "__MSG_cmdToggleSecrets__"
+    },
+    "toggle-toast": {
+      "suggested_key": {
+        "default": "Alt+Shift+T",
+        "mac": "MacCtrl+Shift+T"
+      },
+      "description": "__MSG_cmdToggleToast__"
+    },
+    "toggle-save": {
+      "suggested_key": {
+        "default": "Alt+Shift+G",
+        "mac": "MacCtrl+Shift+G"
+      },
+      "description": "__MSG_cmdToggleSave__"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://grok.com/*",
+        "https://chat.mistral.ai/*",
+        "https://lechat.mistral.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://poe.com/*",
+        "https://huggingface.co/chat/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*",
+        "https://chat.qwenlm.ai/*",
+        "https://kimi.com/*",
+        "https://www.kimi.com/*",
+        "https://kimi.ai/*",
+        "https://www.kimi.ai/*",
+        "https://kimi.moonshot.cn/*",
+        "https://chat.z.ai/*",
+        "https://chatglm.cn/*",
+        "https://www.chatglm.cn/*",
+        "https://doubao.com/*",
+        "https://www.doubao.com/*",
+        "https://yuanbao.tencent.com/*",
+        "https://yiyan.baidu.com/*",
+        "https://ernie.baidu.com/*",
+        "https://notebooklm.google.com/*",
+        "https://v0.dev/*",
+        "https://bolt.new/*",
+        "https://lovable.dev/*",
+        "https://openrouter.ai/*",
+        "https://duck.ai/*",
+        "https://facebook.com/*",
+        "https://www.facebook.com/*",
+        "https://m.facebook.com/*",
+        "https://messenger.com/*",
+        "https://www.messenger.com/*",
+        "https://instagram.com/*",
+        "https://www.instagram.com/*",
+        "https://web.whatsapp.com/*",
+        "https://web.telegram.org/*",
+        "https://discord.com/*",
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://reddit.com/*",
+        "https://www.reddit.com/*",
+        "https://www.linkedin.com/*",
+        "https://github.com/*",
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*",
+        "https://outlook.cloud.microsoft/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://gemini.google.com/*",
+        "https://aistudio.google.com/*",
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://perplexity.ai/*",
+        "https://www.perplexity.ai/*",
+        "https://grok.com/*",
+        "https://chat.mistral.ai/*",
+        "https://lechat.mistral.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://poe.com/*",
+        "https://huggingface.co/chat/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.qwen.ai/*",
+        "https://chat.qwenlm.ai/*",
+        "https://kimi.com/*",
+        "https://www.kimi.com/*",
+        "https://kimi.ai/*",
+        "https://www.kimi.ai/*",
+        "https://kimi.moonshot.cn/*",
+        "https://chat.z.ai/*",
+        "https://chatglm.cn/*",
+        "https://www.chatglm.cn/*",
+        "https://doubao.com/*",
+        "https://www.doubao.com/*",
+        "https://yuanbao.tencent.com/*",
+        "https://yiyan.baidu.com/*",
+        "https://ernie.baidu.com/*",
+        "https://notebooklm.google.com/*",
+        "https://v0.dev/*",
+        "https://bolt.new/*",
+        "https://lovable.dev/*",
+        "https://openrouter.ai/*",
+        "https://duck.ai/*",
+        "https://facebook.com/*",
+        "https://www.facebook.com/*",
+        "https://m.facebook.com/*",
+        "https://messenger.com/*",
+        "https://www.messenger.com/*",
+        "https://instagram.com/*",
+        "https://www.instagram.com/*",
+        "https://web.whatsapp.com/*",
+        "https://web.telegram.org/*",
+        "https://discord.com/*",
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://reddit.com/*",
+        "https://www.reddit.com/*",
+        "https://www.linkedin.com/*",
+        "https://github.com/*",
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://outlook.office365.com/*",
+        "https://outlook.cloud.microsoft/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "ISOLATED"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{0985b1c5-a3bc-44fc-a2f8-5c829208c439}",
+      "strict_min_version": "140.0",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
+    },
+    "gecko_android": {
+      "strict_min_version": "142.0"
+    }
+  }
+}

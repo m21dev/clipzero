@@ -1,0 +1,489 @@
+{
+  "extDescription": {
+    "message": "Renomeia uploads com privacidade, limpa EXIF/GPS, SVG e PDF, oculta áreas no canvas e protege segredos em IA e redes sociais."
+  },
+  "cmdToggleEnabled": {
+    "message": "Pausar ou retomar o ClipZero na aba ativa"
+  },
+  "cmdToggleStrict": {
+    "message": "Alternar renomear tudo (nomes próprios e documentos)"
+  },
+  "cmdToggleExif": {
+    "message": "Alternar limpeza de metadados EXIF, GPS e SVG sem perdas"
+  },
+  "cmdToggleRedact": {
+    "message": "Alternar redator visual no canvas antes do envio"
+  },
+  "cmdToggleSecrets": {
+    "message": "Alternar proteção de chaves e tokens ao colar"
+  },
+  "cmdToggleToast": {
+    "message": "Mostrar ou ocultar aviso de confirmação"
+  },
+  "cmdToggleSave": {
+    "message": "Lembrar ou esquecer configurações neste site"
+  },
+  "popupChecking": {
+    "message": "Verificando aba…"
+  },
+  "popupStandbyBadge": {
+    "message": "Inativo"
+  },
+  "popupActiveBadge": {
+    "message": "Ativo"
+  },
+  "popupPausedBadge": {
+    "message": "Pausado"
+  },
+  "popupStandbyTitle": {
+    "message": "Indisponível nesta página"
+  },
+  "popupStandbyBanner": {
+    "message": "Abra uma aba compatível (IA, rede social ou e-mail) para ajustar as opções.\nOs atalhos funcionam nessas abas."
+  },
+  "popupReloadBadge": {
+    "message": "Recarregar"
+  },
+  "popupReloadTitle": {
+    "message": "Recarregue esta aba"
+  },
+  "popupReloadBanner": {
+    "message": "O ClipZero foi atualizado.\nRecarregue esta aba (F5) uma vez para ativar todos os controles."
+  },
+  "popupReloadBtn": {
+    "message": "Recarregar aba"
+  },
+  "popupTabReloadTitle": {
+    "message": "Recarregue · $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupTabReloadBanner": {
+    "message": "Esta aba já estava aberta antes do ClipZero ser ativado aqui.\nRecarregue uma vez para proteger envios e colagens.\n(Se continuar após recarregar: about:addons → ClipZero → Executar em sites com restrições → Permitir.)"
+  },
+  "popupPermBadge": {
+    "message": "Permissão"
+  },
+  "popupPermTitle": {
+    "message": "Permissões pendentes ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBanner": {
+    "message": "O Firefox ainda não liberou o acesso em $COUNT$ site(s) compatível(eis).\nPermita uma vez para ativar a proteção em todos.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBtn": {
+    "message": "Permitir sites pendentes ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSaved": {
+    "message": "$PREFIX$_… · Salvo neste site",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSession": {
+    "message": "$PREFIX$_… · Apenas nesta sessão",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleReset": {
+    "message": "$PREFIX$_… · Redefinido (corrompido)",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitlePaused": {
+    "message": "Pausado em $PREFIX$_…",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "optEnabledTitle": {
+    "message": "Renomear ao enviar"
+  },
+  "optEnabledDesc": {
+    "message": "Colar, arrastar e seletor de arquivos"
+  },
+  "optStrictTitle": {
+    "message": "Renomear tudo"
+  },
+  "optStrictDesc": {
+    "message": "Nomes próprios e documentos"
+  },
+  "optExifTitle": {
+    "message": "Limpar metadados"
+  },
+  "optExifDesc": {
+    "message": "JPEG EXIF/GPS, PNG, WebP, SVG e PDF"
+  },
+  "optRedactTitle": {
+    "message": "Ocultar dados antes de enviar"
+  },
+  "optRedactDesc": {
+    "message": "Cubra áreas sensíveis no canvas"
+  },
+  "optSecretsTitle": {
+    "message": "Proteger chaves e tokens"
+  },
+  "optSecretsDesc": {
+    "message": "Mascara segredos, cartões, IBANs e URLs ao colar"
+  },
+  "optPiiTitle": {
+    "message": "Ocultar contatos e IPs"
+  },
+  "optPiiDesc": {
+    "message": "E-mails, telefones e endereços IP ao colar"
+  },
+  "popupMoreSettings": {
+    "message": "Mais ajustes"
+  },
+  "optOptimizeTitle": {
+    "message": "Redimensionar imagens"
+  },
+  "optOptimizeDesc": {
+    "message": "Máximo de 2048 px no lado"
+  },
+  "optToastTitle": {
+    "message": "Mostrar aviso"
+  },
+  "optToastDesc": {
+    "message": "Confirmação breve na tela"
+  },
+  "optSaveTitle": {
+    "message": "Lembrar este site"
+  },
+  "optSaveDesc": {
+    "message": "Salvar ajustes apenas neste domínio"
+  },
+  "optDebugTitle": {
+    "message": "Logs de depuração"
+  },
+  "optDebugDesc": {
+    "message": "Registros sem dados sensíveis no DevTools"
+  },
+  "optCustomWordsTitle": {
+    "message": "Palavras ocultas próprias"
+  },
+  "optCustomWordsDesc": {
+    "message": "Nomes, clientes ou projetos separados por vírgula"
+  },
+  "optCustomWordsPlaceholder": {
+    "message": "AcmeCorp, ProjetoTitan, João Silva"
+  },
+  "tokensDetectedCopyTitle": {
+    "message": "Tokens mascarados copiados"
+  },
+  "tokensDetectedCopySub": {
+    "message": "Restaurar os valores originais na área de transferência?"
+  },
+  "tokensRestoreClipBtn": {
+    "message": "Restaurar originais"
+  },
+  "tokensRestoredClipTitle": {
+    "message": "Originais restaurados"
+  },
+  "popupShortcutsBtn": {
+    "message": "Atalhos de teclado…"
+  },
+  "popupShortcutsFallback": {
+    "message": "Abra about:addons → ClipZero → Gerenciar atalhos da extensão"
+  },
+  "popupNotSet": {
+    "message": "Sem tecla"
+  },
+  "toastFilesWord": {
+    "message": "arquivos"
+  },
+  "hintPause": {
+    "message": "pausar"
+  },
+  "hintAll": {
+    "message": "tudo"
+  },
+  "hintExif": {
+    "message": "metadados"
+  },
+  "hintRedact": {
+    "message": "ocultar"
+  },
+  "hintSecrets": {
+    "message": "chaves"
+  },
+  "hintNotice": {
+    "message": "aviso"
+  },
+  "hintSave": {
+    "message": "salvar"
+  },
+  "toastActiveTitle": {
+    "message": "ClipZero ativo"
+  },
+  "toastActiveSub": {
+    "message": "Os envios serão anonimizados"
+  },
+  "toastPausedTitle": {
+    "message": "ClipZero pausado"
+  },
+  "toastPausedSub": {
+    "message": "Nomes originais mantidos"
+  },
+  "toastStrictOnTitle": {
+    "message": "Renomear tudo · SIM"
+  },
+  "toastStrictOnSub": {
+    "message": "Nomes próprios e documentos serão renomeados"
+  },
+  "toastStrictOffTitle": {
+    "message": "Renomear tudo · NÃO"
+  },
+  "toastStrictOffSub": {
+    "message": "Nomes próprios e documentos preservados"
+  },
+  "toastExifOnTitle": {
+    "message": "Limpar metadados · SIM"
+  },
+  "toastExifOnSub": {
+    "message": "Limpeza de EXIF, GPS e SVG ativada"
+  },
+  "toastExifOffTitle": {
+    "message": "Limpar metadados · NÃO"
+  },
+  "toastExifOffSub": {
+    "message": "Envio instantâneo restaurado"
+  },
+  "toastRedactOnTitle": {
+    "message": "Redator no canvas · SIM"
+  },
+  "toastRedactOnSub": {
+    "message": "Desenhe caixas para ocultar áreas antes de enviar"
+  },
+  "toastRedactOffTitle": {
+    "message": "Redator no canvas · NÃO"
+  },
+  "toastRedactOffSub": {
+    "message": "Imagens enviadas direto sem pré-visualização"
+  },
+  "toastSecretsOnTitle": {
+    "message": "Guarda de chaves · SIM"
+  },
+  "toastSecretsOnSub": {
+    "message": "Chaves API, tokens e URLs mascarados ao colar"
+  },
+  "toastSecretsOffTitle": {
+    "message": "Guarda de chaves · NÃO"
+  },
+  "toastSecretsOffSub": {
+    "message": "Chaves coladas mantidas sem alterações"
+  },
+  "toastPiiOnTitle": {
+    "message": "Contatos e IPs · SIM"
+  },
+  "toastPiiOnSub": {
+    "message": "E-mails, telefones e IPs ocultados ao colar"
+  },
+  "toastPiiOffTitle": {
+    "message": "Contatos e IPs · NÃO"
+  },
+  "toastPiiOffSub": {
+    "message": "Contatos e IPs mantidos sem alterações"
+  },
+  "toastDebugOnTitle": {
+    "message": "Logs de depuração · SIM"
+  },
+  "toastDebugOnSub": {
+    "message": "Registros sem dados sensíveis ativados"
+  },
+  "toastDebugOffTitle": {
+    "message": "Logs de depuração · NÃO"
+  },
+  "toastDebugOffSub": {
+    "message": "Logs no console silenciados"
+  },
+  "toastOptimizeOnTitle": {
+    "message": "Limite 2048 px · SIM"
+  },
+  "toastOptimizeOnSub": {
+    "message": "Imagens grandes limitadas a 2048 px"
+  },
+  "toastOptimizeOffTitle": {
+    "message": "Limite 2048 px · NÃO"
+  },
+  "toastOptimizeOffSub": {
+    "message": "Resolução original preservada"
+  },
+  "toastToastOnTitle": {
+    "message": "Aviso · SIM"
+  },
+  "toastToastOnSub": {
+    "message": "Confirmações na tela ativadas"
+  },
+  "toastToastOffTitle": {
+    "message": "Aviso · NÃO"
+  },
+  "toastToastOffSub": {
+    "message": "Modo silencioso"
+  },
+  "toastSaveOnTitle": {
+    "message": "Salvo para este site"
+  },
+  "toastSaveOnSub": {
+    "message": "Ajustes salvos apenas neste domínio"
+  },
+  "toastSaveOffTitle": {
+    "message": "Apenas nesta sessão"
+  },
+  "toastSaveOffSub": {
+    "message": "Ajustes salvos deste site removidos"
+  },
+  "toastStorageResetTitle": {
+    "message": "Ajustes do site redefinidos"
+  },
+  "toastStorageResetSub": {
+    "message": "Dados salvos corrompidos ou incompatíveis foram limpos"
+  },
+  "toastSecretsMaskedTitle": {
+    "message": "Segredos protegidos"
+  },
+  "toastSecretsMaskedSub": {
+    "message": "itens sensíveis ocultados antes de colar"
+  },
+  "toastSecretsReviewBtn": {
+    "message": "Revisar"
+  },
+  "secretsModalTitle": {
+    "message": "Segredos protegidos"
+  },
+  "secretsModalSub": {
+    "message": "O texto colado segue oculto. Desmarque o que quiser permitir ou cole o original uma vez."
+  },
+  "secretsShowBtn": {
+    "message": "Mostrar"
+  },
+  "secretsHideBtn": {
+    "message": "Ocultar"
+  },
+  "secretsKeepBtn": {
+    "message": "Manter oculto"
+  },
+  "secretsApplyBtn": {
+    "message": "Aplicar seleção"
+  },
+  "secretsCopySelectedBtn": {
+    "message": "Copiar seleção"
+  },
+  "secretsPasteRawBtn": {
+    "message": "Colar original"
+  },
+  "secretsCopyRawBtn": {
+    "message": "Copiar original"
+  },
+  "secretsRestoredTitle": {
+    "message": "Original colado"
+  },
+  "secretsRestoredSub": {
+    "message": "A proteção de segredos continua ativa"
+  },
+  "secretsCopiedTitle": {
+    "message": "Original copiado"
+  },
+  "secretsChangedNotice": {
+    "message": "O bloco colado mudou no chat; copie o original manualmente se precisar."
+  },
+  "redactModalTitle": {
+    "message": "Ocultar áreas antes de enviar"
+  },
+  "redactModalHint": {
+    "message": "Arraste ou N/+ Caixa · Setas movem · Shift+Setas ajustam · Del remove · Enter envia"
+  },
+  "redactModalHintBatch": {
+    "message": "Arraste ou N/+ Caixa · Setas/Shift ajustam · Del remove · PgUp/PgDn troca · Enter envia"
+  },
+  "redactBtnAddBox": {
+    "message": "+ Caixa"
+  },
+  "redactBtnPrev": {
+    "message": "Anterior"
+  },
+  "redactBtnNext": {
+    "message": "Próxima"
+  },
+  "redactBtnSkip": {
+    "message": "Pular"
+  },
+  "redactBtnInclude": {
+    "message": "Incluir"
+  },
+  "redactSkippedTag": {
+    "message": "Ignorada"
+  },
+  "redactBtnUndo": {
+    "message": "Desfazer"
+  },
+  "redactBtnClear": {
+    "message": "Limpar"
+  },
+  "redactBtnCancel": {
+    "message": "Cancelar"
+  },
+  "redactBtnSend": {
+    "message": "Enviar"
+  },
+  "redactModeCover": {
+    "message": "Cobrir"
+  },
+  "redactModeOutline": {
+    "message": "Contornar"
+  },
+  "redactModePen": {
+    "message": "Caneta"
+  },
+  "redactColorBlack": {
+    "message": "Preto"
+  },
+  "redactColorWhite": {
+    "message": "Branco"
+  },
+  "redactColorRed": {
+    "message": "Vermelho"
+  },
+  "redactColorBlue": {
+    "message": "Azul"
+  },
+  "redactColorGreen": {
+    "message": "Verde"
+  },
+  "redactColorYellow": {
+    "message": "Amarelo"
+  },
+  "popupSupportBtn": {
+    "message": "Apoiar · GitHub Sponsors"
+  },
+  "popupTabProtection": {
+    "message": "Proteção"
+  }
+}

@@ -1,0 +1,489 @@
+{
+  "extDescription": {
+    "message": "Benennt Uploads privat um, bereinigt EXIF/GPS, SVG & PDF, schwärzt Bilder im Canvas und schützt Secrets in KI-Chats & Social Web."
+  },
+  "cmdToggleEnabled": {
+    "message": "ClipZero im aktiven Tab pausieren oder fortsetzen"
+  },
+  "cmdToggleStrict": {
+    "message": "Alle Dateien und Dokumente umbenennen umschalten"
+  },
+  "cmdToggleExif": {
+    "message": "Verlustfreie EXIF-, GPS- und SVG-Bereinigung umschalten"
+  },
+  "cmdToggleRedact": {
+    "message": "Canvas-Schwärzung vor dem Upload umschalten"
+  },
+  "cmdToggleSecrets": {
+    "message": "Schutz für API-Keys & Tokens beim Einfügen umschalten"
+  },
+  "cmdToggleToast": {
+    "message": "Bestätigungshinweis anzeigen oder verbergen"
+  },
+  "cmdToggleSave": {
+    "message": "Einstellungen für diese Website merken oder löschen"
+  },
+  "popupChecking": {
+    "message": "Tab wird geprüft…"
+  },
+  "popupStandbyBadge": {
+    "message": "Aus"
+  },
+  "popupActiveBadge": {
+    "message": "Aktiv"
+  },
+  "popupPausedBadge": {
+    "message": "Pausiert"
+  },
+  "popupStandbyTitle": {
+    "message": "Auf dieser Seite nicht verfügbar"
+  },
+  "popupStandbyBanner": {
+    "message": "Öffne einen unterstützten KI-, Social- oder Webmail-Tab, um Optionen zu ändern.\nTastenkürzel gelten dort direkt."
+  },
+  "popupReloadBadge": {
+    "message": "Neu laden"
+  },
+  "popupReloadTitle": {
+    "message": "Tab neu laden"
+  },
+  "popupReloadBanner": {
+    "message": "ClipZero wurde aktualisiert.\nLade diesen Tab einmal neu (F5), um alle Schalter zu aktivieren."
+  },
+  "popupReloadBtn": {
+    "message": "Tab neu laden"
+  },
+  "popupTabReloadTitle": {
+    "message": "Neu laden · $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupTabReloadBanner": {
+    "message": "Dieser Tab war schon offen, bevor ClipZero hier aktiv wurde.\nLade einmal neu, um Uploads und Einfügen zu schützen.\n(Falls es danach bleibt: about:addons → ClipZero → Auf Websites mit Einschränkungen ausführen → Erlauben.)"
+  },
+  "popupPermBadge": {
+    "message": "Zugriff"
+  },
+  "popupPermTitle": {
+    "message": "Berechtigungen fehlen ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBanner": {
+    "message": "Firefox hat den Zugriff auf $COUNT$ unterstützte Website(s) noch nicht freigegeben.\nEinmal erlauben, damit ClipZero dort automatisch schützt.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBtn": {
+    "message": "Fehlende Seiten erlauben ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSaved": {
+    "message": "$PREFIX$_… · Hier gespeichert",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSession": {
+    "message": "$PREFIX$_… · Nur diese Sitzung",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleReset": {
+    "message": "$PREFIX$_… · Zurückgesetzt",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitlePaused": {
+    "message": "Pausiert auf $PREFIX$_…",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "optEnabledTitle": {
+    "message": "Beim Hochladen umbenennen"
+  },
+  "optEnabledDesc": {
+    "message": "Einfügen, Drag & Drop und Dateiwahl"
+  },
+  "optStrictTitle": {
+    "message": "Alle Dateien umbenennen"
+  },
+  "optStrictDesc": {
+    "message": "Eigene Namen & Dokumente"
+  },
+  "optExifTitle": {
+    "message": "Metadaten entfernen"
+  },
+  "optExifDesc": {
+    "message": "JPEG EXIF/GPS, PNG, WebP, SVG & PDF"
+  },
+  "optRedactTitle": {
+    "message": "Vor Upload schwärzen"
+  },
+  "optRedactDesc": {
+    "message": "Sensible Bereiche im Canvas verdecken"
+  },
+  "optSecretsTitle": {
+    "message": "Keys & Tokens schützen"
+  },
+  "optSecretsDesc": {
+    "message": "Keys, Karten, IBAN & URLs beim Einfügen maskieren"
+  },
+  "optPiiTitle": {
+    "message": "Kontakte & IPs maskieren"
+  },
+  "optPiiDesc": {
+    "message": "E-Mails, Telefonnummern & IPs beim Einfügen"
+  },
+  "popupMoreSettings": {
+    "message": "Weitere Einstellungen"
+  },
+  "optOptimizeTitle": {
+    "message": "Große Bilder verkleinern"
+  },
+  "optOptimizeDesc": {
+    "message": "Längste Kante max. 2048 px"
+  },
+  "optToastTitle": {
+    "message": "Hinweis anzeigen"
+  },
+  "optToastDesc": {
+    "message": "Kurze Bestätigung auf der Seite"
+  },
+  "optSaveTitle": {
+    "message": "Website merken"
+  },
+  "optSaveDesc": {
+    "message": "Nur für diese Domain speichern"
+  },
+  "optDebugTitle": {
+    "message": "Debug-Logs"
+  },
+  "optDebugDesc": {
+    "message": "Datenschutzsichere Traces in DevTools"
+  },
+  "optCustomWordsTitle": {
+    "message": "Eigene versteckte Begriffe"
+  },
+  "optCustomWordsDesc": {
+    "message": "Namen, Kunden oder Projekte mit Komma trennen"
+  },
+  "optCustomWordsPlaceholder": {
+    "message": "AcmeCorp, ProjektTitan, Max Mustermann"
+  },
+  "tokensDetectedCopyTitle": {
+    "message": "Maskierte Tokens kopiert"
+  },
+  "tokensDetectedCopySub": {
+    "message": "Originalwerte in der Zwischenablage wiederherstellen?"
+  },
+  "tokensRestoreClipBtn": {
+    "message": "Originale herstellen"
+  },
+  "tokensRestoredClipTitle": {
+    "message": "Originale in Zwischenablage"
+  },
+  "popupShortcutsBtn": {
+    "message": "Tastenkürzel…"
+  },
+  "popupShortcutsFallback": {
+    "message": "Öffne about:addons → ClipZero → Erweiterungs-Tastenkürzel verwalten"
+  },
+  "popupNotSet": {
+    "message": "Keine"
+  },
+  "toastFilesWord": {
+    "message": "Dateien"
+  },
+  "hintPause": {
+    "message": "Pause"
+  },
+  "hintAll": {
+    "message": "Alle"
+  },
+  "hintExif": {
+    "message": "Metadaten"
+  },
+  "hintRedact": {
+    "message": "schwärzen"
+  },
+  "hintSecrets": {
+    "message": "Keys"
+  },
+  "hintNotice": {
+    "message": "Hinweis"
+  },
+  "hintSave": {
+    "message": "Merken"
+  },
+  "toastActiveTitle": {
+    "message": "ClipZero aktiv"
+  },
+  "toastActiveSub": {
+    "message": "Uploads werden anonymisiert"
+  },
+  "toastPausedTitle": {
+    "message": "ClipZero pausiert"
+  },
+  "toastPausedSub": {
+    "message": "Originalnamen werden beibehalten"
+  },
+  "toastStrictOnTitle": {
+    "message": "Alle umbenennen · EIN"
+  },
+  "toastStrictOnSub": {
+    "message": "Auch eigene Namen und Dokumente werden umbenannt"
+  },
+  "toastStrictOffTitle": {
+    "message": "Alle umbenennen · AUS"
+  },
+  "toastStrictOffSub": {
+    "message": "Eigene Namen und Dokumente bleiben erhalten"
+  },
+  "toastExifOnTitle": {
+    "message": "Metadaten entfernen · EIN"
+  },
+  "toastExifOnSub": {
+    "message": "EXIF-, GPS- und SVG-Bereinigung aktiv"
+  },
+  "toastExifOffTitle": {
+    "message": "Metadaten entfernen · AUS"
+  },
+  "toastExifOffSub": {
+    "message": "Sofortiger Upload ohne Verzögerung aktiv"
+  },
+  "toastRedactOnTitle": {
+    "message": "Canvas-Schwärzung · EIN"
+  },
+  "toastRedactOnSub": {
+    "message": "Bereiche vor dem Hochladen dauerhaft abdecken"
+  },
+  "toastRedactOffTitle": {
+    "message": "Canvas-Schwärzung · AUS"
+  },
+  "toastRedactOffSub": {
+    "message": "Bilder werden direkt ohne Vorschau gesendet"
+  },
+  "toastSecretsOnTitle": {
+    "message": "Key-Schutz · EIN"
+  },
+  "toastSecretsOnSub": {
+    "message": "API-Keys, Tokens & URLs beim Einfügen maskiert"
+  },
+  "toastSecretsOffTitle": {
+    "message": "Key-Schutz · AUS"
+  },
+  "toastSecretsOffSub": {
+    "message": "Eingefügte Keys bleiben unverändert"
+  },
+  "toastPiiOnTitle": {
+    "message": "Kontakt- & IP-Schutz · EIN"
+  },
+  "toastPiiOnSub": {
+    "message": "E-Mails, Nummern & IPs beim Einfügen maskiert"
+  },
+  "toastPiiOffTitle": {
+    "message": "Kontakt- & IP-Schutz · AUS"
+  },
+  "toastPiiOffSub": {
+    "message": "Kontakte & IPs bleiben unverändert"
+  },
+  "toastDebugOnTitle": {
+    "message": "Debug-Logs · EIN"
+  },
+  "toastDebugOnSub": {
+    "message": "Datenschutzsichere DevTools-Traces aktiv"
+  },
+  "toastDebugOffTitle": {
+    "message": "Debug-Logs · AUS"
+  },
+  "toastDebugOffSub": {
+    "message": "Konsolen-Traces stumm"
+  },
+  "toastOptimizeOnTitle": {
+    "message": "Limit 2048 px · EIN"
+  },
+  "toastOptimizeOnSub": {
+    "message": "Große Bilder auf 2048 px begrenzt"
+  },
+  "toastOptimizeOffTitle": {
+    "message": "Limit 2048 px · AUS"
+  },
+  "toastOptimizeOffSub": {
+    "message": "Originalauflösung bleibt erhalten"
+  },
+  "toastToastOnTitle": {
+    "message": "Hinweis · EIN"
+  },
+  "toastToastOnSub": {
+    "message": "Bestätigungen aktiviert"
+  },
+  "toastToastOffTitle": {
+    "message": "Hinweis · AUS"
+  },
+  "toastToastOffSub": {
+    "message": "Stiller Modus"
+  },
+  "toastSaveOnTitle": {
+    "message": "Für diese Website gespeichert"
+  },
+  "toastSaveOnSub": {
+    "message": "Einstellungen nur lokal auf dieser Domain"
+  },
+  "toastSaveOffTitle": {
+    "message": "Nur diese Sitzung"
+  },
+  "toastSaveOffSub": {
+    "message": "Gespeicherte Website-Daten gelöscht"
+  },
+  "toastStorageResetTitle": {
+    "message": "Website-Einstellungen zurückgesetzt"
+  },
+  "toastStorageResetSub": {
+    "message": "Beschädigte oder inkompatible Daten wurden bereinigt"
+  },
+  "toastSecretsMaskedTitle": {
+    "message": "Keys maskiert"
+  },
+  "toastSecretsMaskedSub": {
+    "message": "sensible Einträge vor dem Einfügen ersetzt"
+  },
+  "toastSecretsReviewBtn": {
+    "message": "Prüfen"
+  },
+  "secretsModalTitle": {
+    "message": "Geschützte Keys"
+  },
+  "secretsModalSub": {
+    "message": "Eingefügter Text bleibt maskiert. Einträge zum Erlauben abwählen oder Original einmal einfügen."
+  },
+  "secretsShowBtn": {
+    "message": "Anzeigen"
+  },
+  "secretsHideBtn": {
+    "message": "Verbergen"
+  },
+  "secretsKeepBtn": {
+    "message": "Maskiert lassen"
+  },
+  "secretsApplyBtn": {
+    "message": "Auswahl anwenden"
+  },
+  "secretsCopySelectedBtn": {
+    "message": "Auswahl kopieren"
+  },
+  "secretsPasteRawBtn": {
+    "message": "Original einmal einfügen"
+  },
+  "secretsCopyRawBtn": {
+    "message": "Original kopieren"
+  },
+  "secretsRestoredTitle": {
+    "message": "Original eingefügt"
+  },
+  "secretsRestoredSub": {
+    "message": "Key-Schutz bleibt aktiv"
+  },
+  "secretsCopiedTitle": {
+    "message": "Original kopiert"
+  },
+  "secretsChangedNotice": {
+    "message": "Text im Eingabefeld geändert; Original bei Bedarf manuell kopieren."
+  },
+  "redactModalTitle": {
+    "message": "Vor Upload schwärzen"
+  },
+  "redactModalHint": {
+    "message": "Ziehen oder N/+ Box · Pfeile bewegen · Shift+Pfeile skalieren · Entf löscht · Enter sendet"
+  },
+  "redactModalHintBatch": {
+    "message": "Ziehen oder N/+ Box · Pfeile/Shift anpassen · Entf löscht · Bild↑/↓ wechselt · Enter sendet"
+  },
+  "redactBtnAddBox": {
+    "message": "+ Box"
+  },
+  "redactBtnPrev": {
+    "message": "Zurück"
+  },
+  "redactBtnNext": {
+    "message": "Weiter"
+  },
+  "redactBtnSkip": {
+    "message": "Überspringen"
+  },
+  "redactBtnInclude": {
+    "message": "Einbeziehen"
+  },
+  "redactSkippedTag": {
+    "message": "Übersprungen"
+  },
+  "redactBtnUndo": {
+    "message": "Rückgängig"
+  },
+  "redactBtnClear": {
+    "message": "Leeren"
+  },
+  "redactBtnCancel": {
+    "message": "Abbrechen"
+  },
+  "redactBtnSend": {
+    "message": "Hochladen"
+  },
+  "redactModeCover": {
+    "message": "Verdecken"
+  },
+  "redactModeOutline": {
+    "message": "Umranden"
+  },
+  "redactModePen": {
+    "message": "Stift"
+  },
+  "redactColorBlack": {
+    "message": "Schwarz"
+  },
+  "redactColorWhite": {
+    "message": "Weiß"
+  },
+  "redactColorRed": {
+    "message": "Rot"
+  },
+  "redactColorBlue": {
+    "message": "Blau"
+  },
+  "redactColorGreen": {
+    "message": "Grün"
+  },
+  "redactColorYellow": {
+    "message": "Gelb"
+  },
+  "popupSupportBtn": {
+    "message": "Unterstützen · GitHub Sponsors"
+  },
+  "popupTabProtection": {
+    "message": "Schutz"
+  }
+}

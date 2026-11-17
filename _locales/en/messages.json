@@ -1,0 +1,489 @@
+{
+  "extDescription": {
+    "message": "Privacy upload renamer, lossless EXIF/GPS/SVG/PDF metadata cleaner, batch visual redactor, and reversible secret guard for AI chats & social web."
+  },
+  "cmdToggleEnabled": {
+    "message": "Pause or resume ClipZero on the active tab"
+  },
+  "cmdToggleStrict": {
+    "message": "Toggle rename all filenames and documents"
+  },
+  "cmdToggleExif": {
+    "message": "Toggle lossless EXIF, GPS, and SVG metadata cleaning"
+  },
+  "cmdToggleRedact": {
+    "message": "Toggle pre-upload Canvas visual redactor"
+  },
+  "cmdToggleSecrets": {
+    "message": "Toggle Secret & API Key Guard on paste"
+  },
+  "cmdToggleToast": {
+    "message": "Show or hide on-screen confirmation notice"
+  },
+  "cmdToggleSave": {
+    "message": "Remember or forget settings for this site"
+  },
+  "popupChecking": {
+    "message": "Checking tab…"
+  },
+  "popupStandbyBadge": {
+    "message": "Off"
+  },
+  "popupActiveBadge": {
+    "message": "Active"
+  },
+  "popupPausedBadge": {
+    "message": "Paused"
+  },
+  "popupStandbyTitle": {
+    "message": "Not available on this page"
+  },
+  "popupStandbyBanner": {
+    "message": "Open a supported AI chat, social, or webmail tab to adjust settings.\nKeyboard shortcuts apply to those tabs."
+  },
+  "popupReloadBadge": {
+    "message": "Reload"
+  },
+  "popupReloadTitle": {
+    "message": "Tab reload needed"
+  },
+  "popupReloadBanner": {
+    "message": "ClipZero updated.\nReload this tab (F5) once to activate all new controls."
+  },
+  "popupReloadBtn": {
+    "message": "Reload tab"
+  },
+  "popupTabReloadTitle": {
+    "message": "Reload needed · $HOST$",
+    "placeholders": {
+      "host": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupTabReloadBanner": {
+    "message": "This tab was open before ClipZero activated here.\nReload once to protect uploads and pastes.\n(If reloading still shows this, open about:addons → ClipZero → Run on sites with restrictions → Allow.)"
+  },
+  "popupPermBadge": {
+    "message": "Permission"
+  },
+  "popupPermTitle": {
+    "message": "Permissions needed ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBanner": {
+    "message": "Firefox hasn't granted ClipZero access on $COUNT$ supported site(s) yet.\nAllow access once so protection activates automatically.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupPermBtn": {
+    "message": "Allow missing sites ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSaved": {
+    "message": "$PREFIX$_… · Saved on site",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleSession": {
+    "message": "$PREFIX$_… · This session only",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitleReset": {
+    "message": "$PREFIX$_… · Reset (corrupt data)",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "popupSubtitlePaused": {
+    "message": "Paused on $PREFIX$_…",
+    "placeholders": {
+      "prefix": {
+        "content": "$1"
+      }
+    }
+  },
+  "optEnabledTitle": {
+    "message": "Rename on upload"
+  },
+  "optEnabledDesc": {
+    "message": "Paste, drag & drop, and file picker"
+  },
+  "optStrictTitle": {
+    "message": "Rename all files"
+  },
+  "optStrictDesc": {
+    "message": "Custom names & documents"
+  },
+  "optExifTitle": {
+    "message": "Strip metadata"
+  },
+  "optExifDesc": {
+    "message": "JPEG EXIF/GPS, PNG, WebP, SVG & PDF"
+  },
+  "optRedactTitle": {
+    "message": "Redact before upload"
+  },
+  "optRedactDesc": {
+    "message": "Hide sensitive areas on canvas"
+  },
+  "optSecretsTitle": {
+    "message": "Protect keys & tokens"
+  },
+  "optSecretsDesc": {
+    "message": "Mask API secrets, cards, IBANs & URLs on paste"
+  },
+  "optPiiTitle": {
+    "message": "Mask contacts & IPs"
+  },
+  "optPiiDesc": {
+    "message": "Emails, phones & IP addresses on paste"
+  },
+  "popupMoreSettings": {
+    "message": "More settings"
+  },
+  "optOptimizeTitle": {
+    "message": "Resize large images"
+  },
+  "optOptimizeDesc": {
+    "message": "Cap longest edge at 2048 px"
+  },
+  "optToastTitle": {
+    "message": "Show notice"
+  },
+  "optToastDesc": {
+    "message": "Brief on-screen confirmation"
+  },
+  "optSaveTitle": {
+    "message": "Remember this site"
+  },
+  "optSaveDesc": {
+    "message": "Keep settings for this domain"
+  },
+  "optDebugTitle": {
+    "message": "Debug logs"
+  },
+  "optDebugDesc": {
+    "message": "Privacy-safe traces in DevTools console"
+  },
+  "optCustomWordsTitle": {
+    "message": "Custom hidden words"
+  },
+  "optCustomWordsDesc": {
+    "message": "Comma-separated names, clients, or projects"
+  },
+  "optCustomWordsPlaceholder": {
+    "message": "AcmeCorp, ProjectTitan, John Doe"
+  },
+  "tokensDetectedCopyTitle": {
+    "message": "Masked tokens copied"
+  },
+  "tokensDetectedCopySub": {
+    "message": "Restore original values to clipboard for this copy?"
+  },
+  "tokensRestoreClipBtn": {
+    "message": "Restore originals"
+  },
+  "tokensRestoredClipTitle": {
+    "message": "Originals restored to clipboard"
+  },
+  "popupShortcutsBtn": {
+    "message": "Keyboard shortcuts…"
+  },
+  "popupShortcutsFallback": {
+    "message": "Open about:addons → ClipZero → Manage Extension Shortcuts"
+  },
+  "popupNotSet": {
+    "message": "Unset"
+  },
+  "toastFilesWord": {
+    "message": "files"
+  },
+  "hintPause": {
+    "message": "pause"
+  },
+  "hintAll": {
+    "message": "all"
+  },
+  "hintExif": {
+    "message": "metadata"
+  },
+  "hintRedact": {
+    "message": "redact"
+  },
+  "hintSecrets": {
+    "message": "secrets"
+  },
+  "hintNotice": {
+    "message": "notice"
+  },
+  "hintSave": {
+    "message": "save"
+  },
+  "toastActiveTitle": {
+    "message": "ClipZero active"
+  },
+  "toastActiveSub": {
+    "message": "Uploads will be anonymized"
+  },
+  "toastPausedTitle": {
+    "message": "ClipZero paused"
+  },
+  "toastPausedSub": {
+    "message": "Original filenames kept"
+  },
+  "toastStrictOnTitle": {
+    "message": "Rename all · ON"
+  },
+  "toastStrictOnSub": {
+    "message": "Custom names and documents will be renamed"
+  },
+  "toastStrictOffTitle": {
+    "message": "Rename all · OFF"
+  },
+  "toastStrictOffSub": {
+    "message": "Custom unique names and documents kept"
+  },
+  "toastExifOnTitle": {
+    "message": "Strip metadata · ON"
+  },
+  "toastExifOnSub": {
+    "message": "EXIF, GPS, and SVG metadata cleaner enabled"
+  },
+  "toastExifOffTitle": {
+    "message": "Strip metadata · OFF"
+  },
+  "toastExifOffSub": {
+    "message": "Instant zero-delay upload restored"
+  },
+  "toastRedactOnTitle": {
+    "message": "Canvas redactor · ON"
+  },
+  "toastRedactOnSub": {
+    "message": "Draw boxes to hide areas before upload"
+  },
+  "toastRedactOffTitle": {
+    "message": "Canvas redactor · OFF"
+  },
+  "toastRedactOffSub": {
+    "message": "Images upload directly without preview"
+  },
+  "toastSecretsOnTitle": {
+    "message": "Secret guard · ON"
+  },
+  "toastSecretsOnSub": {
+    "message": "API keys, tokens, and URLs masked on paste"
+  },
+  "toastSecretsOffTitle": {
+    "message": "Secret guard · OFF"
+  },
+  "toastSecretsOffSub": {
+    "message": "Pasted secrets left untouched"
+  },
+  "toastPiiOnTitle": {
+    "message": "Contact & IP guard · ON"
+  },
+  "toastPiiOnSub": {
+    "message": "Emails, phones, and IPs masked on paste"
+  },
+  "toastPiiOffTitle": {
+    "message": "Contact & IP guard · OFF"
+  },
+  "toastPiiOffSub": {
+    "message": "Contacts and IPs left untouched"
+  },
+  "toastDebugOnTitle": {
+    "message": "Debug logs · ON"
+  },
+  "toastDebugOnSub": {
+    "message": "Privacy-safe DevTools traces enabled"
+  },
+  "toastDebugOffTitle": {
+    "message": "Debug logs · OFF"
+  },
+  "toastDebugOffSub": {
+    "message": "Console traces muted"
+  },
+  "toastOptimizeOnTitle": {
+    "message": "Limit 2048 px · ON"
+  },
+  "toastOptimizeOnSub": {
+    "message": "Large images capped at 2048 px"
+  },
+  "toastOptimizeOffTitle": {
+    "message": "Limit 2048 px · OFF"
+  },
+  "toastOptimizeOffSub": {
+    "message": "Original resolution preserved"
+  },
+  "toastToastOnTitle": {
+    "message": "Notice · ON"
+  },
+  "toastToastOnSub": {
+    "message": "Upload confirmations enabled"
+  },
+  "toastToastOffTitle": {
+    "message": "Notice · OFF"
+  },
+  "toastToastOffSub": {
+    "message": "Silent mode"
+  },
+  "toastSaveOnTitle": {
+    "message": "Saved for this site"
+  },
+  "toastSaveOnSub": {
+    "message": "Settings stored on this domain only"
+  },
+  "toastSaveOffTitle": {
+    "message": "Session only"
+  },
+  "toastSaveOffSub": {
+    "message": "Saved site settings cleared"
+  },
+  "toastStorageResetTitle": {
+    "message": "Site settings reset"
+  },
+  "toastStorageResetSub": {
+    "message": "Corrupted or incompatible saved data was cleared"
+  },
+  "toastSecretsMaskedTitle": {
+    "message": "Secrets masked"
+  },
+  "toastSecretsMaskedSub": {
+    "message": "sensitive items replaced before paste"
+  },
+  "toastSecretsReviewBtn": {
+    "message": "Review"
+  },
+  "secretsModalTitle": {
+    "message": "Protected secrets"
+  },
+  "secretsModalSub": {
+    "message": "Pasted text stays masked. Uncheck items you want to allow, or paste the original once."
+  },
+  "secretsShowBtn": {
+    "message": "Show"
+  },
+  "secretsHideBtn": {
+    "message": "Hide"
+  },
+  "secretsKeepBtn": {
+    "message": "Keep masked"
+  },
+  "secretsApplyBtn": {
+    "message": "Apply selection"
+  },
+  "secretsCopySelectedBtn": {
+    "message": "Copy selection"
+  },
+  "secretsPasteRawBtn": {
+    "message": "Paste original once"
+  },
+  "secretsCopyRawBtn": {
+    "message": "Copy original"
+  },
+  "secretsRestoredTitle": {
+    "message": "Original pasted"
+  },
+  "secretsRestoredSub": {
+    "message": "Secret guard stays enabled"
+  },
+  "secretsCopiedTitle": {
+    "message": "Original copied"
+  },
+  "secretsChangedNotice": {
+    "message": "Edited block changed in chat; copy original manually if needed."
+  },
+  "redactModalTitle": {
+    "message": "Redact before upload"
+  },
+  "redactModalHint": {
+    "message": "Drag or N/+ Box · Arrows move · Shift+Arrows resize · Del removes · Enter uploads"
+  },
+  "redactModalHintBatch": {
+    "message": "Drag or N/+ Box · Arrows/Shift resize · Del removes · PgUp/PgDn slides · Enter uploads"
+  },
+  "redactBtnAddBox": {
+    "message": "+ Box"
+  },
+  "redactBtnPrev": {
+    "message": "Prev"
+  },
+  "redactBtnNext": {
+    "message": "Next"
+  },
+  "redactBtnSkip": {
+    "message": "Skip"
+  },
+  "redactBtnInclude": {
+    "message": "Include"
+  },
+  "redactSkippedTag": {
+    "message": "Skipped"
+  },
+  "redactBtnUndo": {
+    "message": "Undo"
+  },
+  "redactBtnClear": {
+    "message": "Clear"
+  },
+  "redactBtnCancel": {
+    "message": "Cancel"
+  },
+  "redactBtnSend": {
+    "message": "Upload"
+  },
+  "redactModeCover": {
+    "message": "Cover"
+  },
+  "redactModeOutline": {
+    "message": "Outline"
+  },
+  "redactModePen": {
+    "message": "Pen"
+  },
+  "redactColorBlack": {
+    "message": "Black"
+  },
+  "redactColorWhite": {
+    "message": "White"
+  },
+  "redactColorRed": {
+    "message": "Red"
+  },
+  "redactColorBlue": {
+    "message": "Blue"
+  },
+  "redactColorGreen": {
+    "message": "Green"
+  },
+  "redactColorYellow": {
+    "message": "Yellow"
+  },
+  "popupSupportBtn": {
+    "message": "Support · GitHub Sponsors"
+  },
+  "popupTabProtection": {
+    "message": "Protection"
+  }
+}
