@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="icons/icon-128.png" width="72" height="72" alt="ClipZero">
+<img src="assets/banner.png" width="880" alt="ClipZero v1.3.1 overview">
 
-# ClipZero
-
-**Local-only upload, metadata, visual redaction, and secret firewall for Firefox.**
+<br><br>
 
 [![Firefox Add-ons](https://img.shields.io/amo/v/clipzero?label=Firefox%20AMO&style=flat-square&color=0060df)](https://addons.mozilla.org/firefox/addon/clipzero/)
 [![CI](https://img.shields.io/github/actions/workflow/status/m21dev/clipzero/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/m21dev/clipzero/actions/workflows/ci.yml)
@@ -13,47 +11,46 @@
 
 [Install on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/clipzero/) · [Releases](https://github.com/m21dev/clipzero/releases) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
 
-<br>
-
-<img src="assets/01-canvas-editor.png" width="840" alt="ClipZero pre-upload Canvas Redactor">
-
 </div>
 
 <br>
 
 ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab** before websites read them—with **zero API permissions**, **zero network calls**, and **unminified source code**.
 
-- **Anonymize upload filenames:** Renames pasted, dropped, and picked files (`clip_XXXXXX.png` / `doc_XXXXXX.*`) and converts `.bmp`, `.ico`, `.tiff`, and `.heic` rasters to `.png`.
-- **Strip metadata losslessly:** Cleans JPEG EXIF/GPS/APP0, PNG and WebP chunks (`iDOT`, `C2PA`, text), GIF comments/XMP, static AVIF markers, active SVG vectors, and PDF `/Info` + XMP fields in-place.
-- **Redact & crop before upload (`v1.3.1`):** Draw irreversible **Cover** fills, **Outline** boxes, or **Pen** strokes (`Thin` / `Medium` / `Thick`), trim margins with **Crop (`C`)**, or pan tall mobile screenshots with **Scroll (`H`)**.
+- **Anonymize filenames:** Renames pasted, dropped, and picked files (`clip_XXXXXX.png` / `doc_XXXXXX.*`) and flattens `.bmp`, `.ico`, `.tiff`, and `.heic` rasters to `.png`.
+- **Clean metadata losslessly:** Strips JPEG EXIF/GPS/APP0, PNG and WebP chunks (`iDOT`, `C2PA`, text), GIF comments/XMP, static AVIF markers, active SVG vectors, and PDF `/Info` + XMP fields in-place.
+- **Redact & crop before upload (`v1.3.1`):** Permanent **Cover** fills, **Outline** boxes, and **Pen** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)**, mobile **Scroll (`H`)**, and single-touch `pointerId` lock.
 - **Mask secrets & PII on paste:** Replaces API keys, tokens, JWTs, Luhn cards, IBANs, URL credentials, optional contacts/IPs, and **Custom hidden words** with consistent session tokens (`[REDACTED_*_N]`).
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="assets/01-canvas-editor.png" width="800" alt="ClipZero pre-upload Canvas Redactor"><br>
+  <sub><b>Pre-upload Canvas Redactor</b> — Cover, Outline, Pen stroke widths, Crop (<code>C</code>), Scroll (<code>H</code>), and chronological Undo.</sub>
+</p>
 
 <br>
 
-## Interface Overview
+<p align="center">
+  <img src="assets/03-popup-controls.png" width="800" alt="ClipZero zero-permission tabbed popup"><br>
+  <sub><b>Zero-Permission Tabbed Popup</b> — Per-tab toggles, Custom hidden words, shortcuts, and automatic reload detection (<code>!</code>) across 55 hosts.</sub>
+</p>
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <a href="assets/02-secret-guard.png"><img src="assets/02-secret-guard.png" alt="Secret and PII Guard on paste"></a>
-      <br><sub><b>Secret, PII &amp; Custom Words Guard</b> — Numbered session placeholders, per-item Review checkboxes, and one-click Restore originals.</sub>
-    </td>
-    <td width="50%" valign="top">
-      <a href="assets/03-popup-controls.png"><img src="assets/03-popup-controls.png" alt="ClipZero zero-permission tabbed popup"></a>
-      <br><sub><b>Per-Tab Controls (Zero API Permissions)</b> — Compact Protection &amp; More settings tabs with volatile defaults, reload badges (<code>!</code>), and 6 languages.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-      <a href="assets/01-canvas-editor.png"><img src="assets/01-canvas-editor.png" alt="Pre-upload Canvas Redactor"></a>
-      <br><sub><b>Mobile &amp; Desktop Canvas Editor</b> — Single-finger <code>pointerId</code> lock, chronological Undo, and low-RAM <code>ImageBitmap</code> previews.</sub>
-    </td>
-    <td width="50%" valign="top">
-      <a href="assets/04-metadata-privacy.png"><img src="assets/04-metadata-privacy.png" alt="Lossless metadata and filename cleaner"></a>
-      <br><sub><b>Lossless Metadata &amp; File Shield</b> — Strips identifying headers in tab memory while preserving upright photos, animations, and PDF links.</sub>
-    </td>
-  </tr>
-</table>
+<br>
+
+<p align="center">
+  <img src="assets/02-secret-guard.png" width="800" alt="ClipZero Secret and PII Guard on paste"><br>
+  <sub><b>Secret, PII &amp; Custom Words Guard</b> — Masks keys and contacts before paste with per-item Review checkboxes and Restore originals.</sub>
+</p>
+
+<br>
+
+<p align="center">
+  <img src="assets/04-metadata-privacy.png" width="800" alt="ClipZero lossless metadata and filename scrubbing"><br>
+  <sub><b>Filename Anonymizer &amp; Lossless Scrubber</b> — Cleans identifying metadata in tab memory without touching originals on disk.</sub>
+</p>
 
 ---
 
@@ -64,7 +61,7 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 
 ---
 
-## Technical Reference
+## Reference
 
 <details>
 <summary>What's new in v1.3.1</summary>
