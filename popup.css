@@ -430,7 +430,6 @@ body {
   width: 14px;
   height: 14px;
   color: var(--text-muted);
-  transform-origin: 50% 50%;
 }
 
 .footer-hint {

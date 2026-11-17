@@ -86,10 +86,10 @@ def check_locales():
                     assert f"${ph_name.upper()}$" in msg or f"${ph_name}$" in msg, (
                         f"Missing placeholder token ${ph_name}$ in {lang}:{key}"
                     )
-    assert len(base_keys) == 149, f"Expected 149 locale keys, got {len(base_keys)}"
+    assert len(base_keys) == 152, f"Expected 152 locale keys, got {len(base_keys)}"
 
 
-def check_security_static():
+def check_security_static(manifest_version):
     forbidden_sinks = (
         r"\.innerHTML\b",
         r"\.outerHTML\b",
@@ -106,6 +106,9 @@ def check_security_static():
             assert not re.search(pat, src), f"Forbidden pattern {pat!r} found in {rel}"
 
     popup_html = read_text("popup.html")
+    assert f'<span class="version">{manifest_version}</span>' in popup_html, (
+        f"popup.html version span must match manifest version {manifest_version}"
+    )
     assert 'href="https://github.com/sponsors/m21dev"' in popup_html
     assert 'target="_blank"' in popup_html and 'rel="noopener noreferrer"' in popup_html
     adv_pos = popup_html.index('id="panel-advanced"')
@@ -115,7 +118,10 @@ def check_security_static():
 
     content_js = read_text("content.js")
     assert "pixelate" not in content_js.lower(), "Obsolete pixelate mode must not be present"
-    assert ":host{all:initial" in content_js, "Closed shadow CSS reset missing"
+    assert "isInstanceSuperseded" not in content_js, "Legacy supersede state must not be present"
+    assert "REDACT_WEIGHTS" in content_js and ":host{all:initial" in content_js, (
+        "Closed shadow CSS reset or stroke weight table missing"
+    )
 
 
 def check_js_syntax():
@@ -132,11 +138,11 @@ def check_js_syntax():
 def main():
     manifest = check_manifest()
     check_locales()
-    check_security_static()
+    check_security_static(manifest["version"])
     js_checked = check_js_syntax()
     print(
         f"OK: ClipZero v{manifest['version']} verified "
-        f"(55 hosts, 0 API perms, 6 locales x 149 keys, 0 sinks, node_syntax={js_checked})."
+        f"(55 hosts, 0 API perms, 6 locales x 152 keys, 0 sinks, node_syntax={js_checked})."
     )
 
 

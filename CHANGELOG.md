@@ -1,43 +1,50 @@
 # Changelog
 
-All notable releases of **ClipZero** are documented in this file.
+All notable releases of **ClipZero** are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [1.3.0] — 2026-11-17
+---
 
-### Added
-- **Pre-upload Canvas Modes:** Added **Cover** (opaque solid fill), **Outline** (color frames leaving inner content visible), and **Pen** (freehand strokes smoothed via `quadraticCurveTo`) across 6 colors with independent per-tool color memory and keyboard shortcuts (`O`, `P`).
-- **Batch Navigation Redesign:** Added windowed batch pagination (`getBatchVisiblePills`) and a quick slide jump `<select>` menu for large image batches without horizontal scrollbars.
-- **Already-Open Tab Reload Detection:** Added `site_match.js` + `background.js` `onInstalled` `!` badge detection for supported tabs already open before install/update, plus a 1-click **Reload tab** button and Quarantined Domains hint in the popup.
-- **Tabbed Popup Layout:** Split popup controls into **Protection** and **More settings** tabs (`408 px` wide, zero vertical scrollbars) and added a voluntary external link to GitHub Sponsors inside **More settings**.
-
-### Changed & Optimized
-- **Low-RAM Media Pipeline:** Switched raster decoding to native EXIF-aware `ImageBitmap` (`imageOrientation: 'from-image'`) with explicit `.close()` lifecycle cleanup, cached `1400 px` preview windows (max `2` live batch slides), sequential 1-at-a-time full-resolution export skipping unedited images, and immediate `<canvas>` backing-store release (`width = 0; height = 0`).
-- **Bounded Session Vault:** Replaced full map clears with bounded LRU + `1 MB` memory-budget eviction in `sessionTokenToRaw`, monotonic `nextIdx` + LRU in `sessionTypeEntities`, and LRU in `usedNames`.
-- **Instant Popup Open:** Made shortcut loading asynchronous so opening the popup never blocks UI rendering; fast-paths tabs flagged with `!`.
-- **Cold-Start Bridge Recovery:** Ordered `content.js` (`MAIN`) before `bridge.js` (`ISOLATED`) in `manifest.json` and added `{ ack: true }` + bounded retries (`90 ms`, `320 ms`) on `MessageChannel` setup for duplicate/heavy SPA tabs.
-- **Complex Editor Focus Restoration:** Restores focus cleanly to `previousFocused` rich-text editors before dispatching paste/drop events.
-- **Locales:** Updated all 6 translations (`de`, `en`, `es`, `fr`, `pt_BR`, `zh_CN`) to `149` synchronized keys each.
-
-## [1.2.2] — 2026-11-17
+## `[1.3.1]` — 2026-11-17 *(Mobile & Editor Polish)*
 
 ### Added
-- Expanded coverage to **`55` host patterns**, adding Microsoft Outlook webmail (`outlook.live.com`, `outlook.office.com`, `outlook.office365.com`, `outlook.cloud.microsoft`) alongside Gmail, AI chats, GitHub, and social/messaging sites.
-- Added permission-recovery flow for existing users upgrading when Firefox holds new host origins pending manual confirmation.
+- **Stroke Weights:** Added **Thin**, **Medium**, and **Thick** size selector for **Outline** and **Pen** tools, scaled accurately at export resolution.
+- **Non-Destructive Crop (`C`):** Interactive crop overlay with live `W×H` badge, pixel-exact box coordinate mapping, proportional minimum clamp on small images, and keyboard clamping inside active crops.
+- **Scroll Mode (`H`) & Tall-Portrait Layout:** Dedicated pan mode (`touch-action: pan-x pan-y` on mobile + mouse drag-to-pan on desktop) and scrollable tall-portrait canvas sizing (`h > w * 1.85`).
+- **Single-Touch `pointerId` Lock:** Rejects secondary fingers and palm contacts mid-stroke with `lostpointercapture` cleanup.
 
-### Removed
-- Removed `"activeTab"` so unsupported pages (e.g. Google Drive) stay cleanly passive without misleading visit-permission prompts (`0` API permissions declared in `manifest.json`).
+### Changed
+- **Chronological Undo & Ergonomics:** `Delete`/`Backspace` now pushes undoable `{ kind: 'delete' }` entries alongside `Crop` and box draws; `+ Box` (`N`/`Space`) switches out of `Crop`/`Scroll` into `Cover`; clicking a box restores canvas keyboard focus; Black **Outline** previews show a 1px outer `#0a84ff` guide ring; and stage scroll resets cleanly between slides.
+- **Popup, Background & Locales:** Deduplicated popup/background helpers, disarmed pending permission reloads on cancel (`clipzero:disarm-reload`), preserved armed tab IDs on mismatch, and removed 2 unused locale keys (`152` synchronized keys across 6 languages).
 
-## [1.2.0] — 2026-11-14
+### Security & Fixes
+- Expanded `document_start` native captures (`Array`, `Object`, `Math`, `AbortController`, `MessagePort`, `CanvasRenderingContext2D`, and `Event` descriptors with safe getters).
+- Added SVG `marker` URL scrubbing, widened PDF `PDF_XMP_OPEN_TAG_RE` for attributes/digits, enforced fail-closed error handling in `handlePasteSecrets`, enforced `NativeMessagePort` checks and duplicate-handshake `stopImmediatePropagation`, blocked `window.postMessage` replies once `bridgePort` is active, and hardened `background.js` `sender.id` checks + `octet-stream` export detection.
+
+---
+
+## `[1.3.0]` — 2026-11-17
 
 ### Added
-- **Extended Privacy & Security Suite:** Lossless GIF/AVIF handling alongside JPEG/PNG/WebP/SVG, in-place PDF `/Info` + XMP sanitization preserving `xref` offsets and bookmarks, exotic raster conversion (`.bmp`/`.ico`/`.tiff`/`.heic` -> `.png`), numbered session tokens (`[REDACTED_*_N]`), user-defined **Custom hidden words**, **Restore originals** copy toast, and strict `MessageChannel` + Closed Shadow DOM isolation.
+- **Pre-Upload Canvas Modes:** Added **Cover**, **Outline**, and **Pen** across 6 colors with per-tool color memory and shortcuts (`O`, `P`).
+- **Batch Navigation & Tabbed Popup:** Added windowed pagination + slide `<select>`, `site_match.js` `!` reload badge + **Reload tab**, and compact `408 px` tabbed popup (**Protection** | **More settings**) with optional GitHub Sponsors link.
 
-## [1.1.0] — 2026-11-13
+### Changed
+- **Low-RAM Pipeline & LRU Vault:** Switched to `ImageBitmap` (`imageOrientation: 'from-image'`) with explicit `.close()`, `1400 px` preview caching (`<= 2` live slides), 1-by-1 full-res export, immediate canvas zeroing, `<= 500`-entry / `<= 1 MB` session token LRU, `MAIN → ISOLATED` load order, `MessageChannel` ACK retries, and rich-text focus restoration.
 
-### Added
-- Per-finding selective checkboxes inside the Secret & PII **Review** modal (**Apply selection** / **Copy selection**) and expanded automated security tests.
+---
 
-## [1.0.0] — 2026-11-12
+## `[1.2.2]` — 2026-11-17
 
-### Added
-- Initial public release of **ClipZero** (evolved from `ClipRename` `1.0.0` / `1.0.1`), establishing zero-permission local upload filename anonymization and privacy protections under `GPL-3.0-or-later`.
+- Expanded coverage to **`55` host patterns** (adding Outlook Web domains), added missing-host recovery flow, and removed `"activeTab"` (`0` API permissions declared).
+
+## `[1.2.0]` — 2026-11-14
+
+- Added lossless GIF/AVIF handling, in-place PDF `/Info` + XMP cleaning (`<= 50 MB`, preserving `xref` & bookmarks), exotic raster conversion (`.bmp`/`.ico`/`.tiff`/`.heic` → `.png`), numbered session tokens (`[REDACTED_*_N]`), **Custom hidden words**, **Restore originals** toast, and `MessageChannel` + Closed Shadow DOM isolation.
+
+## `[1.1.0]` — 2026-11-13
+
+- Added selective per-finding checkboxes inside the Secret & PII **Review** modal (**Apply selection** / **Copy selection**) and expanded automated security tests.
+
+## `[1.0.0]` — 2026-11-12
+
+- Initial public release of **ClipZero** (evolved from `ClipRename` `1.0.0` / `1.0.1`) under `GPL-3.0-or-later`.

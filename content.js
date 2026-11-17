@@ -48,8 +48,37 @@
     typeof Object.hasOwn === 'function'
       ? Object.hasOwn
       : (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+  const nativeObjAssign = typeof Object.assign === 'function' ? Object.assign : null;
+  const nativeObjKeys = typeof Object.keys === 'function' ? Object.keys : null;
+  const nativeObjCreate = typeof Object.create === 'function' ? Object.create : null;
+  const nativeIsArray = typeof Array.isArray === 'function' ? Array.isArray : (v) => v instanceof Array;
+  const nativeMathMin = Math.min;
+  const nativeMathMax = Math.max;
+  const nativeMathRound = Math.round;
+  const nativeMathFloor = Math.floor;
+  const nativeMathCeil = Math.ceil;
+  const nativeMathAbs = Math.abs;
+  const nativeMathHypot = Math.hypot;
+  const nativeMathLog2 = Math.log2;
+  const nativeNumberIsFinite = Number.isFinite;
+  const NativeAbortController = typeof window.AbortController === 'function' ? window.AbortController : null;
+  const NativeMessagePort = typeof window.MessagePort === 'function' ? window.MessagePort : null;
+  const nativePortPostMessage =
+    NativeMessagePort && NativeMessagePort.prototype && typeof NativeMessagePort.prototype.postMessage === 'function'
+      ? NativeMessagePort.prototype.postMessage
+      : null;
+  const portOnMessageDesc =
+    NativeMessagePort && NativeMessagePort.prototype
+      ? Object.getOwnPropertyDescriptor(NativeMessagePort.prototype, 'onmessage')
+      : null;
+  const nativeRAF =
+    typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : null;
+  const nativeCAF =
+    typeof window.cancelAnimationFrame === 'function' ? window.cancelAnimationFrame.bind(window) : null;
   const nativePostMessage = window.postMessage.bind(window);
   const nativeAddEventListener = EventTarget.prototype.addEventListener;
+  const nativeRemoveEventListener = EventTarget.prototype.removeEventListener;
+  const nativeDispatchEvent = EventTarget.prototype.dispatchEvent;
   const nativePreventDefault =
     NativeEvent && NativeEvent.prototype && typeof NativeEvent.prototype.preventDefault === 'function'
       ? NativeEvent.prototype.preventDefault
@@ -57,10 +86,6 @@
   const nativeStopImmediatePropagation =
     NativeEvent && NativeEvent.prototype && typeof NativeEvent.prototype.stopImmediatePropagation === 'function'
       ? NativeEvent.prototype.stopImmediatePropagation
-      : null;
-  const nativeStopPropagation =
-    NativeEvent && NativeEvent.prototype && typeof NativeEvent.prototype.stopPropagation === 'function'
-      ? NativeEvent.prototype.stopPropagation
       : null;
   const nativeComposedPath =
     NativeEvent && NativeEvent.prototype && typeof NativeEvent.prototype.composedPath === 'function'
@@ -203,6 +228,58 @@
   const nativeCtxQuadraticCurveTo =
     ctxProto && typeof ctxProto.quadraticCurveTo === 'function' ? ctxProto.quadraticCurveTo : null;
   const nativeCtxStroke = ctxProto && typeof ctxProto.stroke === 'function' ? ctxProto.stroke : null;
+  const nativeCtxSave = ctxProto && typeof ctxProto.save === 'function' ? ctxProto.save : null;
+  const nativeCtxRestore = ctxProto && typeof ctxProto.restore === 'function' ? ctxProto.restore : null;
+  const nativeCtxRect = ctxProto && typeof ctxProto.rect === 'function' ? ctxProto.rect : null;
+  const nativeCtxClip = ctxProto && typeof ctxProto.clip === 'function' ? ctxProto.clip : null;
+  const nativeAppendChild =
+    typeof Node === 'function' && Node.prototype && typeof Node.prototype.appendChild === 'function'
+      ? Node.prototype.appendChild
+      : null;
+  const nativeRemoveChild =
+    typeof Node === 'function' && Node.prototype && typeof Node.prototype.removeChild === 'function'
+      ? Node.prototype.removeChild
+      : null;
+  const nativeElementRemove =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.remove === 'function'
+      ? Element.prototype.remove
+      : null;
+  const nativeGetBoundingClientRect =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.getBoundingClientRect === 'function'
+      ? Element.prototype.getBoundingClientRect
+      : null;
+  const nativeSetPointerCapture =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.setPointerCapture === 'function'
+      ? Element.prototype.setPointerCapture
+      : null;
+  const nativeReleasePointerCapture =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.releasePointerCapture === 'function'
+      ? Element.prototype.releasePointerCapture
+      : null;
+  const nativeHasPointerCapture =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.hasPointerCapture === 'function'
+      ? Element.prototype.hasPointerCapture
+      : null;
+  const nativeSetAttribute =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.setAttribute === 'function'
+      ? Element.prototype.setAttribute
+      : null;
+  const nativeGetAttribute =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.getAttribute === 'function'
+      ? Element.prototype.getAttribute
+      : null;
+  const nativeRemoveAttribute =
+    typeof Element === 'function' && Element.prototype && typeof Element.prototype.removeAttribute === 'function'
+      ? Element.prototype.removeAttribute
+      : null;
+  const nativeGetElementsByTagName =
+    typeof Document === 'function' && Document.prototype && typeof Document.prototype.getElementsByTagName === 'function'
+      ? Document.prototype.getElementsByTagName
+      : null;
+  const nativeElementFromPoint =
+    typeof Document === 'function' && Document.prototype && typeof Document.prototype.elementFromPoint === 'function'
+      ? Document.prototype.elementFromPoint
+      : null;
   const nativeImgSrcDesc =
     NativeImage && typeof HTMLImageElement === 'function' && HTMLImageElement.prototype
       ? Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')
@@ -326,6 +403,49 @@
       ? NativeRegExp.prototype.exec
       : null;
   const nativeArrayPush = Array.prototype.push;
+  const nativeArrayPop = Array.prototype.pop;
+  const nativeArraySplice = Array.prototype.splice;
+  const nativeArrayFilter = Array.prototype.filter;
+  const nativeArraySome = Array.prototype.some;
+  const nativeArrayIncludes = Array.prototype.includes;
+  const nativeArrayReduce = Array.prototype.reduce;
+  const nativeArrayMap = Array.prototype.map;
+  const nativePointerPrimaryDesc =
+    typeof PointerEvent === 'function' && PointerEvent.prototype
+      ? Object.getOwnPropertyDescriptor(PointerEvent.prototype, 'isPrimary')
+      : null;
+  const nativePointerTypeDesc =
+    typeof PointerEvent === 'function' && PointerEvent.prototype
+      ? Object.getOwnPropertyDescriptor(PointerEvent.prototype, 'pointerType')
+      : null;
+  const nativePointerIdDesc =
+    typeof PointerEvent === 'function' && PointerEvent.prototype
+      ? Object.getOwnPropertyDescriptor(PointerEvent.prototype, 'pointerId')
+      : null;
+  const nativeMouseBtnDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'button')
+      : null;
+  const nativeClientXDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'clientX')
+      : null;
+  const nativeClientYDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'clientY')
+      : null;
+  const nativeDetailDesc =
+    typeof UIEvent === 'function' && UIEvent.prototype
+      ? Object.getOwnPropertyDescriptor(UIEvent.prototype, 'detail')
+      : null;
+  const nativeKeyDesc =
+    typeof KeyboardEvent === 'function' && KeyboardEvent.prototype
+      ? Object.getOwnPropertyDescriptor(KeyboardEvent.prototype, 'key')
+      : null;
+  const nativeAbortMethod =
+    NativeAbortController && NativeAbortController.prototype && typeof NativeAbortController.prototype.abort === 'function'
+      ? NativeAbortController.prototype.abort
+      : null;
   const createObjectURL =
     NativeURL && typeof NativeURL.createObjectURL === 'function'
       ? NativeURL.createObjectURL.bind(NativeURL)
@@ -418,6 +538,19 @@
   function setClear(s) {
     return nativeSetClear ? nativeSetClear.call(s) : s.clear();
   }
+  function setToArray(s) {
+    if (!nativeSetValues || !nativeSetIterNext) {
+      return Array.from(s);
+    }
+    const out = [];
+    const it = nativeSetValues.call(s);
+    while (true) {
+      const step = nativeSetIterNext.call(it);
+      if (!step || step.done) break;
+      nativeArrayPush.call(out, step.value);
+    }
+    return out;
+  }
   function setSize(s) {
     return nativeSetSizeDesc && typeof nativeSetSizeDesc.get === 'function'
       ? nativeSetSizeDesc.get.call(s)
@@ -439,17 +572,6 @@
       }
     } catch {
       // Ignore non-cancellable errors cleanly.
-    }
-  }
-  function safeStopPropagation(ev) {
-    try {
-      if (nativeStopPropagation) {
-        nativeStopPropagation.call(ev);
-      } else if (ev && typeof ev.stopPropagation === 'function') {
-        ev.stopPropagation();
-      }
-    } catch {
-      // Ignore propagation errors cleanly.
     }
   }
   function haltEvent(ev) {
@@ -489,14 +611,68 @@
   function safeDtSetData(dt, mime, val) {
     return dtSetData ? dtSetData.call(dt, mime, val) : dt.setData(mime, val);
   }
-  function safeDtItemsAdd(dt, fileOrStr, type) {
+  function safeDtItemsAdd(dt, file) {
     const list = dtItemsDesc && typeof dtItemsDesc.get === 'function' ? dtItemsDesc.get.call(dt) : dt.items;
-    return type !== undefined
-      ? (dtItemsAdd ? dtItemsAdd.call(list, fileOrStr, type) : list.add(fileOrStr, type))
-      : (dtItemsAdd ? dtItemsAdd.call(list, fileOrStr) : list.add(fileOrStr));
+    return dtItemsAdd ? dtItemsAdd.call(list, file) : list.add(file);
   }
   function safeDtFiles(dt) {
     return dtFilesDesc && typeof dtFilesDesc.get === 'function' ? dtFilesDesc.get.call(dt) : dt.files;
+  }
+  function appendChildSafe(parent, child) {
+    return nativeAppendChild ? nativeAppendChild.call(parent, child) : parent.appendChild(child);
+  }
+  function removeChildSafe(parent, child) {
+    return nativeRemoveChild ? nativeRemoveChild.call(parent, child) : parent.removeChild(child);
+  }
+  function removeNodeSafe(node) {
+    if (!node) return;
+    if (nativeElementRemove) {
+      nativeElementRemove.call(node);
+    } else if (typeof node.remove === 'function') {
+      node.remove();
+    }
+  }
+  function dispatchEventSafe(target, ev) {
+    return nativeDispatchEvent ? nativeDispatchEvent.call(target, ev) : target.dispatchEvent(ev);
+  }
+  function setAttrSafe(el, name, val) {
+    if (nativeSetAttribute) nativeSetAttribute.call(el, name, val);
+    else el.setAttribute(name, val);
+  }
+  function getAttrSafe(el, name) {
+    return nativeGetAttribute ? nativeGetAttribute.call(el, name) : el.getAttribute(name);
+  }
+  function removeAttrSafe(el, name) {
+    if (nativeRemoveAttribute) nativeRemoveAttribute.call(el, name);
+    else el.removeAttribute(name);
+  }
+  function postPortMessageSafe(port, msg) {
+    return nativePortPostMessage ? nativePortPostMessage.call(port, msg) : port.postMessage(msg);
+  }
+  function setPortOnMessageSafe(port, fn) {
+    if (portOnMessageDesc && typeof portOnMessageDesc.set === 'function') {
+      portOnMessageDesc.set.call(port, fn);
+    } else {
+      port.onmessage = fn;
+    }
+  }
+  function makeAbortControllerSafe() {
+    return NativeAbortController ? new NativeAbortController() : null;
+  }
+  function abortSafe(ac) {
+    if (!ac) return;
+    if (nativeAbortMethod) nativeAbortMethod.call(ac);
+    else ac.abort();
+  }
+  function getEvProp(desc, ev, key) {
+    if (desc && typeof desc.get === 'function') {
+      try {
+        return desc.get.call(ev);
+      } catch {
+        // Fallback when event instance is not of the descriptor's exact interface.
+      }
+    }
+    return ev[key];
   }
   function safeCreateElement(tag) {
     return nativeCreateElement ? nativeCreateElement.call(document, tag) : document.createElement(tag);
@@ -541,6 +717,12 @@
     Object.freeze({ hex: '#eab308', labelKey: 'redactColorYellow' }),
   ]);
   const REDACT_COLOR_SET = new NativeSet(REDACT_COLORS.map((c) => c.hex));
+  const REDACT_WEIGHTS = Object.freeze([
+    Object.freeze({ id: 'sm', factor: 0.55, dotPx: 3, labelKey: 'redactWeightThin' }),
+    Object.freeze({ id: 'md', factor: 1, dotPx: 5, labelKey: 'redactWeightMedium' }),
+    Object.freeze({ id: 'lg', factor: 1.85, dotPx: 8, labelKey: 'redactWeightThick' }),
+  ]);
+  const REDACT_WEIGHT_MAP = Object.freeze({ sm: 0.55, md: 1, lg: 1.85 });
   const MAX_SVG_BYTES = 8 * 1024 * 1024;
   const MAX_PDF_BYTES = 50 * 1024 * 1024;
   const MAX_SECRET_SCAN_CHARS = 512 * 1024;
@@ -571,7 +753,6 @@
     (window.location.hostname || '').toLowerCase()
   );
   // Privacy-safe diagnostics stay muted unless toggled in popup advanced settings.
-  let isInstanceSuperseded = false;
   let sessionBridgeToken = null;
   let bridgePort = null;
   const targetOrigin = window.location.origin;
@@ -711,8 +892,6 @@
     hintExif: 'metadata',
     hintRedact: 'redact',
     hintSecrets: 'secrets',
-    hintNotice: 'notice',
-    hintSave: 'save',
     activeTitle: 'ClipZero active',
     activeSub: 'Uploads will be anonymized',
     pausedTitle: 'ClipZero paused',
@@ -791,6 +970,11 @@
     redactModeCover: 'Cover',
     redactModeOutline: 'Outline',
     redactModePen: 'Pen',
+    redactModeCrop: 'Crop',
+    redactModeScroll: 'Scroll',
+    redactWeightThin: 'Thin',
+    redactWeightMedium: 'Medium',
+    redactWeightThick: 'Thick',
     redactColorBlack: 'Black',
     redactColorWhite: 'White',
     redactColorRed: 'Red',
@@ -885,7 +1069,11 @@
 
   /** Restores in-memory settings to safe default session values. */
   function resetStateToDefaults() {
-    Object.assign(state, DEFAULT_STATE);
+    if (nativeObjAssign) {
+      nativeObjAssign(state, DEFAULT_STATE);
+    } else {
+      Object.assign(state, DEFAULT_STATE);
+    }
   }
 
   function clearStorageResetFallbackTimer() {
@@ -898,7 +1086,7 @@
   /** Displays a one-time notice when corrupt or incompatible site settings were purged. */
   function flushStorageResetNotice() {
     clearStorageResetFallbackTimer();
-    if (!storageResetNoticePending || isInstanceSuperseded) {
+    if (!storageResetNoticePending) {
       return;
     }
     if (!document.body && document.readyState === 'loading') {
@@ -982,12 +1170,12 @@
     }
     try {
       const parsed = nativeJsonParse(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      if (!parsed || typeof parsed !== 'object' || nativeIsArray(parsed)) {
         markStorageResetCorrupt();
         return;
       }
 
-      const hasVersion = Object.prototype.hasOwnProperty.call(parsed, '_v');
+      const hasVersion = nativeHasOwn(parsed, '_v');
       if (
         hasVersion &&
         (typeof parsed._v !== 'number' ||
@@ -1004,7 +1192,7 @@
       const nextValues = {};
       for (let i = 0; i < PERSISTED_KEYS.length; i += 1) {
         const key = PERSISTED_KEYS[i];
-        if (!Object.prototype.hasOwnProperty.call(parsed, key)) {
+        if (!nativeHasOwn(parsed, key)) {
           continue;
         }
         if (typeof parsed[key] === 'boolean') {
@@ -1015,7 +1203,7 @@
         }
       }
 
-      if (Object.prototype.hasOwnProperty.call(parsed, 'customWords')) {
+      if (nativeHasOwn(parsed, 'customWords')) {
         if (typeof parsed.customWords === 'string') {
           nextValues.customWords = sanitizeCustomWords(parsed.customWords);
         } else {
@@ -1028,7 +1216,7 @@
         return;
       }
 
-      const keys = Object.keys(parsed);
+      const keys = nativeObjKeys ? nativeObjKeys(parsed) : Object.keys(parsed);
       let hasUnknownKeys = false;
       for (let i = 0; i < keys.length; i += 1) {
         const k = keys[i];
@@ -1038,8 +1226,12 @@
         }
       }
 
-      const hasCustomWords = Object.prototype.hasOwnProperty.call(parsed, 'customWords');
-      Object.assign(state, nextValues);
+      const hasCustomWords = nativeHasOwn(parsed, 'customWords');
+      if (nativeObjAssign) {
+        nativeObjAssign(state, nextValues);
+      } else {
+        Object.assign(state, nextValues);
+      }
       state.saveSite = true;
 
       if (
@@ -1088,11 +1280,11 @@
   function removeActiveToast() {
     clearToastTimers();
     if (activeToastAbort) {
-      activeToastAbort.abort();
+      abortSafe(activeToastAbort);
       activeToastAbort = null;
     }
     if (activeToastHost) {
-      activeToastHost.remove();
+      removeNodeSafe(activeToastHost);
       activeToastHost = null;
     }
   }
@@ -1107,7 +1299,7 @@
     removeActiveToast();
 
     try {
-      const host = document.createElement('div');
+      const host = safeCreateElement('div');
       host.style.position = 'fixed';
       host.style.right = '18px';
       host.style.bottom = '18px';
@@ -1124,12 +1316,12 @@
         resetStyle,
         ':host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} *,*::before,*::after{box-sizing:border-box;}'
       );
-      shadow.appendChild(resetStyle);
+      appendChildSafe(shadow, resetStyle);
       const hasAction = Boolean(actionSpec && actionSpec.label && typeof actionSpec.onAction === 'function');
-      const ac = typeof AbortController === 'function' ? new AbortController() : null;
+      const ac = makeAbortControllerSafe();
       activeToastAbort = ac;
 
-      const card = document.createElement('div');
+      const card = safeCreateElement('div');
       card.style.display = 'flex';
       card.style.flexDirection = 'column';
       card.style.gap = '3px';
@@ -1149,37 +1341,37 @@
       card.style.transform = reducedMotion ? 'translateY(0)' : 'translateY(6px)';
       card.style.transition = reducedMotion ? 'none' : 'opacity 140ms ease, transform 140ms ease';
 
-      const headerRow = document.createElement('div');
+      const headerRow = safeCreateElement('div');
       headerRow.style.display = 'flex';
       headerRow.style.alignItems = 'center';
       headerRow.style.justifyContent = 'space-between';
       headerRow.style.gap = '10px';
 
-      const leftGroup = document.createElement('div');
+      const leftGroup = safeCreateElement('div');
       leftGroup.style.display = 'flex';
       leftGroup.style.alignItems = 'center';
       leftGroup.style.gap = '7px';
 
-      const dot = document.createElement('span');
+      const dot = safeCreateElement('span');
       dot.style.width = '6px';
       dot.style.height = '6px';
       dot.style.borderRadius = '50%';
       dot.style.flexShrink = '0';
       dot.style.background = state.enabled ? '#0a84ff' : '#8f8f9d';
 
-      const title = document.createElement('span');
+      const title = safeCreateElement('span');
       title.style.fontWeight = '600';
       title.style.wordBreak = 'break-word';
-      title.textContent = titleText;
+      setSafeText(title, titleText);
 
-      leftGroup.appendChild(dot);
-      leftGroup.appendChild(title);
-      headerRow.appendChild(leftGroup);
+      appendChildSafe(leftGroup, dot);
+      appendChildSafe(leftGroup, title);
+      appendChildSafe(headerRow, leftGroup);
 
       if (hasAction) {
-        const actionBtn = document.createElement('button');
+        const actionBtn = safeCreateElement('button');
         actionBtn.type = 'button';
-        actionBtn.textContent = actionSpec.label;
+        setSafeText(actionBtn, actionSpec.label);
         actionBtn.style.appearance = 'none';
         actionBtn.style.border = '1px solid rgba(10, 132, 255, 0.55)';
         actionBtn.style.background = 'rgba(10, 132, 255, 0.22)';
@@ -1191,38 +1383,44 @@
         actionBtn.style.fontWeight = '600';
         actionBtn.style.cursor = 'pointer';
         actionBtn.style.flexShrink = '0';
-        actionBtn.addEventListener(
+        nativeAddEventListener.call(
+          actionBtn,
           'click',
           (ev) => {
-            ev.preventDefault();
-            ev.stopPropagation();
+            haltEvent(ev);
             removeActiveToast();
             actionSpec.onAction();
           },
           ac ? { signal: ac.signal } : false
         );
-        headerRow.appendChild(actionBtn);
+        appendChildSafe(headerRow, actionBtn);
       }
 
-      card.appendChild(headerRow);
+      appendChildSafe(card, headerRow);
 
       if (subtitleText) {
-        const sub = document.createElement('div');
+        const sub = safeCreateElement('div');
         sub.style.color = '#b1b1bd';
         sub.style.fontSize = '11px';
         sub.style.paddingLeft = '13px';
-        sub.textContent = subtitleText;
-        card.appendChild(sub);
+        setSafeText(sub, subtitleText);
+        appendChildSafe(card, sub);
       }
 
-      shadow.appendChild(card);
-      mountTarget.appendChild(host);
+      appendChildSafe(shadow, card);
+      appendChildSafe(mountTarget, host);
       activeToastHost = host;
 
-      requestAnimationFrame(() => {
+      const raf = nativeRAF || (typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame : null);
+      if (raf) {
+        raf(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        });
+      } else {
         card.style.opacity = '1';
         card.style.transform = 'translateY(0)';
-      });
+      }
 
       const baseDelay = durationMs || 1900;
       const scheduleToastHide = (delay) => {
@@ -1234,7 +1432,7 @@
             if (activeToastHost === host) {
               removeActiveToast();
             } else {
-              host.remove();
+              removeNodeSafe(host);
             }
           }, 180);
         }, delay);
@@ -1242,10 +1440,10 @@
 
       if (hasAction) {
         const listenerOpts = ac ? { signal: ac.signal } : false;
-        card.addEventListener('pointerenter', () => clearToastTimers(), listenerOpts);
-        card.addEventListener('pointerleave', () => scheduleToastHide(Math.min(baseDelay, 3200)), listenerOpts);
-        card.addEventListener('focusin', () => clearToastTimers(), listenerOpts);
-        card.addEventListener('focusout', () => scheduleToastHide(Math.min(baseDelay, 3200)), listenerOpts);
+        nativeAddEventListener.call(card, 'pointerenter', () => clearToastTimers(), listenerOpts);
+        nativeAddEventListener.call(card, 'pointerleave', () => scheduleToastHide(nativeMathMin(baseDelay, 3200)), listenerOpts);
+        nativeAddEventListener.call(card, 'focusin', () => clearToastTimers(), listenerOpts);
+        nativeAddEventListener.call(card, 'focusout', () => scheduleToastHide(nativeMathMin(baseDelay, 3200)), listenerOpts);
       }
 
       scheduleToastHide(baseDelay);
@@ -1268,7 +1466,6 @@
           border: '#42414d',
           accent: '#0a84ff',
           accentText: '#ffffff',
-          btnHover: '#3a3944',
           warnBg: 'rgba(255, 189, 46, 0.14)',
           warnBorder: 'rgba(255, 189, 46, 0.45)',
           warnText: '#ffd670',
@@ -1282,7 +1479,6 @@
           border: '#d7d7db',
           accent: '#0060df',
           accentText: '#ffffff',
-          btnHover: '#e0e0e6',
           warnBg: 'rgba(215, 110, 0, 0.08)',
           warnBorder: 'rgba(215, 110, 0, 0.35)',
           warnText: '#8f4600',
@@ -1290,10 +1486,10 @@
   }
 
   function createModalButton(palette, label, primary) {
-    const btn = document.createElement('button');
+    const btn = safeCreateElement('button');
     btn.type = 'button';
     btn.className = 'cz-btn';
-    btn.textContent = label;
+    setSafeText(btn, label);
     btn.style.appearance = 'none';
     btn.style.display = 'inline-flex';
     btn.style.alignItems = 'center';
@@ -1314,7 +1510,7 @@
   }
 
   function createModalShell(palette, maxWidthCss) {
-    const host = document.createElement('div');
+    const host = safeCreateElement('div');
     host.style.position = 'fixed';
     host.style.inset = '0';
     host.style.zIndex = '2147483647';
@@ -1332,11 +1528,11 @@
         `.cz-btn:hover:not(:disabled),.cz-select:hover:not(:disabled){filter:${hoverFilter};} ` +
         `.cz-btn:focus-visible,.cz-select:focus-visible{outline:2px solid ${palette.accent};outline-offset:1px;}`
     );
-    shadow.appendChild(resetStyle);
+    appendChildSafe(shadow, resetStyle);
 
     const scrim = safeCreateElement('div');
-    scrim.setAttribute('role', 'dialog');
-    scrim.setAttribute('aria-modal', 'true');
+    setAttrSafe(scrim, 'role', 'dialog');
+    setAttrSafe(scrim, 'aria-modal', 'true');
     scrim.style.position = 'fixed';
     scrim.style.inset = '0';
     scrim.style.display = 'flex';
@@ -1347,7 +1543,7 @@
     scrim.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
     scrim.style.fontSize = '13px';
 
-    const modal = document.createElement('div');
+    const modal = safeCreateElement('div');
     modal.style.display = 'flex';
     modal.style.flexDirection = 'column';
     modal.style.gap = '10px';
@@ -1361,31 +1557,34 @@
     modal.style.border = `1px solid ${palette.border}`;
     modal.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.44)';
 
-    const header = document.createElement('div');
+    const header = safeCreateElement('div');
     header.style.display = 'flex';
     header.style.alignItems = 'center';
     header.style.justifyContent = 'space-between';
     header.style.gap = '10px';
     header.style.flexWrap = 'wrap';
 
-    const titleGroup = document.createElement('div');
+    const titleGroup = safeCreateElement('div');
     titleGroup.style.display = 'flex';
     titleGroup.style.alignItems = 'center';
     titleGroup.style.gap = '8px';
     titleGroup.style.flexWrap = 'wrap';
 
-    const titleEl = document.createElement('span');
+    const titleEl = safeCreateElement('span');
     titleEl.style.fontWeight = '600';
     titleEl.style.fontSize = '14px';
     titleEl.style.fontVariantNumeric = 'tabular-nums';
-    titleGroup.appendChild(titleEl);
-    header.appendChild(titleGroup);
+    appendChildSafe(titleGroup, titleEl);
+    appendChildSafe(header, titleGroup);
 
     return { host, shadow, scrim, modal, header, titleGroup, titleEl };
   }
 
   function handleModalTabKey(event, shadow, focusables) {
-    const activeList = focusables.filter((el) => el && !el.disabled && el.style.display !== 'none');
+    const activeList = nativeArrayFilter.call(
+      focusables,
+      (el) => el && !el.disabled && el.style.display !== 'none'
+    );
     if (activeList.length === 0) {
       return;
     }
@@ -1807,7 +2006,7 @@
         return null;
       }
       if (marker === 0xd9) {
-        kept.push(bytes.subarray(offset, m + 1));
+        nativeArrayPush.call(kept, bytes.subarray(offset, m + 1));
         if (m + 1 < len) {
           stripped = true;
         }
@@ -1855,22 +2054,22 @@
           break;
         }
         if (eoiEnd > 0) {
-          kept.push(bytes.subarray(offset, eoiEnd));
+          nativeArrayPush.call(kept, bytes.subarray(offset, eoiEnd));
           if (eoiEnd < len) {
             stripped = true;
           }
           break;
         }
         if (nextSegOffset > offset) {
-          kept.push(bytes.subarray(offset, nextSegOffset));
+          nativeArrayPush.call(kept, bytes.subarray(offset, nextSegOffset));
           offset = nextSegOffset;
           continue;
         }
-        kept.push(bytes.subarray(offset));
+        nativeArrayPush.call(kept, bytes.subarray(offset));
         break;
       }
       if ((marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) {
-        kept.push(bytes.subarray(offset, m + 1));
+        nativeArrayPush.call(kept, bytes.subarray(offset, m + 1));
         offset = m + 1;
         continue;
       }
@@ -1894,16 +2093,16 @@
         if (!app0Segment && kept.length === 0) {
           app0Segment = cleanApp0;
         } else {
-          kept.push(cleanApp0);
+          nativeArrayPush.call(kept, cleanApp0);
         }
       } else if (marker === 0xee) {
         if (isAdobeApp14Segment(bytes, m, segLen)) {
-          kept.push(bytes.subarray(offset, segEnd));
+          nativeArrayPush.call(kept, bytes.subarray(offset, segEnd));
         } else {
           stripped = true;
         }
       } else if (marker === 0xe2 && isIccProfileSegment(bytes, m, segLen)) {
-        kept.push(bytes.subarray(offset, segEnd));
+        nativeArrayPush.call(kept, bytes.subarray(offset, segEnd));
       } else if ((marker >= 0xe0 && marker <= 0xef && marker !== 0xee) || marker === 0xfe) {
         if (
           marker === 0xe1 &&
@@ -1926,7 +2125,7 @@
         }
         stripped = true;
       } else {
-        kept.push(bytes.subarray(offset, segEnd));
+        nativeArrayPush.call(kept, bytes.subarray(offset, segEnd));
       }
 
       offset = segEnd;
@@ -1938,13 +2137,13 @@
 
     const out = [bytes.subarray(0, 2)];
     if (app0Segment) {
-      out.push(app0Segment);
+      nativeArrayPush.call(out, app0Segment);
     }
     if (orientation >= 2 && orientation <= 8) {
-      out.push(buildMinimalOrientationApp1(orientation));
+      nativeArrayPush.call(out, buildMinimalOrientationApp1(orientation));
     }
     for (let i = 0; i < kept.length; i += 1) {
-      out.push(kept[i]);
+      nativeArrayPush.call(out, kept[i]);
     }
     return concatChunks(out);
   }
@@ -2046,7 +2245,7 @@
         return null;
       }
 
-      if (!setHas(WEBP_SAFE_CHUNKS, fourcc) || fourcc === 'EXIF' || fourcc === 'XMP ') {
+      if (!setHas(WEBP_SAFE_CHUNKS, fourcc)) {
         stripped = true;
       } else if (fourcc === 'VP8X' && chunkEnd >= offset + 9) {
         const vp8xCopy = new NativeUint8Array(bytes.subarray(offset, chunkEnd));
@@ -2224,13 +2423,10 @@
     if (!bytes || bytes.byteLength < 16 || !asciiBytesEquals(bytes, 4, 'ftyp')) {
       return false;
     }
-    if (!hasAvifBrand(bytes, 'avif') && !hasAvifBrand(bytes, 'avis')) {
+    if (hasAvifBrand(bytes, 'avis') || !hasAvifBrand(bytes, 'avif')) {
       return false;
     }
-    if (hasAvifBrand(bytes, 'avis')) {
-      return false;
-    }
-    const scanCap = Math.min(bytes.byteLength, 512 * 1024);
+    const scanCap = nativeMathMin(bytes.byteLength, 512 * 1024);
     return (
       bytesContainsAscii(bytes, 'Exif\0\0', scanCap) ||
       bytesContainsAscii(bytes, 'http://ns.adobe.com/xap/1.0/', scanCap) ||
@@ -2349,6 +2545,7 @@
     'filter',
     'clip-path',
     'mask',
+    'marker',
     'marker-start',
     'marker-mid',
     'marker-end',
@@ -2525,7 +2722,10 @@
       if (!doc || !doc.documentElement || doc.documentElement.localName.toLowerCase() !== 'svg') {
         return null;
       }
-      if (doc.getElementsByTagName('parsererror').length > 0) {
+      const errNodes = nativeGetElementsByTagName
+        ? nativeGetElementsByTagName.call(doc, 'parsererror')
+        : doc.getElementsByTagName('parsererror');
+      if (errNodes && errNodes.length > 0) {
         return null;
       }
 
@@ -2536,7 +2736,7 @@
         for (let i = children.length - 1; i >= 0; i -= 1) {
           const child = children[i];
           if (child.nodeType === 8 || child.nodeType === 7) {
-            node.removeChild(child);
+            removeChildSafe(node, child);
             modified = true;
             continue;
           }
@@ -2549,7 +2749,7 @@
           const nsUri = child.namespaceURI || '';
           const isAnim = setHas(SVG_ANIMATE_LOCAL_TAGS, local);
           const animAttr = isAnim
-            ? (child.getAttribute('attributeName') || '')
+            ? (getAttrSafe(child, 'attributeName') || '')
                 .replace(/[\u0000-\u0020]+/g, '')
                 .toLowerCase()
             : '';
@@ -2567,11 +2767,11 @@
             setHas(SVG_DANGEROUS_LOCAL_TAGS, local) ||
             dangerousAnim ||
             local === 'metadata' ||
-            SVG_STRIP_ELEMENT_PREFIXES.some((prefix) => tag.startsWith(prefix)) ||
+            nativeArraySome.call(SVG_STRIP_ELEMENT_PREFIXES, (prefix) => tag.startsWith(prefix)) ||
             (nsUri && SVG_STRIP_NAMESPACE_RE.test(nsUri)) ||
             (local === 'desc' && SVG_GENERATOR_DESC_RE.test(getSafeText(child) || ''))
           ) {
-            node.removeChild(child);
+            removeChildSafe(node, child);
             modified = true;
             continue;
           }
@@ -2596,22 +2796,22 @@
             const attrNs = attr.namespaceURI || '';
             if (
               setHas(SVG_STRIP_XMLNS, attrName) ||
-              SVG_STRIP_ATTR_PREFIXES.some((prefix) => attrName.startsWith(prefix)) ||
+              nativeArraySome.call(SVG_STRIP_ATTR_PREFIXES, (prefix) => attrName.startsWith(prefix)) ||
               (attrNs && SVG_STRIP_NAMESPACE_RE.test(attrNs)) ||
               attrName.startsWith('on') ||
               attrLocal.startsWith('on') ||
               ((setHas(SVG_URI_ATTRS, attrName) || setHas(SVG_URI_ATTRS, attrLocal)) &&
                 !isSafeSvgUrl(attr.value))
             ) {
-              node.removeAttribute(attr.name);
+              removeAttrSafe(node, attr.name);
               modified = true;
             } else if (attrName === 'style') {
               const safeInline = sanitizeSvgCssText(attr.value || '');
               if (safeInline !== (attr.value || '')) {
                 if (safeInline.trim()) {
-                  node.setAttribute(attr.name, safeInline);
+                  setAttrSafe(node, attr.name, safeInline);
                 } else {
-                  node.removeAttribute(attr.name);
+                  removeAttrSafe(node, attr.name);
                 }
                 modified = true;
               }
@@ -2621,9 +2821,9 @@
                 const safePres = sanitizeSvgCssText(rawVal);
                 if (safePres !== rawVal) {
                   if (safePres.trim()) {
-                    node.setAttribute(attr.name, safePres);
+                    setAttrSafe(node, attr.name, safePres);
                   } else {
-                    node.removeAttribute(attr.name);
+                    removeAttrSafe(node, attr.name);
                   }
                   modified = true;
                 }
@@ -2638,7 +2838,7 @@
       for (let i = rootChildren.length - 1; i >= 0; i -= 1) {
         const nt = rootChildren[i].nodeType;
         if (nt === 8 || nt === 7 || nt === 10) {
-          doc.removeChild(rootChildren[i]);
+          removeChildSafe(doc, rootChildren[i]);
           modified = true;
         }
       }
@@ -2681,7 +2881,7 @@
   const PDF_XMP_ATTR_RE =
     /\b(?:dc:creator|pdf:Author|pdf:Producer|pdf:Keywords|xmp:CreatorTool|xmp:CreateDate|xmp:ModifyDate|xmp:MetadataDate|dc:title|dc:description|dc:subject|xmpMM:DocumentID|xmpMM:InstanceID|xmpMM:OriginalDocumentID|tiff:Make|tiff:Model|tiff:Artist|tiff:Software|tiff:DateTime|photoshop:[A-Za-z0-9]{1,24}|exif:[A-Za-z0-9]{1,24})\s*=\s*(?:"([^"]{0,4096})"|'([^']{0,4096})')/gi;
   const PDF_XMP_OPEN_TAG_RE =
-    /<(dc:creator|pdf:Author|pdf:Producer|pdf:Keywords|xmp:CreatorTool|xmp:CreateDate|xmp:ModifyDate|xmp:MetadataDate|dc:title|dc:description|dc:subject|xmpMM:DocumentID|xmpMM:InstanceID|xmpMM:OriginalDocumentID|tiff:Make|tiff:Model|tiff:Artist|tiff:Software|tiff:DateTime|photoshop:[A-Za-z0-9]{1,24}|exif:[A-Za-z0-9]{1,24}|stEvt:[A-Za-z0-9]{1,24})(?=\s|>)(?:\s[^>{0,256}]*)?>/gi;
+    /<(dc:creator|pdf:Author|pdf:Producer|pdf:Keywords|xmp:CreatorTool|xmp:CreateDate|xmp:ModifyDate|xmp:MetadataDate|dc:title|dc:description|dc:subject|xmpMM:DocumentID|xmpMM:InstanceID|xmpMM:OriginalDocumentID|tiff:Make|tiff:Model|tiff:Artist|tiff:Software|tiff:DateTime|photoshop:[A-Za-z0-9]{1,24}|exif:[A-Za-z0-9]{1,24}|stEvt:[A-Za-z0-9]{1,24})(?=\s|>)(?:\s[^>]{0,256})?>/gi;
 
   function blankPdfByteRange(out, start, end) {
     let changed = false;
@@ -2907,6 +3107,9 @@
     PDF_XMP_OPEN_TAG_RE.lastIndex = 0;
     let openMatch;
     while ((openMatch = PDF_XMP_OPEN_TAG_RE.exec(packet)) !== null) {
+      if (openMatch[0].endsWith('/>')) {
+        continue;
+      }
       const tagName = openMatch[1];
       const absContentStart = spanStart + openMatch.index + openMatch[0].length;
       const closeRel = packet.indexOf(`</${tagName}`, openMatch.index + openMatch[0].length);
@@ -3427,16 +3630,16 @@
     if (!str || str.length === 0) {
       return 0;
     }
-    const freq = Object.create(null);
+    const freq = nativeObjCreate ? nativeObjCreate(null) : Object.create(null);
     for (let i = 0; i < str.length; i += 1) {
       const ch = str[i];
       freq[ch] = (freq[ch] || 0) + 1;
     }
     let entropy = 0;
-    const keys = Object.keys(freq);
+    const keys = nativeObjKeys ? nativeObjKeys(freq) : Object.keys(freq);
     for (let i = 0; i < keys.length; i += 1) {
       const p = freq[keys[i]] / str.length;
-      entropy -= p * Math.log2(p);
+      entropy -= p * nativeMathLog2(p);
     }
     return entropy;
   }
@@ -4465,9 +4668,56 @@
     }
   }
 
+  function setTextControlValueAndCaret(control, nextVal, caret) {
+    const desc =
+      NativeHTMLTextAreaElement && control instanceof NativeHTMLTextAreaElement
+        ? textAreaValueDescriptor
+        : inputValueDescriptor;
+    if (desc && typeof desc.set === 'function') {
+      desc.set.call(control, nextVal);
+    } else {
+      control.value = nextVal;
+    }
+    if (typeof control.setSelectionRange === 'function') {
+      control.setSelectionRange(caret, caret);
+    }
+  }
+
+  function dispatchSyntheticInputEvent(target, inputType, data) {
+    const ev = NativeInputEvent
+      ? new NativeInputEvent('input', {
+          bubbles: true,
+          cancelable: false,
+          composed: true,
+          inputType,
+          data,
+        })
+      : new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
+    dispatchEventSafe(target, ev);
+  }
+
+  function dispatchSyntheticTextPaste(target, text) {
+    if (typeof NativeClipboardEvent !== 'function' || !target) {
+      return null;
+    }
+    const dt = new NativeDataTransfer();
+    safeDtSetData(dt, 'text/plain', text);
+    const synthetic = new NativeClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      clipboardData: dt,
+    });
+    const synClip = getClipboardData(synthetic);
+    if (!synClip || safeDtGetData(synClip, 'text/plain') !== text) {
+      overrideEventTransfer(synthetic, 'clipboardData', dt);
+    }
+    markSyntheticEvent(synthetic);
+    return dispatchEventSafe(target, synthetic);
+  }
+
   function insertMaskedText(event, maskedText) {
-    const rawTarget =
-      (typeof event.composedPath === 'function' && event.composedPath()[0]) || event.target;
+    const rawTarget = getEventPathTarget(event);
     const editable = findEditableTarget(rawTarget);
     const rawElement =
       rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
@@ -4482,26 +4732,13 @@
     // (ProseMirror, ChatGPT, Claude) handle newlines/Markdown natively if they intercept paste.
     // Skip on Quill (.ql-editor) because Quill's onPaste steals focus and schedules an async deletion.
     if (!isQuillEditor(editable) && dispatchTarget && typeof NativeClipboardEvent === 'function') {
-      const cleanDt = new NativeDataTransfer();
-      cleanDt.setData('text/plain', maskedText);
-      const syntheticPaste = new NativeClipboardEvent('paste', {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        clipboardData: cleanDt,
-      });
-      const synClip = getClipboardData(syntheticPaste);
-      if (!synClip || safeDtGetData(synClip, 'text/plain') !== maskedText) {
-        overrideEventTransfer(syntheticPaste, 'clipboardData', cleanDt);
-      }
-      markSyntheticEvent(syntheticPaste);
-      const notCanceled = dispatchTarget.dispatchEvent(syntheticPaste);
+      const notCanceled = dispatchSyntheticTextPaste(dispatchTarget, maskedText);
       logDiag('Secrets', '2:insertMaskedText:syntheticPaste', {
         dispatchTarget: describeDomNode(dispatchTarget),
         notCanceled,
         defaultPrevented: !notCanceled,
       });
-      if (!notCanceled) {
+      if (notCanceled === false) {
         return true;
       }
     }
@@ -4539,32 +4776,11 @@
         const start = typeof editable.selectionStart === 'number' ? editable.selectionStart : editable.value.length;
         const end = typeof editable.selectionEnd === 'number' ? editable.selectionEnd : editable.value.length;
         const nextVal = `${editable.value.slice(0, start)}${maskedText}${editable.value.slice(end)}`;
-        const desc =
-          NativeHTMLTextAreaElement && editable instanceof NativeHTMLTextAreaElement
-            ? textAreaValueDescriptor
-            : inputValueDescriptor;
-        if (desc && typeof desc.set === 'function') {
-          desc.set.call(editable, nextVal);
-        } else {
-          editable.value = nextVal;
-        }
-        const caret = start + maskedText.length;
-        if (typeof editable.setSelectionRange === 'function') {
-          editable.setSelectionRange(caret, caret);
-        }
+        setTextControlValueAndCaret(editable, nextVal, start + maskedText.length);
       } else if (editable.isContentEditable) {
         insertTextWithLineBreaksIntoContentEditable(editable, maskedText);
       }
-      const ev = NativeInputEvent
-        ? new NativeInputEvent('input', {
-            bubbles: true,
-            cancelable: false,
-            composed: true,
-            inputType: 'insertFromPaste',
-            data: maskedText,
-          })
-        : new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
-      editable.dispatchEvent(ev);
+      dispatchSyntheticInputEvent(editable, 'insertFromPaste', maskedText);
     }
 
     logDiag('Secrets', '2b:insertMaskedText:fallbackUsed', {
@@ -4725,8 +4941,6 @@
     let syncAfterExecPresent = null;
 
     if (!quillMode && typeof NativeClipboardEvent === 'function') {
-      const rawDt = new NativeDataTransfer();
-      rawDt.setData('text/plain', rawText);
       const startEl =
         range && range.startContainer
           ? range.startContainer.nodeType === 3
@@ -4735,19 +4949,8 @@
           : null;
       const syntheticTarget =
         startEl && startEl.isConnected && editable.contains(startEl) ? startEl : editable;
-      const synthetic = new NativeClipboardEvent('paste', {
-        bubbles: true,
-        cancelable: true,
-        composed: true,
-        clipboardData: rawDt,
-      });
-      const synClipRaw = getClipboardData(synthetic);
-      if (!synClipRaw || safeDtGetData(synClipRaw, 'text/plain') !== rawText) {
-        overrideEventTransfer(synthetic, 'clipboardData', rawDt);
-      }
-      markSyntheticEvent(synthetic);
-      syntheticTarget.dispatchEvent(synthetic);
-      if (synthetic.defaultPrevented) {
+      const notCanceled = dispatchSyntheticTextPaste(syntheticTarget, rawText);
+      if (notCanceled === false) {
         replaced = true;
         syntheticPrevented = true;
       }
@@ -4945,16 +5148,7 @@
       insertTextWithLineBreaksIntoContentEditable(editable, normalizedRaw);
       const beforeInputCheck = debugCheckTextPresent(editable, normalizedRaw);
 
-      const ev = NativeInputEvent
-        ? new NativeInputEvent('input', {
-            bubbles: true,
-            cancelable: false,
-            composed: true,
-            inputType: 'insertFromPaste',
-            data: normalizedRaw,
-          })
-        : new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
-      editable.dispatchEvent(ev);
+      dispatchSyntheticInputEvent(editable, 'insertFromPaste', normalizedRaw);
       const afterInputCheck = debugCheckTextPresent(editable, normalizedRaw);
 
       logDiag('Secrets', '5f:restore:dispatched', {
@@ -5026,29 +5220,8 @@
       if (typeof editable.focus === 'function') {
         editable.focus();
       }
-      const desc =
-        NativeHTMLTextAreaElement && editable instanceof NativeHTMLTextAreaElement
-          ? textAreaValueDescriptor
-          : inputValueDescriptor;
-      if (desc && typeof desc.set === 'function') {
-        desc.set.call(editable, nextVal);
-      } else {
-        editable.value = nextVal;
-      }
-      const caret = idx + normalizedRaw.length;
-      if (typeof editable.setSelectionRange === 'function') {
-        editable.setSelectionRange(caret, caret);
-      }
-      const ev = NativeInputEvent
-        ? new NativeInputEvent('input', {
-            bubbles: true,
-            cancelable: false,
-            composed: true,
-            inputType: 'insertReplacementText',
-            data: normalizedRaw,
-          })
-        : new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
-      editable.dispatchEvent(ev);
+      setTextControlValueAndCaret(editable, nextVal, idx + normalizedRaw.length);
+      dispatchSyntheticInputEvent(editable, 'insertReplacementText', normalizedRaw);
       logDiag('Secrets', '5c:restore:SUCCESS-textarea', { idx, nextLen: nextVal.length });
       return { ok: true };
     }
@@ -5146,7 +5319,7 @@
         if (!pageMount) {
           return false;
         }
-        pageMount.appendChild(tempHost);
+        appendChildSafe(pageMount, tempHost);
       }
       const ta = safeCreateElement('textarea');
       if (textAreaValueDescriptor && typeof textAreaValueDescriptor.set === 'function') {
@@ -5157,7 +5330,7 @@
       ta.style.position = 'fixed';
       ta.style.opacity = '0';
       ta.style.pointerEvents = 'none';
-      shadowMount.appendChild(ta);
+      appendChildSafe(shadowMount, ta);
       try {
         ta.focus({ preventScroll: true });
       } catch {
@@ -5170,43 +5343,43 @@
       } else {
         ta.value = '';
       }
-      ta.remove();
+      removeNodeSafe(ta);
       return Boolean(ok);
     } catch {
       return false;
     } finally {
       if (tempHost) {
-        tempHost.remove();
+        removeNodeSafe(tempHost);
       }
     }
   }
 
   function createEyeIconSvg(revealed) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '13');
-    svg.setAttribute('height', '13');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('stroke-width', '2');
-    svg.setAttribute('stroke-linecap', 'round');
-    svg.setAttribute('stroke-linejoin', 'round');
-    svg.setAttribute('aria-hidden', 'true');
+    const svg = safeCreateElementNS('http://www.w3.org/2000/svg', 'svg');
+    setAttrSafe(svg, 'width', '13');
+    setAttrSafe(svg, 'height', '13');
+    setAttrSafe(svg, 'viewBox', '0 0 24 24');
+    setAttrSafe(svg, 'fill', 'none');
+    setAttrSafe(svg, 'stroke', 'currentColor');
+    setAttrSafe(svg, 'stroke-width', '2');
+    setAttrSafe(svg, 'stroke-linecap', 'round');
+    setAttrSafe(svg, 'stroke-linejoin', 'round');
+    setAttrSafe(svg, 'aria-hidden', 'true');
 
-    const p1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p1.setAttribute('d', 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z');
-    svg.appendChild(p1);
+    const p1 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
+    setAttrSafe(p1, 'd', 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z');
+    appendChildSafe(svg, p1);
 
     if (revealed) {
-      const p2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      p2.setAttribute('d', 'M3 3l18 18');
-      svg.appendChild(p2);
+      const p2 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
+      setAttrSafe(p2, 'd', 'M3 3l18 18');
+      appendChildSafe(svg, p2);
     } else {
-      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('cx', '12');
-      c.setAttribute('cy', '12');
-      c.setAttribute('r', '3');
-      svg.appendChild(c);
+      const c = safeCreateElementNS('http://www.w3.org/2000/svg', 'circle');
+      setAttrSafe(c, 'cx', '12');
+      setAttrSafe(c, 'cy', '12');
+      setAttrSafe(c, 'r', '3');
+      appendChildSafe(svg, c);
     }
     return svg;
   }
@@ -5231,10 +5404,10 @@
       palette,
       'min(92vw, 560px)'
     );
-    titleEl.textContent = i18n.secretsModalTitle;
+    setSafeText(titleEl, i18n.secretsModalTitle);
 
-    const countPill = document.createElement('span');
-    countPill.textContent = String(draft.findings.length);
+    const countPill = safeCreateElement('span');
+    setSafeText(countPill, String(draft.findings.length));
     countPill.style.fontSize = '11px';
     countPill.style.fontWeight = '600';
     countPill.style.padding = '1px 7px';
@@ -5242,15 +5415,15 @@
     countPill.style.background = palette.surface;
     countPill.style.border = `1px solid ${palette.border}`;
     countPill.style.color = palette.muted;
-    titleGroup.appendChild(countPill);
+    appendChildSafe(titleGroup, countPill);
 
-    const subEl = document.createElement('div');
-    subEl.textContent = i18n.secretsModalSub;
+    const subEl = safeCreateElement('div');
+    setSafeText(subEl, i18n.secretsModalSub);
     subEl.style.fontSize = '12px';
     subEl.style.color = palette.muted;
     subEl.style.lineHeight = '1.4';
 
-    const listEl = document.createElement('div');
+    const listEl = safeCreateElement('div');
     listEl.style.display = 'flex';
     listEl.style.flexDirection = 'column';
     listEl.style.gap = '8px';
@@ -5263,13 +5436,14 @@
       typeof draft.totalFindings === 'number' && draft.totalFindings >= draft.findings.length
         ? draft.totalFindings
         : draft.findings.length;
-    const getUnmaskedCount = () => draft.findings.filter((f) => f.masked === false).length;
+    const getUnmaskedCount = () =>
+      nativeArrayFilter.call(draft.findings, (f) => f.masked === false).length;
     const getTargetReplacementText = () => {
       const unmaskedCount = getUnmaskedCount();
       if (
         unmaskedCount === 0 ||
         (unmaskedCount === draft.findings.length && draft.findings.length >= totalFindingCount) ||
-        !Array.isArray(draft.segments) ||
+        !nativeIsArray(draft.segments) ||
         draft.segments.length === 0
       ) {
         return draft.rawText;
@@ -5284,8 +5458,8 @@
     const syncFooterButtons = () => {
       const unmaskedCount = getUnmaskedCount();
       const isPartial = unmaskedCount > 0 && unmaskedCount < totalFindingCount;
-      pasteBtn.textContent = isPartial ? i18n.secretsApplyBtn : i18n.secretsPasteRawBtn;
-      copyBtn.textContent = isPartial ? i18n.secretsCopySelectedBtn : i18n.secretsCopyRawBtn;
+      setSafeText(pasteBtn, isPartial ? i18n.secretsApplyBtn : i18n.secretsPasteRawBtn);
+      setSafeText(copyBtn, isPartial ? i18n.secretsCopySelectedBtn : i18n.secretsCopyRawBtn);
     };
 
     for (let i = 0; i < draft.findings.length; i += 1) {
@@ -5295,7 +5469,7 @@
       }
       let revealed = false;
 
-      const row = document.createElement('div');
+      const row = safeCreateElement('div');
       row.style.display = 'flex';
       row.style.flexDirection = 'column';
       row.style.gap = '5px';
@@ -5304,13 +5478,13 @@
       row.style.background = palette.surface;
       row.style.border = `1px solid ${palette.border}`;
 
-      const topBar = document.createElement('div');
+      const topBar = safeCreateElement('div');
       topBar.style.display = 'flex';
       topBar.style.alignItems = 'center';
       topBar.style.justifyContent = 'space-between';
       topBar.style.gap = '8px';
 
-      const meta = document.createElement('label');
+      const meta = safeCreateElement('label');
       meta.style.display = 'flex';
       meta.style.alignItems = 'center';
       meta.style.gap = '6px';
@@ -5319,7 +5493,7 @@
       meta.style.cursor = 'pointer';
       meta.style.userSelect = 'none';
 
-      const checkbox = document.createElement('input');
+      const checkbox = safeCreateElement('input');
       checkbox.type = 'checkbox';
       checkbox.checked = item.masked;
       checkbox.style.margin = '0';
@@ -5327,14 +5501,14 @@
       checkbox.style.height = '14px';
       checkbox.style.cursor = 'pointer';
       checkbox.style.accentColor = palette.accent;
-      checkbox.setAttribute('aria-label', item.label);
+      setAttrSafe(checkbox, 'aria-label', item.label);
 
-      const typeEl = document.createElement('span');
+      const typeEl = safeCreateElement('span');
       typeEl.style.fontWeight = '600';
-      typeEl.textContent = item.label;
+      setSafeText(typeEl, item.label);
 
-      const placeholderEl = document.createElement('code');
-      placeholderEl.textContent = item.placeholder;
+      const placeholderEl = safeCreateElement('code');
+      setSafeText(placeholderEl, item.placeholder);
       placeholderEl.style.fontSize = '11px';
       placeholderEl.style.color = palette.muted;
 
@@ -5346,14 +5520,14 @@
       };
       syncRowMaskState();
 
-      checkbox.addEventListener('change', () => {
+      nativeAddEventListener.call(checkbox, 'change', () => {
         syncRowMaskState();
         syncFooterButtons();
       });
 
-      meta.appendChild(checkbox);
-      meta.appendChild(typeEl);
-      meta.appendChild(placeholderEl);
+      appendChildSafe(meta, checkbox);
+      appendChildSafe(meta, typeEl);
+      appendChildSafe(meta, placeholderEl);
 
       const eyeBtn = createModalButton(palette, '', false);
       eyeBtn.style.display = 'inline-flex';
@@ -5361,7 +5535,7 @@
       eyeBtn.style.gap = '5px';
       eyeBtn.style.padding = '3px 8px';
       eyeBtn.style.fontSize = '11px';
-      eyeBtn.setAttribute('aria-pressed', 'false');
+      setAttrSafe(eyeBtn, 'aria-pressed', 'false');
 
       const valueEl = safeCreateElement('code');
       valueEl.style.display = 'block';
@@ -5378,32 +5552,32 @@
 
       const syncEyeState = () => {
         setSafeText(eyeBtn, '');
-        eyeBtn.appendChild(createEyeIconSvg(revealed));
+        appendChildSafe(eyeBtn, createEyeIconSvg(revealed));
         const lbl = safeCreateElement('span');
         setSafeText(lbl, revealed ? i18n.secretsHideBtn : i18n.secretsShowBtn);
-        eyeBtn.appendChild(lbl);
-        eyeBtn.setAttribute('aria-pressed', revealed ? 'true' : 'false');
+        appendChildSafe(eyeBtn, lbl);
+        setAttrSafe(eyeBtn, 'aria-pressed', revealed ? 'true' : 'false');
         setSafeText(valueEl, revealed ? item.rawValue : item.maskedPreview);
         valueEl.style.color = revealed ? palette.text : palette.muted;
       };
 
       syncEyeState();
-      eyeBtn.addEventListener('click', () => {
+      nativeAddEventListener.call(eyeBtn, 'click', () => {
         revealed = !revealed;
         syncEyeState();
       });
 
-      focusableRowControls.push(checkbox, eyeBtn);
-      topBar.appendChild(meta);
-      topBar.appendChild(eyeBtn);
-      row.appendChild(topBar);
-      row.appendChild(valueEl);
-      listEl.appendChild(row);
+      nativeArrayPush.call(focusableRowControls, checkbox, eyeBtn);
+      appendChildSafe(topBar, meta);
+      appendChildSafe(topBar, eyeBtn);
+      appendChildSafe(row, topBar);
+      appendChildSafe(row, valueEl);
+      appendChildSafe(listEl, row);
     }
 
     syncFooterButtons();
 
-    const warnEl = document.createElement('div');
+    const warnEl = safeCreateElement('div');
     warnEl.style.display = 'none';
     warnEl.style.padding = '7px 10px';
     warnEl.style.borderRadius = '6px';
@@ -5411,9 +5585,9 @@
     warnEl.style.background = palette.warnBg;
     warnEl.style.border = `1px solid ${palette.warnBorder}`;
     warnEl.style.color = palette.warnText;
-    warnEl.textContent = i18n.secretsChangedNotice;
+    setSafeText(warnEl, i18n.secretsChangedNotice);
 
-    const ac = typeof AbortController === 'function' ? new AbortController() : null;
+    const ac = makeAbortControllerSafe();
     let isClosed = false;
 
     const closeReviewModal = (wipeDraft, closeReason) => {
@@ -5422,11 +5596,11 @@
       }
       isClosed = true;
       if (ac) {
-        ac.abort();
+        abortSafe(ac);
       } else {
         window.removeEventListener('keydown', onReviewKeyDown, true);
       }
-      host.remove();
+      removeNodeSafe(host);
       if (wipeDraft) {
         clearEphemeralSecretDraft(closeReason || 'modal-action');
       } else if (ephemeralSecretDraft === draft) {
@@ -5442,22 +5616,23 @@
       if (!e || !e.isTrusted) {
         return;
       }
-      if (e.key === 'Escape') {
+      const key = getEvProp(nativeKeyDesc, e, 'key');
+      if (key === 'Escape') {
         haltEvent(e);
         closeReviewModal(false, 'modal-escape');
-      } else if (e.key === 'Tab') {
+      } else if (key === 'Tab') {
         handleModalTabKey(e, shadow, [...focusableRowControls, keepBtn, copyBtn, pasteBtn]);
       }
     };
 
     if (ac) {
-      window.addEventListener('keydown', onReviewKeyDown, { capture: true, signal: ac.signal });
+      nativeAddEventListener.call(window, 'keydown', onReviewKeyDown, { capture: true, signal: ac.signal });
     } else {
-      window.addEventListener('keydown', onReviewKeyDown, true);
+      nativeAddEventListener.call(window, 'keydown', onReviewKeyDown, true);
     }
 
-    keepBtn.addEventListener('click', () => closeReviewModal(false, 'modal-keep'));
-    copyBtn.addEventListener('click', async () => {
+    nativeAddEventListener.call(keepBtn, 'click', () => closeReviewModal(false, 'modal-keep'));
+    nativeAddEventListener.call(copyBtn, 'click', async () => {
       const targetText = getTargetReplacementText();
       logDiag('Secrets', '4:modal:click-copy-original', { rawLen: (targetText || '').length });
       const copied = await copyRawTextToClipboard(targetText, shadow);
@@ -5469,7 +5644,7 @@
         showToastNotice(i18n.secretsCopiedTitle, i18n.secretsRestoredSub, 2400);
       }
     });
-    pasteBtn.addEventListener('click', () => {
+    nativeAddEventListener.call(pasteBtn, 'click', () => {
       const targetText = getTargetReplacementText();
       logDiag('Secrets', '4:modal:click-paste-original', {
         targetConnected: Boolean(draft.targetEditable && draft.targetEditable.isConnected),
@@ -5496,24 +5671,24 @@
       }
     });
 
-    const footer = document.createElement('div');
+    const footer = safeCreateElement('div');
     footer.style.display = 'flex';
     footer.style.alignItems = 'center';
     footer.style.justifyContent = 'flex-end';
     footer.style.gap = '6px';
     footer.style.flexWrap = 'wrap';
-    footer.appendChild(keepBtn);
-    footer.appendChild(copyBtn);
-    footer.appendChild(pasteBtn);
+    appendChildSafe(footer, keepBtn);
+    appendChildSafe(footer, copyBtn);
+    appendChildSafe(footer, pasteBtn);
 
-    modal.appendChild(header);
-    modal.appendChild(subEl);
-    modal.appendChild(listEl);
-    modal.appendChild(warnEl);
-    modal.appendChild(footer);
-    scrim.appendChild(modal);
-    shadow.appendChild(scrim);
-    mountTarget.appendChild(host);
+    appendChildSafe(modal, header);
+    appendChildSafe(modal, subEl);
+    appendChildSafe(modal, listEl);
+    appendChildSafe(modal, warnEl);
+    appendChildSafe(modal, footer);
+    appendChildSafe(scrim, modal);
+    appendChildSafe(shadow, scrim);
+    appendChildSafe(mountTarget, host);
     keepBtn.focus();
   }
 
@@ -5534,7 +5709,15 @@
       });
       return;
     }
-    const { text: maskedText, count, findings, totalFindings, segments } = maskSensitiveText(rawText);
+    let maskedRes;
+    try {
+      maskedRes = maskSensitiveText(rawText);
+    } catch {
+      // Fail closed if page tampering disrupts scanning so raw secrets never paste through.
+      haltEvent(event);
+      return;
+    }
+    const { text: maskedText, count, findings, totalFindings, segments } = maskedRes;
     if (count === 0 || maskedText === rawText) {
       return;
     }
@@ -5825,20 +6008,119 @@
       return { mime: 'image/webp', ext: 'webp', quality: 0.9 };
     }
     const name = (file.name || '').toLowerCase();
-    if (!mime) {
+    const ambiguousMime =
+      !mime || mime === 'application/octet-stream' || mime === 'binary/octet-stream';
+    if (ambiguousMime) {
       if (/\.jpe?g$/.test(name)) return { mime: 'image/jpeg', ext: 'jpg', quality: 0.9 };
       if (name.endsWith('.webp')) return { mime: 'image/webp', ext: 'webp', quality: 0.9 };
     }
     return { mime: 'image/png', ext: 'png', quality: undefined };
   }
 
+  function getRedactWeightFactor(weightId) {
+    return weightId && nativeHasOwn(REDACT_WEIGHT_MAP, weightId)
+      ? REDACT_WEIGHT_MAP[weightId]
+      : 1;
+  }
+
+  function computeToolStrokeWeights(w, h, weightId) {
+    const baseMax = nativeMathMax(1, nativeMathMax(w, h));
+    const factor = getRedactWeightFactor(weightId);
+    return {
+      outline: nativeMathMax(2, nativeMathRound(baseMax * 0.0055 * factor)),
+      pen: nativeMathMax(2, nativeMathRound(baseMax * 0.0065 * factor)),
+    };
+  }
+
+  function clamp01(v) {
+    if (!nativeNumberIsFinite(v)) {
+      return 0;
+    }
+    return v < 0 ? 0 : v > 1 ? 1 : v;
+  }
+
+  function normalizeCropRegion(crop) {
+    if (
+      !crop ||
+      !nativeNumberIsFinite(crop.x) ||
+      !nativeNumberIsFinite(crop.y) ||
+      !nativeNumberIsFinite(crop.w) ||
+      !nativeNumberIsFinite(crop.h) ||
+      crop.w <= 0.004 ||
+      crop.h <= 0.004
+    ) {
+      return { x: 0, y: 0, w: 1, h: 1 };
+    }
+    const x = nativeMathMin(0.995, clamp01(crop.x));
+    const y = nativeMathMin(0.995, clamp01(crop.y));
+    const w = nativeMathMax(0.005, nativeMathMin(1 - x, crop.w));
+    const h = nativeMathMax(0.005, nativeMathMin(1 - y, crop.h));
+    return { x, y, w, h };
+  }
+
+  function isActiveCropRegion(crop) {
+    if (!crop || !nativeNumberIsFinite(crop.w) || !nativeNumberIsFinite(crop.h)) {
+      return false;
+    }
+    const r = normalizeCropRegion(crop);
+    return r.x > 0.002 || r.y > 0.002 || r.w < 0.998 || r.h < 0.998;
+  }
+
+  function toFullNormalizedPoint(region, viewPt) {
+    return {
+      x: clamp01(region.x + viewPt.x * region.w),
+      y: clamp01(region.y + viewPt.y * region.h),
+    };
+  }
+
+  function toViewNormalizedPoint(region, fullPt) {
+    return {
+      x: (fullPt.x - region.x) / region.w,
+      y: (fullPt.y - region.y) / region.h,
+    };
+  }
+
+  function mapBoxesToRegion(boxes, region) {
+    if (!nativeIsArray(boxes) || boxes.length === 0 || !isActiveCropRegion(region)) {
+      return boxes;
+    }
+    const out = [];
+    for (let i = 0; i < boxes.length; i += 1) {
+      const box = boxes[i];
+      if (!box) continue;
+      if (box.mode === 'pen' && nativeIsArray(box.points)) {
+        const mappedPts = [];
+        for (let j = 0; j < box.points.length; j += 1) {
+          nativeArrayPush.call(mappedPts, toViewNormalizedPoint(region, box.points[j]));
+        }
+        nativeArrayPush.call(out, {
+          mode: 'pen',
+          color: box.color,
+          weight: box.weight,
+          points: mappedPts,
+        });
+      } else {
+        nativeArrayPush.call(out, {
+          x: (box.x - region.x) / region.w,
+          y: (box.y - region.y) / region.h,
+          w: box.w / region.w,
+          h: box.h / region.h,
+          mode: box.mode,
+          color: box.color,
+          weight: box.weight,
+        });
+      }
+    }
+    return out;
+  }
+
   function drawPenStroke(ctx, box, w, h, strokeWeight) {
-    const pts = box && Array.isArray(box.points) ? box.points : null;
+    const pts = box && nativeIsArray(box.points) ? box.points : null;
     if (!pts || pts.length < 2) {
       return;
     }
     const color = setHas(REDACT_COLOR_SET, box.color) ? box.color : '#09090b';
-    const lw = Math.max(2, Math.round(strokeWeight));
+    const lw = nativeMathMax(2, nativeMathRound(strokeWeight));
     ctx.strokeStyle = color;
     ctx.lineWidth = lw;
     ctx.lineCap = 'round';
@@ -5880,7 +6162,7 @@
     if (box.mode !== 'pen') {
       return { x: box.x, y: box.y, w: box.w, h: box.h };
     }
-    const pts = Array.isArray(box.points) ? box.points : null;
+    const pts = nativeIsArray(box.points) ? box.points : null;
     if (!pts || pts.length === 0) {
       return null;
     }
@@ -5895,35 +6177,54 @@
       if (p.y < minY) minY = p.y;
       if (p.y > maxY) maxY = p.y;
     }
-    return { x: minX, y: minY, w: Math.max(0.01, maxX - minX), h: Math.max(0.01, maxY - minY) };
+    return {
+      x: minX,
+      y: minY,
+      w: nativeMathMax(0.01, maxX - minX),
+      h: nativeMathMax(0.01, maxY - minY),
+    };
   }
 
   function applyRedactionBoxes(ctx, boxes, w, h) {
-    const strokeWeight = Math.max(2, Math.round(Math.max(w, h) * 0.0055));
-    const penWeight = Math.max(3, Math.round(Math.max(w, h) * 0.0065));
+    if (!nativeIsArray(boxes) || boxes.length === 0 || w <= 0 || h <= 0) {
+      return;
+    }
+    if (nativeCtxSave) nativeCtxSave.call(ctx);
+    else ctx.save();
+    if (nativeCtxBeginPath) nativeCtxBeginPath.call(ctx);
+    else ctx.beginPath();
+    if (nativeCtxRect) nativeCtxRect.call(ctx, 0, 0, w, h);
+    else ctx.rect(0, 0, w, h);
+    if (nativeCtxClip) nativeCtxClip.call(ctx);
+    else ctx.clip();
     for (let i = 0; i < boxes.length; i += 1) {
       const box = boxes[i];
+      if (!box) continue;
+      const weights = computeToolStrokeWeights(w, h, box.weight);
       if (box.mode === 'pen') {
-        drawPenStroke(ctx, box, w, h, penWeight);
+        drawPenStroke(ctx, box, w, h, weights.pen);
         continue;
       }
       const rx = box.x * w;
       const ry = box.y * h;
       const rw = box.w * w;
       const rh = box.h * h;
-      if (rw < 2 || rh < 2) {
+      if (rw < 2 || rh < 2 || rx + rw <= 0 || ry + rh <= 0 || rx >= w || ry >= h) {
         continue;
       }
       const color = setHas(REDACT_COLOR_SET, box.color) ? box.color : '#09090b';
-      const xInt = Math.floor(rx);
-      const yInt = Math.floor(ry);
-      const wInt = Math.ceil(rw);
-      const hInt = Math.ceil(rh);
+      const xInt = nativeMathFloor(rx);
+      const yInt = nativeMathFloor(ry);
+      const wInt = nativeMathCeil(rw);
+      const hInt = nativeMathCeil(rh);
       if (box.mode === 'outline') {
-        const lw = Math.min(strokeWeight, Math.max(2, Math.floor(Math.min(wInt, hInt) / 3)));
+        const lw = nativeMathMin(
+          weights.outline,
+          nativeMathMax(2, nativeMathFloor(nativeMathMin(wInt, hInt) / 3))
+        );
         const inset = lw / 2;
-        const sw = Math.max(1, wInt - lw);
-        const sh = Math.max(1, hInt - lw);
+        const sw = nativeMathMax(1, wInt - lw);
+        const sh = nativeMathMax(1, hInt - lw);
         ctx.strokeStyle = color;
         ctx.lineWidth = lw;
         ctx.lineJoin = 'miter';
@@ -5941,6 +6242,8 @@
         }
       }
     }
+    if (nativeCtxRestore) nativeCtxRestore.call(ctx);
+    else ctx.restore();
   }
 
   function releaseCanvasMemory(canvas) {
@@ -5955,7 +6258,7 @@
     }
   }
 
-  function renderCanvasBlob(source, naturalW, naturalH, boxes, fmt, clampEdge) {
+  function renderCanvasBlob(source, naturalW, naturalH, boxes, fmt, clampEdge, crop) {
     return new Promise((resolve) => {
       if (!canvasToBlob || !source || naturalW <= 0 || naturalH <= 0) {
         resolve(null);
@@ -5963,11 +6266,26 @@
       }
       let canvas = null;
       try {
+        const hasCrop = isActiveCropRegion(crop);
+        const cropRegion = hasCrop ? normalizeCropRegion(crop) : { x: 0, y: 0, w: 1, h: 1 };
+        const sx = hasCrop
+          ? nativeMathMax(0, nativeMathMin(naturalW - 1, nativeMathRound(cropRegion.x * naturalW)))
+          : 0;
+        const sy = hasCrop
+          ? nativeMathMax(0, nativeMathMin(naturalH - 1, nativeMathRound(cropRegion.y * naturalH)))
+          : 0;
+        const sw = hasCrop
+          ? nativeMathMax(1, nativeMathMin(naturalW - sx, nativeMathRound(cropRegion.w * naturalW)))
+          : naturalW;
+        const sh = hasCrop
+          ? nativeMathMax(1, nativeMathMin(naturalH - sy, nativeMathRound(cropRegion.h * naturalH)))
+          : naturalH;
+
         const safeCap = clampEdge ? MAX_OPTIMIZE_EDGE : 8192;
-        const maxSide = Math.max(naturalW, naturalH);
+        const maxSide = nativeMathMax(sw, sh);
         const scale = maxSide > safeCap ? safeCap / maxSide : 1;
-        const outW = Math.max(1, Math.round(naturalW * scale));
-        const outH = Math.max(1, Math.round(naturalH * scale));
+        const outW = nativeMathMax(1, nativeMathRound(sw * scale));
+        const outH = nativeMathMax(1, nativeMathRound(sh * scale));
 
         canvas = safeCreateElement('canvas');
         canvas.width = outW;
@@ -5983,13 +6301,23 @@
         }
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
-        if (nativeCtxDrawImage) {
+        if (hasCrop) {
+          if (nativeCtxDrawImage) {
+            nativeCtxDrawImage.call(ctx, source, sx, sy, sw, sh, 0, 0, outW, outH);
+          } else {
+            ctx.drawImage(source, sx, sy, sw, sh, 0, 0, outW, outH);
+          }
+        } else if (nativeCtxDrawImage) {
           nativeCtxDrawImage.call(ctx, source, 0, 0, outW, outH);
         } else {
           ctx.drawImage(source, 0, 0, outW, outH);
         }
-        if (boxes && boxes.length > 0) {
-          applyRedactionBoxes(ctx, boxes, outW, outH);
+        const pixelCropRegion = hasCrop
+          ? { x: sx / naturalW, y: sy / naturalH, w: sw / naturalW, h: sh / naturalH }
+          : null;
+        const exportBoxes = pixelCropRegion ? mapBoxesToRegion(boxes, pixelCropRegion) : boxes;
+        if (exportBoxes && exportBoxes.length > 0) {
+          applyRedactionBoxes(ctx, exportBoxes, outW, outH);
         }
         canvasToBlob.call(
           canvas,
@@ -6011,46 +6339,83 @@
 
   function createRedactToolIconSvg(toolMode) {
     const svg = safeCreateElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '12');
-    svg.setAttribute('height', '12');
-    svg.setAttribute('viewBox', '0 0 16 16');
-    svg.setAttribute('aria-hidden', 'true');
+    setAttrSafe(svg, 'width', '12');
+    setAttrSafe(svg, 'height', '12');
+    setAttrSafe(svg, 'viewBox', '0 0 16 16');
+    setAttrSafe(svg, 'aria-hidden', 'true');
     if (toolMode === 'pen') {
       const p1 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
-      p1.setAttribute('d', 'M11.6 2.1a1.5 1.5 0 0 1 2.1 2.1L5.8 12.1 2.4 13.4l1.3-3.4z');
-      p1.setAttribute('fill', 'none');
-      p1.setAttribute('stroke', 'currentColor');
-      p1.setAttribute('stroke-width', '1.6');
-      p1.setAttribute('stroke-linejoin', 'round');
-      svg.appendChild(p1);
+      setAttrSafe(p1, 'd', 'M11.6 2.1a1.5 1.5 0 0 1 2.1 2.1L5.8 12.1 2.4 13.4l1.3-3.4z');
+      setAttrSafe(p1, 'fill', 'none');
+      setAttrSafe(p1, 'stroke', 'currentColor');
+      setAttrSafe(p1, 'stroke-width', '1.6');
+      setAttrSafe(p1, 'stroke-linejoin', 'round');
+      appendChildSafe(svg, p1);
+      return svg;
+    }
+    if (toolMode === 'crop') {
+      const p1 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
+      setAttrSafe(p1, 'd', 'M4.5 1.5v10h10M1.5 4.5h10v10');
+      setAttrSafe(p1, 'fill', 'none');
+      setAttrSafe(p1, 'stroke', 'currentColor');
+      setAttrSafe(p1, 'stroke-width', '1.7');
+      setAttrSafe(p1, 'stroke-linecap', 'round');
+      setAttrSafe(p1, 'stroke-linejoin', 'round');
+      appendChildSafe(svg, p1);
+      return svg;
+    }
+    if (toolMode === 'scroll') {
+      const p1 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
+      setAttrSafe(p1, 'd', 'M8 1.6v12.8M5.2 4.3L8 1.6l2.8 2.7M5.2 11.7L8 14.4l2.8-2.7');
+      setAttrSafe(p1, 'fill', 'none');
+      setAttrSafe(p1, 'stroke', 'currentColor');
+      setAttrSafe(p1, 'stroke-width', '1.6');
+      setAttrSafe(p1, 'stroke-linecap', 'round');
+      setAttrSafe(p1, 'stroke-linejoin', 'round');
+      appendChildSafe(svg, p1);
       return svg;
     }
     const rect = safeCreateElementNS('http://www.w3.org/2000/svg', 'rect');
     if (toolMode === 'outline') {
-      rect.setAttribute('x', '2.2');
-      rect.setAttribute('y', '2.2');
-      rect.setAttribute('width', '11.6');
-      rect.setAttribute('height', '11.6');
-      rect.setAttribute('rx', '2');
-      rect.setAttribute('fill', 'none');
-      rect.setAttribute('stroke', 'currentColor');
-      rect.setAttribute('stroke-width', '2.2');
+      setAttrSafe(rect, 'x', '2.2');
+      setAttrSafe(rect, 'y', '2.2');
+      setAttrSafe(rect, 'width', '11.6');
+      setAttrSafe(rect, 'height', '11.6');
+      setAttrSafe(rect, 'rx', '2');
+      setAttrSafe(rect, 'fill', 'none');
+      setAttrSafe(rect, 'stroke', 'currentColor');
+      setAttrSafe(rect, 'stroke-width', '2.2');
     } else {
-      rect.setAttribute('x', '2');
-      rect.setAttribute('y', '2');
-      rect.setAttribute('width', '12');
-      rect.setAttribute('height', '12');
-      rect.setAttribute('rx', '2');
-      rect.setAttribute('fill', 'currentColor');
+      setAttrSafe(rect, 'x', '2');
+      setAttrSafe(rect, 'y', '2');
+      setAttrSafe(rect, 'width', '12');
+      setAttrSafe(rect, 'height', '12');
+      setAttrSafe(rect, 'rx', '2');
+      setAttrSafe(rect, 'fill', 'currentColor');
     }
-    svg.appendChild(rect);
+    appendChildSafe(svg, rect);
+    return svg;
+  }
+
+  function createWeightIconSvg(dotPx) {
+    const svg = safeCreateElementNS('http://www.w3.org/2000/svg', 'svg');
+    setAttrSafe(svg, 'width', '14');
+    setAttrSafe(svg, 'height', '14');
+    setAttrSafe(svg, 'viewBox', '0 0 14 14');
+    setAttrSafe(svg, 'aria-hidden', 'true');
+    const c = safeCreateElementNS('http://www.w3.org/2000/svg', 'circle');
+    setAttrSafe(c, 'cx', '7');
+    setAttrSafe(c, 'cy', '7');
+    setAttrSafe(c, 'r', String(nativeMathMax(1.4, dotPx / 2)));
+    setAttrSafe(c, 'fill', 'currentColor');
+    appendChildSafe(svg, c);
     return svg;
   }
 
   function openRedactBatchModal(slides) {
     return new Promise((resolve) => {
       const mountTarget = document.body || document.documentElement;
-      if (!mountTarget || !Array.isArray(slides) || slides.length === 0) {
+      if (!mountTarget || !nativeIsArray(slides) || slides.length === 0) {
         resolve({ confirmed: true, slides: slides || [] });
         return;
       }
@@ -6067,27 +6432,39 @@
       let dragStart = null;
       let dragCurrent = null;
       let dragPoints = null;
+      let lastDragViewPt = null;
+      let scrollPanState = null;
+      let activePointerId = null;
       let closed = false;
       let previewW = 1;
       let previewH = 1;
       let rafId = 0;
       let switchSeq = 0;
       let activeMode = 'solid';
-      let lastSolidColor = '#09090b';
-      let lastOutlineColor = '#ef4444';
-      let lastPenColor = '#ef4444';
-      let activeColor = lastSolidColor;
+      let activeWeight = 'md';
+      const modeColors = { solid: '#09090b', outline: '#ef4444', pen: '#ef4444' };
+      let activeColor = modeColors.solid;
       const previewCache = new NativeMap();
       for (let i = 0; i < slides.length; i += 1) {
+        if (!nativeIsArray(slides[i].undoHistory)) {
+          slides[i].undoHistory = [];
+        }
         if (slides[i].preview) {
           mapSet(previewCache, i, slides[i].preview);
         }
       }
 
+      const ctxSave = (c) => (nativeCtxSave ? nativeCtxSave.call(c) : c.save());
+      const ctxRestore = (c) => (nativeCtxRestore ? nativeCtxRestore.call(c) : c.restore());
+      const ctxFillRect = (c, x, y, w, h) =>
+        nativeCtxFillRect ? nativeCtxFillRect.call(c, x, y, w, h) : c.fillRect(x, y, w, h);
+      const ctxStrokeRect = (c, x, y, w, h) =>
+        nativeCtxStrokeRect ? nativeCtxStrokeRect.call(c, x, y, w, h) : c.strokeRect(x, y, w, h);
+
       header.style.paddingBottom = '8px';
       header.style.borderBottom = `1px solid ${palette.border}`;
 
-      const dimEl = document.createElement('span');
+      const dimEl = safeCreateElement('span');
       dimEl.style.fontSize = '11px';
       dimEl.style.fontVariantNumeric = 'tabular-nums';
       dimEl.style.color = palette.muted;
@@ -6095,10 +6472,10 @@
       dimEl.style.border = `1px solid ${palette.border}`;
       dimEl.style.borderRadius = '6px';
       dimEl.style.padding = '2px 7px';
-      titleGroup.appendChild(dimEl);
+      appendChildSafe(titleGroup, dimEl);
 
-      const skippedTagEl = document.createElement('span');
-      skippedTagEl.textContent = i18n.redactSkippedTag;
+      const skippedTagEl = safeCreateElement('span');
+      setSafeText(skippedTagEl, i18n.redactSkippedTag);
       skippedTagEl.style.display = 'none';
       skippedTagEl.style.fontSize = '11px';
       skippedTagEl.style.fontWeight = '600';
@@ -6107,15 +6484,15 @@
       skippedTagEl.style.background = palette.warnBg;
       skippedTagEl.style.border = `1px solid ${palette.warnBorder}`;
       skippedTagEl.style.color = palette.warnText;
-      titleGroup.appendChild(skippedTagEl);
+      appendChildSafe(titleGroup, skippedTagEl);
 
-      const navGroup = document.createElement('div');
+      const navGroup = safeCreateElement('div');
       navGroup.style.display = isBatch ? 'flex' : 'none';
       navGroup.style.alignItems = 'center';
       navGroup.style.gap = '6px';
       navGroup.style.flexWrap = 'wrap';
 
-      const navStepper = document.createElement('div');
+      const navStepper = safeCreateElement('div');
       navStepper.style.display = 'inline-flex';
       navStepper.style.alignItems = 'center';
       navStepper.style.gap = '2px';
@@ -6140,7 +6517,7 @@
       skipBtn.style.height = '30px';
       skipBtn.style.padding = '0 10px';
 
-      const pillBar = document.createElement('div');
+      const pillBar = safeCreateElement('div');
       pillBar.style.display = 'inline-flex';
       pillBar.style.alignItems = 'center';
       pillBar.style.gap = '2px';
@@ -6166,7 +6543,7 @@
       const pillFlowElements = [];
       let slideSelect = null;
       if (isBatch) {
-        navStepper.appendChild(prevBtn);
+        appendChildSafe(navStepper, prevBtn);
         for (let i = 0; i < slides.length; i += 1) {
           const pill = createModalButton(palette, String(i + 1), false);
           pill.style.height = '26px';
@@ -6175,42 +6552,42 @@
           pill.style.borderRadius = '6px';
           pill.style.border = '1px solid transparent';
           pill.style.fontVariantNumeric = 'tabular-nums';
-          pill.addEventListener('click', () => switchSlide(i));
-          pillButtons.push(pill);
+          nativeAddEventListener.call(pill, 'click', () => switchSlide(i));
+          nativeArrayPush.call(pillButtons, pill);
           if (i === 1 && leftDotsBtn) {
-            pillBar.appendChild(leftDotsBtn);
-            pillFlowElements.push(leftDotsBtn);
+            appendChildSafe(pillBar, leftDotsBtn);
+            nativeArrayPush.call(pillFlowElements, leftDotsBtn);
           }
           if (i === slides.length - 1 && rightDotsBtn) {
-            pillBar.appendChild(rightDotsBtn);
-            pillFlowElements.push(rightDotsBtn);
+            appendChildSafe(pillBar, rightDotsBtn);
+            nativeArrayPush.call(pillFlowElements, rightDotsBtn);
           }
-          pillBar.appendChild(pill);
-          pillFlowElements.push(pill);
+          appendChildSafe(pillBar, pill);
+          nativeArrayPush.call(pillFlowElements, pill);
         }
         if (leftDotsBtn) {
-          leftDotsBtn.addEventListener('click', () => {
-            switchSlide(Math.max(1, Math.floor(windowBounds.startIdx / 2)));
+          nativeAddEventListener.call(leftDotsBtn, 'click', () => {
+            switchSlide(nativeMathMax(1, nativeMathFloor(windowBounds.startIdx / 2)));
           });
         }
         if (rightDotsBtn) {
-          rightDotsBtn.addEventListener('click', () => {
+          nativeAddEventListener.call(rightDotsBtn, 'click', () => {
             switchSlide(
-              Math.min(
+              nativeMathMin(
                 slides.length - 2,
-                Math.ceil((windowBounds.endIdx + slides.length - 1) / 2)
+                nativeMathCeil((windowBounds.endIdx + slides.length - 1) / 2)
               )
             );
           });
         }
-        navStepper.appendChild(pillBar);
-        navStepper.appendChild(nextBtn);
-        navGroup.appendChild(navStepper);
+        appendChildSafe(navStepper, pillBar);
+        appendChildSafe(navStepper, nextBtn);
+        appendChildSafe(navGroup, navStepper);
 
         if (slides.length > 7) {
-          slideSelect = document.createElement('select');
+          slideSelect = safeCreateElement('select');
           slideSelect.className = 'cz-select';
-          slideSelect.setAttribute('aria-label', i18n.redactModalTitle);
+          setAttrSafe(slideSelect, 'aria-label', i18n.redactModalTitle);
           slideSelect.style.appearance = 'auto';
           slideSelect.style.height = '30px';
           slideSelect.style.padding = '0 8px';
@@ -6223,32 +6600,32 @@
           slideSelect.style.fontVariantNumeric = 'tabular-nums';
           slideSelect.style.cursor = 'pointer';
           for (let i = 0; i < slides.length; i += 1) {
-            const opt = document.createElement('option');
+            const opt = safeCreateElement('option');
             opt.value = String(i);
-            opt.textContent = `${i + 1} / ${slides.length}`;
-            slideSelect.appendChild(opt);
+            setSafeText(opt, `${i + 1} / ${slides.length}`);
+            appendChildSafe(slideSelect, opt);
           }
-          slideSelect.addEventListener('change', () => {
+          nativeAddEventListener.call(slideSelect, 'change', () => {
             const target = Number(slideSelect.value);
             if (Number.isInteger(target) && target >= 0 && target < slides.length) {
               switchSlide(target);
               focusCanvasQuiet();
             }
           });
-          navGroup.appendChild(slideSelect);
+          appendChildSafe(navGroup, slideSelect);
         }
 
-        navGroup.appendChild(skipBtn);
-        header.appendChild(navGroup);
+        appendChildSafe(navGroup, skipBtn);
+        appendChildSafe(header, navGroup);
       }
 
-      const toolBar = document.createElement('div');
+      const toolBar = safeCreateElement('div');
       toolBar.style.display = 'flex';
       toolBar.style.alignItems = 'center';
-      toolBar.style.gap = '10px';
+      toolBar.style.gap = '8px';
       toolBar.style.flexWrap = 'wrap';
 
-      const modeGroup = document.createElement('div');
+      const modeGroup = safeCreateElement('div');
       modeGroup.style.display = 'inline-flex';
       modeGroup.style.alignItems = 'center';
       modeGroup.style.gap = '2px';
@@ -6260,31 +6637,38 @@
       function makeModeButton(label, toolMode) {
         const btn = createModalButton(palette, '', false);
         btn.style.height = '26px';
-        btn.style.padding = '0 10px';
-        btn.style.gap = '5px';
+        btn.style.padding = '0 8px';
+        btn.style.gap = '4px';
         btn.style.borderRadius = '6px';
         btn.style.border = '1px solid transparent';
-        btn.appendChild(createRedactToolIconSvg(toolMode));
-        const txt = document.createElement('span');
-        txt.textContent = label;
-        btn.appendChild(txt);
+        appendChildSafe(btn, createRedactToolIconSvg(toolMode));
+        const txt = safeCreateElement('span');
+        setSafeText(txt, label);
+        appendChildSafe(btn, txt);
         return btn;
+      }
+
+      function makeBarDivider() {
+        const div = safeCreateElement('span');
+        setAttrSafe(div, 'aria-hidden', 'true');
+        div.style.width = '1px';
+        div.style.height = '18px';
+        div.style.background = palette.border;
+        return div;
       }
 
       const coverModeBtn = makeModeButton(i18n.redactModeCover, 'solid');
       const outlineModeBtn = makeModeButton(i18n.redactModeOutline, 'outline');
       const penModeBtn = makeModeButton(i18n.redactModePen, 'pen');
-      modeGroup.appendChild(coverModeBtn);
-      modeGroup.appendChild(outlineModeBtn);
-      modeGroup.appendChild(penModeBtn);
+      const cropModeBtn = makeModeButton(i18n.redactModeCrop, 'crop');
+      const scrollModeBtn = makeModeButton(i18n.redactModeScroll, 'scroll');
+      appendChildSafe(modeGroup, coverModeBtn);
+      appendChildSafe(modeGroup, outlineModeBtn);
+      appendChildSafe(modeGroup, penModeBtn);
+      appendChildSafe(modeGroup, cropModeBtn);
+      appendChildSafe(modeGroup, scrollModeBtn);
 
-      const toolDivider = document.createElement('span');
-      toolDivider.setAttribute('aria-hidden', 'true');
-      toolDivider.style.width = '1px';
-      toolDivider.style.height = '18px';
-      toolDivider.style.background = palette.border;
-
-      const colorGroup = document.createElement('div');
+      const colorGroup = safeCreateElement('div');
       colorGroup.style.display = 'inline-flex';
       colorGroup.style.alignItems = 'center';
       colorGroup.style.gap = '7px';
@@ -6293,11 +6677,11 @@
       const colorButtons = [];
       for (let i = 0; i < REDACT_COLORS.length; i += 1) {
         const spec = REDACT_COLORS[i];
-        const swatch = document.createElement('button');
+        const swatch = safeCreateElement('button');
         swatch.type = 'button';
         swatch.className = 'cz-btn';
         const colorName = i18n[spec.labelKey] || spec.hex;
-        swatch.setAttribute('aria-label', colorName);
+        setAttrSafe(swatch, 'aria-label', colorName);
         swatch.title = colorName;
         swatch.style.appearance = 'none';
         swatch.style.width = '20px';
@@ -6307,18 +6691,56 @@
         swatch.style.cursor = 'pointer';
         swatch.style.background = spec.hex;
         swatch.style.border = `1px solid ${spec.hex === '#ffffff' ? '#a1a1aa' : palette.border}`;
-        swatch.addEventListener('click', (e) => {
-          setActiveColor(spec.hex, e.detail > 0);
+        nativeAddEventListener.call(swatch, 'click', (e) => {
+          setActiveColor(spec.hex, (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
         });
-        colorButtons.push({ hex: spec.hex, btn: swatch });
-        colorGroup.appendChild(swatch);
+        nativeArrayPush.call(colorButtons, { hex: spec.hex, btn: swatch });
+        appendChildSafe(colorGroup, swatch);
       }
 
-      toolBar.appendChild(modeGroup);
-      toolBar.appendChild(toolDivider);
-      toolBar.appendChild(colorGroup);
+      const weightDivider = makeBarDivider();
+      const weightGroup = safeCreateElement('div');
+      weightGroup.style.display = 'inline-flex';
+      weightGroup.style.alignItems = 'center';
+      weightGroup.style.gap = '2px';
+      weightGroup.style.padding = '2px';
+      weightGroup.style.borderRadius = '8px';
+      weightGroup.style.background = palette.surface;
+      weightGroup.style.border = `1px solid ${palette.border}`;
 
-      const stage = document.createElement('div');
+      const weightButtons = [];
+      for (let i = 0; i < REDACT_WEIGHTS.length; i += 1) {
+        const spec = REDACT_WEIGHTS[i];
+        const wBtn = createModalButton(palette, '', false);
+        const wLabel = i18n[spec.labelKey] || spec.id;
+        setAttrSafe(wBtn, 'aria-label', wLabel);
+        wBtn.title = wLabel;
+        wBtn.style.height = '24px';
+        wBtn.style.width = '24px';
+        wBtn.style.padding = '0';
+        wBtn.style.borderRadius = '6px';
+        wBtn.style.border = '1px solid transparent';
+        appendChildSafe(wBtn, createWeightIconSvg(spec.dotPx));
+        nativeAddEventListener.call(wBtn, 'click', (e) => {
+          setActiveWeight(spec.id, (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+        });
+        nativeArrayPush.call(weightButtons, { id: spec.id, btn: wBtn });
+        appendChildSafe(weightGroup, wBtn);
+      }
+
+      const subToolGroup = safeCreateElement('div');
+      subToolGroup.style.display = 'inline-flex';
+      subToolGroup.style.alignItems = 'center';
+      subToolGroup.style.gap = '9px';
+      subToolGroup.style.flexWrap = 'wrap';
+      appendChildSafe(subToolGroup, colorGroup);
+      appendChildSafe(subToolGroup, weightDivider);
+      appendChildSafe(subToolGroup, weightGroup);
+
+      appendChildSafe(toolBar, modeGroup);
+      appendChildSafe(toolBar, subToolGroup);
+
+      const stage = safeCreateElement('div');
       stage.style.display = 'flex';
       stage.style.flex = '1 1 auto';
       stage.style.minHeight = '140px';
@@ -6330,10 +6752,10 @@
       stage.style.border = `1px solid ${palette.border}`;
       stage.style.padding = '8px';
 
-      const canvas = document.createElement('canvas');
+      const canvas = safeCreateElement('canvas');
       canvas.tabIndex = 0;
-      canvas.setAttribute('role', 'application');
-      canvas.setAttribute('aria-label', i18n.redactModalTitle);
+      setAttrSafe(canvas, 'role', 'application');
+      setAttrSafe(canvas, 'aria-label', i18n.redactModalTitle);
       canvas.style.display = 'block';
       canvas.style.maxWidth = 'min(86vw, 900px)';
       canvas.style.maxHeight = 'min(62vh, calc(92vh - 245px))';
@@ -6343,16 +6765,20 @@
       canvas.style.touchAction = 'none';
       canvas.style.userSelect = 'none';
       canvas.style.outline = 'none';
-      canvas.addEventListener('focus', () => {
+      nativeAddEventListener.call(canvas, 'focus', () => {
         canvas.style.boxShadow = `0 0 0 2px ${palette.accent}`;
       });
-      canvas.addEventListener('blur', () => {
+      nativeAddEventListener.call(canvas, 'blur', () => {
         canvas.style.boxShadow = 'none';
       });
 
-      const ctx = canvas.getContext('2d');
-      const committedCanvas = document.createElement('canvas');
-      const committedCtx = committedCanvas.getContext('2d');
+      const ctx = nativeCanvasGetContext
+        ? nativeCanvasGetContext.call(canvas, '2d')
+        : canvas.getContext('2d');
+      const committedCanvas = safeCreateElement('canvas');
+      const committedCtx = nativeCanvasGetContext
+        ? nativeCanvasGetContext.call(committedCanvas, '2d')
+        : committedCanvas.getContext('2d');
 
       const addBoxBtn = createModalButton(palette, i18n.redactBtnAddBox, false);
       const undoBtn = createModalButton(palette, i18n.redactBtnUndo, false);
@@ -6365,8 +6791,12 @@
       }
 
       function cancelScheduledPreviewDraw() {
-        if (rafId !== 0 && typeof window.cancelAnimationFrame === 'function') {
-          window.cancelAnimationFrame(rafId);
+        if (rafId !== 0) {
+          if (nativeCAF) {
+            nativeCAF(rafId);
+          } else if (typeof window.cancelAnimationFrame === 'function') {
+            window.cancelAnimationFrame(rafId);
+          }
         }
         rafId = 0;
       }
@@ -6410,12 +6840,116 @@
         }
       }
 
-      function drawSlideBaseToContext(targetCtx, slide) {
+      function resetActiveDrag() {
+        if (activePointerId !== null) {
+          try {
+            const held = nativeHasPointerCapture
+              ? nativeHasPointerCapture.call(canvas, activePointerId)
+              : typeof canvas.hasPointerCapture === 'function'
+                ? canvas.hasPointerCapture(activePointerId)
+                : false;
+            if (held) {
+              if (nativeReleasePointerCapture) {
+                nativeReleasePointerCapture.call(canvas, activePointerId);
+              } else if (typeof canvas.releasePointerCapture === 'function') {
+                canvas.releasePointerCapture(activePointerId);
+              }
+            }
+          } catch {
+            // Ignore pointer capture release errors cleanly.
+          }
+        }
+        dragStart = null;
+        dragCurrent = null;
+        dragPoints = null;
+        lastDragViewPt = null;
+        scrollPanState = null;
+        activePointerId = null;
+      }
+
+      function getEffectiveView(slide) {
+        if (activeMode === 'crop' || !slide || !isActiveCropRegion(slide.crop)) {
+          return { x: 0, y: 0, w: 1, h: 1 };
+        }
+        return normalizeCropRegion(slide.crop);
+      }
+
+      function applyCanvasViewportLayout(w, h, effW) {
+        const isTallPortrait = h > w * 1.85;
+        canvas.style.aspectRatio = `${w} / ${h}`;
+        if (isTallPortrait) {
+          const cappedW = nativeMathMin(540, effW || w);
+          stage.style.alignItems = 'flex-start';
+          canvas.style.maxWidth = 'min(100%, 720px)';
+          canvas.style.maxHeight = 'none';
+          canvas.style.width = `min(100%, ${cappedW}px)`;
+          canvas.style.height = 'auto';
+        } else {
+          stage.style.alignItems = 'center';
+          canvas.style.maxWidth = 'min(86vw, 900px)';
+          canvas.style.maxHeight = 'min(62vh, calc(92vh - 245px))';
+          canvas.style.width = 'auto';
+          canvas.style.height = 'auto';
+        }
+      }
+
+      function syncViewportDimensions(slide) {
+        const view = getEffectiveView(slide);
+        const effW = nativeMathMax(1, nativeMathRound(slide.width * view.w));
+        const effH = nativeMathMax(1, nativeMathRound(slide.height * view.h));
+        const scale = nativeMathMin(1, MAX_PREVIEW_EDGE / nativeMathMax(effW, effH));
+        const nextW = nativeMathMax(1, nativeMathRound(effW * scale));
+        const nextH = nativeMathMax(1, nativeMathRound(effH * scale));
+        if (nextW !== previewW || nextH !== previewH) {
+          previewW = nextW;
+          previewH = nextH;
+          canvas.width = previewW;
+          canvas.height = previewH;
+          committedCanvas.width = previewW;
+          committedCanvas.height = previewH;
+        }
+        applyCanvasViewportLayout(previewW, previewH, effW);
+      }
+
+      function drawSlideBaseToContext(targetCtx, slide, view) {
         if (slide.preview && slide.preview.source) {
-          targetCtx.drawImage(slide.preview.source, 0, 0, previewW, previewH);
+          const srcW = slide.preview.width || previewW;
+          const srcH = slide.preview.height || previewH;
+          if (isActiveCropRegion(view)) {
+            if (nativeCtxDrawImage) {
+              nativeCtxDrawImage.call(
+                targetCtx,
+                slide.preview.source,
+                view.x * srcW,
+                view.y * srcH,
+                view.w * srcW,
+                view.h * srcH,
+                0,
+                0,
+                previewW,
+                previewH
+              );
+            } else {
+              targetCtx.drawImage(
+                slide.preview.source,
+                view.x * srcW,
+                view.y * srcH,
+                view.w * srcW,
+                view.h * srcH,
+                0,
+                0,
+                previewW,
+                previewH
+              );
+            }
+          } else if (nativeCtxDrawImage) {
+            nativeCtxDrawImage.call(targetCtx, slide.preview.source, 0, 0, previewW, previewH);
+          } else {
+            targetCtx.drawImage(slide.preview.source, 0, 0, previewW, previewH);
+          }
         } else {
           targetCtx.fillStyle = '#18181b';
-          targetCtx.fillRect(0, 0, previewW, previewH);
+          ctxFillRect(targetCtx, 0, 0, previewW, previewH);
         }
       }
 
@@ -6424,9 +6958,37 @@
           return;
         }
         const slide = getCurrentSlide();
+        const view = getEffectiveView(slide);
         committedCtx.clearRect(0, 0, previewW, previewH);
-        drawSlideBaseToContext(committedCtx, slide);
-        applyRedactionBoxes(committedCtx, slide.boxes, previewW, previewH);
+        drawSlideBaseToContext(committedCtx, slide, view);
+        const viewBoxes = mapBoxesToRegion(slide.boxes, view);
+        applyRedactionBoxes(committedCtx, viewBoxes, previewW, previewH);
+      }
+
+      function drawCropOverlay(rectNorm) {
+        if (!rectNorm) {
+          return;
+        }
+        const cx = nativeMathRound(rectNorm.x * previewW);
+        const cy = nativeMathRound(rectNorm.y * previewH);
+        const cw = nativeMathMax(1, nativeMathRound(rectNorm.w * previewW));
+        const ch = nativeMathMax(1, nativeMathRound(rectNorm.h * previewH));
+        ctxSave(ctx);
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.62)';
+        if (cy > 0) ctxFillRect(ctx, 0, 0, previewW, cy);
+        if (cy + ch < previewH) ctxFillRect(ctx, 0, cy + ch, previewW, previewH - (cy + ch));
+        if (cx > 0) ctxFillRect(ctx, 0, cy, cx, ch);
+        if (cx + cw < previewW) ctxFillRect(ctx, cx + cw, cy, previewW - (cx + cw), ch);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctxStrokeRect(ctx, cx + 1, cy + 1, nativeMathMax(1, cw - 2), nativeMathMax(1, ch - 2));
+        ctx.fillStyle = '#0a84ff';
+        const hs = 7;
+        ctxFillRect(ctx, cx - 2, cy - 2, hs, hs);
+        ctxFillRect(ctx, cx + cw - hs + 2, cy - 2, hs, hs);
+        ctxFillRect(ctx, cx - 2, cy + ch - hs + 2, hs, hs);
+        ctxFillRect(ctx, cx + cw - hs + 2, cy + ch - hs + 2, hs, hs);
+        ctxRestore(ctx);
       }
 
       function redrawPreview() {
@@ -6434,69 +6996,109 @@
           return;
         }
         const slide = getCurrentSlide();
+        const view = getEffectiveView(slide);
         ctx.clearRect(0, 0, previewW, previewH);
         if (committedCtx) {
-          ctx.drawImage(committedCanvas, 0, 0);
+          if (nativeCtxDrawImage) {
+            nativeCtxDrawImage.call(ctx, committedCanvas, 0, 0);
+          } else {
+            ctx.drawImage(committedCanvas, 0, 0);
+          }
         } else {
-          drawSlideBaseToContext(ctx, slide);
-          applyRedactionBoxes(ctx, slide.boxes, previewW, previewH);
+          drawSlideBaseToContext(ctx, slide, view);
+          applyRedactionBoxes(ctx, mapBoxesToRegion(slide.boxes, view), previewW, previewH);
         }
         if (
           !slide.skipped &&
+          activeMode !== 'scroll' &&
           selectedBoxIdx >= 0 &&
           selectedBoxIdx < slide.boxes.length
         ) {
-          const selBounds = getStrokeBoundingBox(slide.boxes[selectedBoxIdx]);
+          const viewSelBox = mapBoxesToRegion([slide.boxes[selectedBoxIdx]], view)[0];
+          const selBounds = getStrokeBoundingBox(viewSelBox);
           if (selBounds) {
-            const sx = Math.floor(selBounds.x * previewW);
-            const sy = Math.floor(selBounds.y * previewH);
-            const sw = Math.max(2, Math.ceil(selBounds.w * previewW));
-            const sh = Math.max(2, Math.ceil(selBounds.h * previewH));
-            ctx.save();
+            const sx = nativeMathFloor(selBounds.x * previewW);
+            const sy = nativeMathFloor(selBounds.y * previewH);
+            const sw = nativeMathMax(2, nativeMathCeil(selBounds.w * previewW));
+            const sh = nativeMathMax(2, nativeMathCeil(selBounds.h * previewH));
+            ctxSave(ctx);
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2;
-            ctx.strokeRect(sx, sy, sw, sh);
+            ctxStrokeRect(ctx, sx, sy, sw, sh);
             ctx.strokeStyle = '#0a84ff';
             ctx.lineWidth = 2;
             ctx.setLineDash([4, 3]);
-            ctx.strokeRect(sx, sy, sw, sh);
+            ctxStrokeRect(ctx, sx, sy, sw, sh);
             ctx.setLineDash([]);
             ctx.fillStyle = '#0a84ff';
             const hSize = 6;
-            ctx.fillRect(sx - 3, sy - 3, hSize, hSize);
-            ctx.fillRect(sx + sw - 3, sy - 3, hSize, hSize);
-            ctx.fillRect(sx - 3, sy + sh - 3, hSize, hSize);
-            ctx.fillRect(sx + sw - 3, sy + sh - 3, hSize, hSize);
-            ctx.restore();
+            ctxFillRect(ctx, sx - 3, sy - 3, hSize, hSize);
+            ctxFillRect(ctx, sx + sw - 3, sy - 3, hSize, hSize);
+            ctxFillRect(ctx, sx - 3, sy + sh - 3, hSize, hSize);
+            ctxFillRect(ctx, sx + sw - 3, sy + sh - 3, hSize, hSize);
+            ctxRestore(ctx);
           }
         }
-        if (dragPoints && dragPoints.length >= 2) {
-          const penWeight = Math.max(3, Math.round(Math.max(previewW, previewH) * 0.0065));
-          ctx.save();
-          drawPenStroke(ctx, { mode: 'pen', color: activeColor, points: dragPoints }, previewW, previewH, penWeight);
-          ctx.restore();
+        if (activeMode === 'crop') {
+          const liveCrop =
+            dragStart && dragCurrent
+              ? {
+                  x: nativeMathMin(dragStart.x, dragCurrent.x),
+                  y: nativeMathMin(dragStart.y, dragCurrent.y),
+                  w: nativeMathAbs(dragCurrent.x - dragStart.x),
+                  h: nativeMathAbs(dragCurrent.y - dragStart.y),
+                }
+              : isActiveCropRegion(slide.crop)
+                ? normalizeCropRegion(slide.crop)
+                : null;
+          drawCropOverlay(liveCrop);
+        } else if (dragPoints && dragPoints.length >= 2) {
+          const weights = computeToolStrokeWeights(previewW, previewH, activeWeight);
+          const previewStroke = mapBoxesToRegion(
+            [{ mode: 'pen', color: activeColor, weight: activeWeight, points: dragPoints }],
+            view
+          )[0];
+          ctxSave(ctx);
+          drawPenStroke(ctx, previewStroke, previewW, previewH, weights.pen);
+          ctxRestore(ctx);
         } else if (dragStart && dragCurrent) {
-          const x = Math.min(dragStart.x, dragCurrent.x);
-          const y = Math.min(dragStart.y, dragCurrent.y);
-          const w = Math.abs(dragCurrent.x - dragStart.x);
-          const h = Math.abs(dragCurrent.y - dragStart.y);
-          ctx.save();
-          ctx.strokeStyle = activeColor === '#09090b' ? '#ffffff' : activeColor;
-          ctx.lineWidth = activeMode === 'outline' ? 3 : 2;
-          if (activeMode !== 'outline') {
+          const x = nativeMathMin(dragStart.x, dragCurrent.x);
+          const y = nativeMathMin(dragStart.y, dragCurrent.y);
+          const w = nativeMathAbs(dragCurrent.x - dragStart.x);
+          const h = nativeMathAbs(dragCurrent.y - dragStart.y);
+          const weights = computeToolStrokeWeights(previewW, previewH, activeWeight);
+          ctxSave(ctx);
+          if (activeMode === 'outline') {
+            ctx.strokeStyle = activeColor;
+            ctx.lineWidth = nativeMathMax(2, weights.outline);
+            ctxStrokeRect(ctx, x * previewW, y * previewH, w * previewW, h * previewH);
+            if (activeColor === '#09090b') {
+              ctx.strokeStyle = '#0a84ff';
+              ctx.lineWidth = 1;
+              ctxStrokeRect(
+                ctx,
+                x * previewW - 1,
+                y * previewH - 1,
+                w * previewW + 2,
+                h * previewH + 2
+              );
+            }
+          } else {
+            ctx.strokeStyle = activeColor === '#09090b' ? '#ffffff' : activeColor;
+            ctx.lineWidth = 2;
             ctx.fillStyle = activeColor;
             ctx.globalAlpha = 0.25;
-            ctx.fillRect(x * previewW, y * previewH, w * previewW, h * previewH);
+            ctxFillRect(ctx, x * previewW, y * previewH, w * previewW, h * previewH);
             ctx.globalAlpha = 1;
             ctx.setLineDash([5, 4]);
+            ctxStrokeRect(ctx, x * previewW, y * previewH, w * previewW, h * previewH);
+            if (activeColor === '#09090b') {
+              ctx.strokeStyle = '#0a84ff';
+              ctx.lineWidth = 2;
+              ctxStrokeRect(ctx, x * previewW, y * previewH, w * previewW, h * previewH);
+            }
           }
-          ctx.strokeRect(x * previewW, y * previewH, w * previewW, h * previewH);
-          if (activeMode === 'solid' && activeColor === '#09090b') {
-            ctx.strokeStyle = '#0a84ff';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x * previewW, y * previewH, w * previewW, h * previewH);
-          }
-          ctx.restore();
+          ctxRestore(ctx);
         }
       }
 
@@ -6506,19 +7108,36 @@
       }
 
       function schedulePreviewDraw() {
-        if (typeof window.requestAnimationFrame !== 'function') {
+        const rafFn =
+          nativeRAF ||
+          (typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame : null);
+        if (!rafFn) {
           redrawPreview();
           return;
         }
         if (rafId !== 0) {
           return;
         }
-        rafId = window.requestAnimationFrame(() => {
+        rafId = rafFn(() => {
           rafId = 0;
           if (!closed) {
             redrawPreview();
           }
         });
+      }
+
+      function refreshSlideCanvas(syncViewport) {
+        const slide = getCurrentSlide();
+        if (syncViewport) {
+          syncViewportDimensions(slide);
+        }
+        rebuildCommittedPreview();
+        refreshBatchUi();
+        drawPreviewNow();
+      }
+
+      function stepSlide(delta) {
+        switchSlide((activeIdx + delta + slides.length) % slides.length);
       }
 
       function getBatchVisiblePills(total, curIdx) {
@@ -6530,13 +7149,13 @@
           return { visible, leftGap: false, rightGap: false, startIdx: 0, endIdx: total - 1 };
         }
         const visible = new NativeSet([0, total - 1]);
-        let startIdx = Math.max(1, curIdx - 1);
-        let endIdx = Math.min(total - 2, curIdx + 1);
+        let startIdx = nativeMathMax(1, curIdx - 1);
+        let endIdx = nativeMathMin(total - 2, curIdx + 1);
         if (curIdx <= 2) {
           startIdx = 1;
-          endIdx = Math.min(total - 2, 3);
+          endIdx = nativeMathMin(total - 2, 3);
         } else if (curIdx >= total - 3) {
-          startIdx = Math.max(1, total - 4);
+          startIdx = nativeMathMax(1, total - 4);
           endIdx = total - 2;
         }
         if (startIdx === 2) {
@@ -6570,46 +7189,67 @@
         btn.style.color = active ? palette.accentText : palette.text;
         btn.style.borderColor = active ? palette.accent : 'transparent';
         btn.style.fontWeight = active ? '600' : '500';
-        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        setAttrSafe(btn, 'aria-pressed', active ? 'true' : 'false');
       }
 
       function refreshToolBarUi() {
         const slide = getCurrentSlide();
         const disabled = Boolean(slide && slide.skipped);
+        const colorDisabled = disabled || activeMode === 'crop' || activeMode === 'scroll';
+        const weightEnabled = !disabled && (activeMode === 'outline' || activeMode === 'pen');
         styleModeButton(coverModeBtn, activeMode === 'solid');
         styleModeButton(outlineModeBtn, activeMode === 'outline');
         styleModeButton(penModeBtn, activeMode === 'pen');
+        styleModeButton(cropModeBtn, activeMode === 'crop');
+        styleModeButton(scrollModeBtn, activeMode === 'scroll');
         coverModeBtn.disabled = disabled;
         outlineModeBtn.disabled = disabled;
         penModeBtn.disabled = disabled;
+        cropModeBtn.disabled = disabled;
+        scrollModeBtn.disabled = disabled;
 
         toolBar.style.opacity = disabled ? '0.45' : '1';
+        colorGroup.style.opacity = !disabled && colorDisabled ? '0.38' : '1';
         for (let i = 0; i < colorButtons.length; i += 1) {
           const item = colorButtons[i];
-          const isSelected = item.hex === activeColor;
-          item.btn.disabled = disabled;
-          item.btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+          const isSelected = !colorDisabled && item.hex === activeColor;
+          item.btn.disabled = colorDisabled;
+          setAttrSafe(item.btn, 'aria-pressed', isSelected ? 'true' : 'false');
           item.btn.style.boxShadow = isSelected
             ? `0 0 0 2px ${palette.bg}, 0 0 0 4px ${palette.accent}`
             : 'none';
           item.btn.style.transform = isSelected ? 'scale(1.1)' : 'scale(1)';
         }
+
+        weightGroup.style.opacity = !disabled && !weightEnabled ? '0.38' : '1';
+        for (let i = 0; i < weightButtons.length; i += 1) {
+          const item = weightButtons[i];
+          const isSelected = item.id === activeWeight;
+          item.btn.disabled = !weightEnabled;
+          styleModeButton(item.btn, isSelected && weightEnabled);
+        }
       }
 
       function setActiveMode(nextMode, refocus) {
         const normalized =
-          nextMode === 'outline' ? 'outline' : nextMode === 'pen' ? 'pen' : 'solid';
+          nextMode === 'outline' ||
+          nextMode === 'pen' ||
+          nextMode === 'crop' ||
+          nextMode === 'scroll'
+            ? nextMode
+            : 'solid';
         activeMode = normalized;
-        activeColor =
-          normalized === 'outline'
-            ? lastOutlineColor
-            : normalized === 'pen'
-              ? lastPenColor
-              : lastSolidColor;
+        if (normalized === 'outline' || normalized === 'pen' || normalized === 'solid') {
+          activeColor = modeColors[normalized];
+        }
         // Clear box selection so switching tools never alters prior boxes.
         selectedBoxIdx = -1;
-        refreshToolBarUi();
-        drawPreviewNow();
+        resetActiveDrag();
+        if (normalized === 'crop') {
+          stage.scrollTop = 0;
+          stage.scrollLeft = 0;
+        }
+        refreshSlideCanvas(true);
         if (refocus) {
           focusCanvasQuiet();
         }
@@ -6620,12 +7260,10 @@
           return;
         }
         activeColor = hex;
-        if (activeMode === 'outline') {
-          lastOutlineColor = hex;
-        } else if (activeMode === 'pen') {
-          lastPenColor = hex;
+        if (activeMode === 'outline' || activeMode === 'pen') {
+          modeColors[activeMode] = hex;
         } else {
-          lastSolidColor = hex;
+          modeColors.solid = hex;
         }
         refreshToolBarUi();
         drawPreviewNow();
@@ -6634,9 +7272,33 @@
         }
       }
 
-      coverModeBtn.addEventListener('click', (e) => setActiveMode('solid', e.detail > 0));
-      outlineModeBtn.addEventListener('click', (e) => setActiveMode('outline', e.detail > 0));
-      penModeBtn.addEventListener('click', (e) => setActiveMode('pen', e.detail > 0));
+      function setActiveWeight(weightId, refocus) {
+        if (!weightId || !nativeHasOwn(REDACT_WEIGHT_MAP, weightId)) {
+          return;
+        }
+        activeWeight = weightId;
+        refreshToolBarUi();
+        drawPreviewNow();
+        if (refocus) {
+          focusCanvasQuiet();
+        }
+      }
+
+      nativeAddEventListener.call(coverModeBtn, 'click', (e) => {
+        setActiveMode('solid', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
+      nativeAddEventListener.call(outlineModeBtn, 'click', (e) => {
+        setActiveMode('outline', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
+      nativeAddEventListener.call(penModeBtn, 'click', (e) => {
+        setActiveMode('pen', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
+      nativeAddEventListener.call(cropModeBtn, 'click', (e) => {
+        setActiveMode('crop', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
+      nativeAddEventListener.call(scrollModeBtn, 'click', (e) => {
+        setActiveMode('scroll', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
 
       function refreshBatchUi() {
         const slide = getCurrentSlide();
@@ -6644,21 +7306,37 @@
           selectedBoxIdx = slide.boxes.length - 1;
         }
         const counterStr = isBatch ? ` (${activeIdx + 1}/${slides.length})` : '';
-        titleEl.textContent = `${i18n.redactModalTitle}${counterStr}`;
-        dimEl.textContent = `${slide.width}×${slide.height}`;
+        setSafeText(titleEl, `${i18n.redactModalTitle}${counterStr}`);
+        const hasCrop = isActiveCropRegion(slide.crop);
+        const effCrop = hasCrop ? normalizeCropRegion(slide.crop) : null;
+        const shownW = effCrop
+          ? nativeMathMax(1, nativeMathRound(slide.width * effCrop.w))
+          : slide.width;
+        const shownH = effCrop
+          ? nativeMathMax(1, nativeMathRound(slide.height * effCrop.h))
+          : slide.height;
+        setSafeText(dimEl, `${shownW}×${shownH}`);
         skippedTagEl.style.display = slide.skipped ? 'inline-block' : 'none';
         canvas.style.opacity = slide.skipped ? '0.35' : '1';
-        canvas.style.cursor = slide.skipped ? 'not-allowed' : 'crosshair';
+        canvas.style.touchAction = activeMode === 'scroll' && !slide.skipped ? 'pan-x pan-y' : 'none';
+        canvas.style.cursor = slide.skipped
+          ? 'not-allowed'
+          : activeMode === 'scroll'
+            ? scrollPanState
+              ? 'grabbing'
+              : 'grab'
+            : 'crosshair';
 
         addBoxBtn.disabled = slide.skipped;
         addBoxBtn.style.opacity = slide.skipped ? '0.45' : '1';
         refreshToolBarUi();
 
-        const emptyBoxes = slide.boxes.length === 0 || slide.skipped;
-        undoBtn.disabled = emptyBoxes;
-        clearBtn.disabled = emptyBoxes;
-        undoBtn.style.opacity = emptyBoxes ? '0.45' : '1';
-        clearBtn.style.opacity = emptyBoxes ? '0.45' : '1';
+        const hasUndoHistory = nativeIsArray(slide.undoHistory) && slide.undoHistory.length > 0;
+        const hasEdits = slide.boxes.length > 0 || hasCrop;
+        undoBtn.disabled = slide.skipped || (!hasEdits && !hasUndoHistory);
+        clearBtn.disabled = slide.skipped || !hasEdits;
+        undoBtn.style.opacity = undoBtn.disabled ? '0.45' : '1';
+        clearBtn.style.opacity = clearBtn.disabled ? '0.45' : '1';
 
         let includedCount = 0;
         for (let i = 0; i < slides.length; i += 1) {
@@ -6666,12 +7344,15 @@
             includedCount += 1;
           }
         }
-        sendBtn.textContent = isBatch ? `${i18n.redactBtnSend} (${includedCount})` : i18n.redactBtnSend;
+        setSafeText(
+          sendBtn,
+          isBatch ? `${i18n.redactBtnSend} (${includedCount})` : i18n.redactBtnSend
+        );
         sendBtn.disabled = includedCount === 0;
         sendBtn.style.opacity = includedCount === 0 ? '0.45' : '1';
 
         if (isBatch) {
-          skipBtn.textContent = slide.skipped ? i18n.redactBtnInclude : i18n.redactBtnSkip;
+          setSafeText(skipBtn, slide.skipped ? i18n.redactBtnInclude : i18n.redactBtnSkip);
           skipBtn.style.background = slide.skipped ? palette.warnBg : palette.surface;
           skipBtn.style.borderColor = slide.skipped ? palette.warnBorder : palette.border;
           skipBtn.style.color = slide.skipped ? palette.warnText : palette.text;
@@ -6689,8 +7370,9 @@
             const s = slides[i];
             const isActive = i === activeIdx;
             const isVisible = setHas(win.visible, i);
+            const hasSlideMark = s.boxes.length > 0 || isActiveCropRegion(s.crop);
             pBtn.style.display = isVisible ? 'inline-flex' : 'none';
-            pBtn.textContent = s.boxes.length > 0 ? `${i + 1}•` : String(i + 1);
+            setSafeText(pBtn, hasSlideMark ? `${i + 1}•` : String(i + 1));
             pBtn.style.background = isActive ? palette.accent : 'transparent';
             pBtn.style.color = isActive ? palette.accentText : palette.text;
             pBtn.style.borderColor = isActive ? palette.accent : 'transparent';
@@ -6698,8 +7380,14 @@
             pBtn.style.opacity = s.skipped ? '0.48' : '1';
             pBtn.style.textDecoration = s.skipped ? 'line-through' : 'none';
             if (slideSelect && slideSelect.options[i]) {
-              const mark = s.skipped ? ' ×' : s.boxes.length > 0 ? ` • ${s.boxes.length}` : '';
-              slideSelect.options[i].textContent = `${i + 1} / ${slides.length}${mark}`;
+              const mark = s.skipped
+                ? ' ×'
+                : s.boxes.length > 0
+                  ? ` • ${s.boxes.length}`
+                  : isActiveCropRegion(s.crop)
+                    ? ' •'
+                    : '';
+              setSafeText(slideSelect.options[i], `${i + 1} / ${slides.length}${mark}`);
             }
           }
           if (slideSelect) {
@@ -6713,18 +7401,31 @@
         if (slide.skipped) {
           return;
         }
-        const minW = Math.min(0.9, Math.max(0.28, 24 / Math.max(1, previewW)));
-        const minH = Math.min(0.9, Math.max(0.14, 24 / Math.max(1, previewH)));
+        if (activeMode === 'crop' || activeMode === 'scroll') {
+          setActiveMode('solid', false);
+        }
+        const view = getEffectiveView(slide);
+        const minWView = nativeMathMin(0.9, nativeMathMax(0.28, 24 / nativeMathMax(1, previewW)));
+        const minHView = nativeMathMin(0.9, nativeMathMax(0.14, 24 / nativeMathMax(1, previewH)));
         const cascade = (slide.boxes.length % 5) * 0.03;
-        const x = Math.max(0, Math.min(1 - minW, 0.5 - minW / 2 + cascade));
-        const y = Math.max(0, Math.min(1 - minH, 0.5 - minH / 2 + cascade));
-        const boxMode = activeMode === 'pen' ? 'solid' : activeMode;
-        const boxColor = activeMode === 'pen' ? lastSolidColor : activeColor;
-        slide.boxes.push({ x, y, w: minW, h: minH, mode: boxMode, color: boxColor });
+        const xView = nativeMathMax(0, nativeMathMin(1 - minWView, 0.5 - minWView / 2 + cascade));
+        const yView = nativeMathMax(0, nativeMathMin(1 - minHView, 0.5 - minHView / 2 + cascade));
+        const isBoxMode = activeMode === 'solid' || activeMode === 'outline';
+        const boxMode = isBoxMode ? activeMode : 'solid';
+        const boxColor = isBoxMode ? activeColor : modeColors.solid;
+        const boxEntry = {
+          x: clamp01(view.x + xView * view.w),
+          y: clamp01(view.y + yView * view.h),
+          w: minWView * view.w,
+          h: minHView * view.h,
+          mode: boxMode,
+          color: boxColor,
+          weight: boxMode === 'outline' ? activeWeight : undefined,
+        };
+        nativeArrayPush.call(slide.boxes, boxEntry);
+        nativeArrayPush.call(slide.undoHistory, { kind: 'box' });
         selectedBoxIdx = slide.boxes.length - 1;
-        rebuildCommittedPreview();
-        refreshBatchUi();
-        drawPreviewNow();
+        refreshSlideCanvas(false);
         focusCanvasQuiet();
       }
 
@@ -6747,20 +7448,46 @@
           return;
         }
         const box = slide.boxes[selectedBoxIdx];
-        if (box.mode === 'pen' && Array.isArray(box.points)) {
-          const bounds = getStrokeBoundingBox(box);
-          if (!bounds) {
+        const view = getEffectiveView(slide);
+        if (box.mode === 'pen' && nativeIsArray(box.points)) {
+          const pts = box.points;
+          if (pts.length === 0) {
             return;
           }
-          const clampedDx = Math.max(-bounds.x, Math.min(1 - (bounds.x + bounds.w), dxNorm));
-          const clampedDy = Math.max(-bounds.y, Math.min(1 - (bounds.y + bounds.h), dyNorm));
-          for (let i = 0; i < box.points.length; i += 1) {
-            box.points[i].x += clampedDx;
-            box.points[i].y += clampedDy;
+          let minX = pts[0].x;
+          let maxX = pts[0].x;
+          let minY = pts[0].y;
+          let maxY = pts[0].y;
+          for (let i = 1; i < pts.length; i += 1) {
+            const p = pts[i];
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
+          }
+          const minBoundX = nativeMathMin(minX, view.x);
+          const maxBoundX = nativeMathMax(maxX, view.x + view.w);
+          const minBoundY = nativeMathMin(minY, view.y);
+          const maxBoundY = nativeMathMax(maxY, view.y + view.h);
+          const clampedDx = nativeMathMax(
+            minBoundX - minX,
+            nativeMathMin(maxBoundX - maxX, dxNorm)
+          );
+          const clampedDy = nativeMathMax(
+            minBoundY - minY,
+            nativeMathMin(maxBoundY - maxY, dyNorm)
+          );
+          for (let i = 0; i < pts.length; i += 1) {
+            pts[i].x += clampedDx;
+            pts[i].y += clampedDy;
           }
         } else {
-          box.x = Math.max(0, Math.min(1 - box.w, box.x + dxNorm));
-          box.y = Math.max(0, Math.min(1 - box.h, box.y + dyNorm));
+          const minX = nativeMathMin(box.x, view.x);
+          const maxRight = nativeMathMax(box.x + box.w, view.x + view.w);
+          const minY = nativeMathMin(box.y, view.y);
+          const maxBottom = nativeMathMax(box.y + box.h, view.y + view.h);
+          box.x = nativeMathMax(minX, nativeMathMin(maxRight - box.w, box.x + dxNorm));
+          box.y = nativeMathMax(minY, nativeMathMin(maxBottom - box.h, box.y + dyNorm));
         }
         rebuildCommittedPreview();
         drawPreviewNow();
@@ -6775,10 +7502,19 @@
         if (box.mode === 'pen') {
           return;
         }
-        const minW = Math.min(1, Math.max(0.01, 4 / Math.max(1, previewW)));
-        const minH = Math.min(1, Math.max(0.01, 4 / Math.max(1, previewH)));
-        box.w = Math.max(minW, Math.min(1 - box.x, box.w + dwNorm));
-        box.h = Math.max(minH, Math.min(1 - box.y, box.h + dhNorm));
+        const view = getEffectiveView(slide);
+        const minW = nativeMathMin(
+          view.w,
+          nativeMathMax(0.01 * view.w, (4 / nativeMathMax(1, previewW)) * view.w)
+        );
+        const minH = nativeMathMin(
+          view.h,
+          nativeMathMax(0.01 * view.h, (4 / nativeMathMax(1, previewH)) * view.h)
+        );
+        const maxRight = nativeMathMin(1, nativeMathMax(box.x + box.w, view.x + view.w));
+        const maxBottom = nativeMathMin(1, nativeMathMax(box.y + box.h, view.y + view.h));
+        box.w = nativeMathMax(minW, nativeMathMin(maxRight - box.x, box.w + dwNorm));
+        box.h = nativeMathMax(minH, nativeMathMin(maxBottom - box.y, box.h + dhNorm));
         rebuildCommittedPreview();
         drawPreviewNow();
       }
@@ -6788,11 +7524,18 @@
         if (slide.skipped || selectedBoxIdx < 0 || selectedBoxIdx >= slide.boxes.length) {
           return;
         }
-        slide.boxes.splice(selectedBoxIdx, 1);
-        selectedBoxIdx = slide.boxes.length > 0 ? Math.min(selectedBoxIdx, slide.boxes.length - 1) : -1;
-        rebuildCommittedPreview();
-        refreshBatchUi();
-        drawPreviewNow();
+        const removedArr = nativeArraySplice.call(slide.boxes, selectedBoxIdx, 1);
+        const removed = removedArr && removedArr[0] ? removedArr[0] : null;
+        if (removed) {
+          nativeArrayPush.call(slide.undoHistory, {
+            kind: 'delete',
+            index: selectedBoxIdx,
+            box: removed,
+          });
+        }
+        selectedBoxIdx =
+          slide.boxes.length > 0 ? nativeMathMin(selectedBoxIdx, slide.boxes.length - 1) : -1;
+        refreshSlideCanvas(false);
       }
 
       function loadSlidePreviewAsync(idx, seq) {
@@ -6826,76 +7569,184 @@
       }
 
       function switchSlide(targetIdx) {
-        const clamped = Math.max(0, Math.min(slides.length - 1, targetIdx));
-        dragStart = null;
-        dragCurrent = null;
-        dragPoints = null;
+        const clamped = nativeMathMax(0, nativeMathMin(slides.length - 1, targetIdx));
+        resetActiveDrag();
         activeIdx = clamped;
         switchSeq += 1;
         const seq = switchSeq;
         const slide = getCurrentSlide();
-        selectedBoxIdx = slide.boxes.length > 0 ? slide.boxes.length - 1 : -1;
-        const scale = Math.min(1, MAX_PREVIEW_EDGE / Math.max(slide.width, slide.height));
-        previewW = Math.max(1, Math.round(slide.width * scale));
-        previewH = Math.max(1, Math.round(slide.height * scale));
-        canvas.width = previewW;
-        canvas.height = previewH;
-        canvas.style.aspectRatio = `${previewW} / ${previewH}`;
-        committedCanvas.width = previewW;
-        committedCanvas.height = previewH;
+        stage.scrollTop = 0;
+        stage.scrollLeft = 0;
+        selectedBoxIdx =
+          activeMode !== 'crop' && activeMode !== 'scroll' && slide.boxes.length > 0
+            ? slide.boxes.length - 1
+            : -1;
+        syncViewportDimensions(slide);
         if (slide.preview) {
           storePreviewInCache(clamped, slide.preview);
         }
-        rebuildCommittedPreview();
-        drawPreviewNow();
-        refreshBatchUi();
+        refreshSlideCanvas(false);
         if (!slide.preview) {
           loadSlidePreviewAsync(clamped, seq);
         }
       }
 
+      function undoLastEdit(slide) {
+        if (!slide || slide.skipped) {
+          return;
+        }
+        if (nativeIsArray(slide.undoHistory) && slide.undoHistory.length > 0) {
+          while (slide.undoHistory.length > 0) {
+            const entry = nativeArrayPop.call(slide.undoHistory);
+            if (entry && entry.kind === 'crop') {
+              slide.crop = entry.prevCrop ? { ...entry.prevCrop } : null;
+              refreshSlideCanvas(true);
+              return;
+            }
+            if (entry && entry.kind === 'delete' && entry.box) {
+              const insertAt = nativeMathMax(
+                0,
+                nativeMathMin(slide.boxes.length, entry.index || 0)
+              );
+              nativeArraySplice.call(slide.boxes, insertAt, 0, entry.box);
+              selectedBoxIdx = insertAt;
+              refreshSlideCanvas(false);
+              return;
+            }
+            if (entry && entry.kind === 'box' && slide.boxes.length > 0) {
+              nativeArrayPop.call(slide.boxes);
+              selectedBoxIdx =
+                slide.boxes.length > 0 ? nativeMathMin(selectedBoxIdx, slide.boxes.length - 1) : -1;
+              refreshSlideCanvas(false);
+              return;
+            }
+          }
+        }
+        if (slide.boxes.length > 0) {
+          nativeArrayPop.call(slide.boxes);
+          selectedBoxIdx =
+            slide.boxes.length > 0 ? nativeMathMin(selectedBoxIdx, slide.boxes.length - 1) : -1;
+          refreshSlideCanvas(false);
+        } else if (isActiveCropRegion(slide.crop)) {
+          slide.crop = null;
+          refreshSlideCanvas(true);
+        }
+      }
+
       function toNormalized(clientX, clientY) {
-        const rect = canvas.getBoundingClientRect();
-        if (rect.width <= 0 || rect.height <= 0) {
+        if (!nativeNumberIsFinite(clientX) || !nativeNumberIsFinite(clientY)) {
+          return { x: 0, y: 0 };
+        }
+        const rect = nativeGetBoundingClientRect
+          ? nativeGetBoundingClientRect.call(canvas)
+          : canvas.getBoundingClientRect();
+        if (!rect || rect.width <= 0 || rect.height <= 0) {
           return { x: 0, y: 0 };
         }
         return {
-          x: Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)),
-          y: Math.max(0, Math.min(1, (clientY - rect.top) / rect.height)),
+          x: clamp01((clientX - rect.left) / rect.width),
+          y: clamp01((clientY - rect.top) / rect.height),
         };
       }
 
-      canvas.addEventListener('pointerdown', (e) => {
-        if (e.button !== 0 || getCurrentSlide().skipped) {
+      nativeAddEventListener.call(canvas, 'pointerdown', (e) => {
+        const slide = getCurrentSlide();
+        const isPrimary = getEvProp(nativePointerPrimaryDesc, e, 'isPrimary');
+        const pointerType = getEvProp(nativePointerTypeDesc, e, 'pointerType');
+        const button = getEvProp(nativeMouseBtnDesc, e, 'button');
+        const pointerId = getEvProp(nativePointerIdDesc, e, 'pointerId');
+        const clientX = getEvProp(nativeClientXDesc, e, 'clientX');
+        const clientY = getEvProp(nativeClientYDesc, e, 'clientY');
+        if (slide.skipped || activePointerId !== null || isPrimary === false) {
           return;
         }
-        e.preventDefault();
-        if (typeof canvas.setPointerCapture === 'function') {
+        if (activeMode === 'scroll') {
+          if (
+            pointerType === 'touch' ||
+            button !== 0 ||
+            !nativeNumberIsFinite(clientX) ||
+            !nativeNumberIsFinite(clientY)
+          ) {
+            return;
+          }
+          safePreventDefault(e);
+          activePointerId = pointerId !== undefined ? pointerId : 0;
+          scrollPanState = {
+            startX: clientX,
+            startY: clientY,
+            startScrollLeft: stage.scrollLeft,
+            startScrollTop: stage.scrollTop,
+          };
           try {
-            canvas.setPointerCapture(e.pointerId);
+            if (nativeSetPointerCapture) {
+              nativeSetPointerCapture.call(canvas, activePointerId);
+            } else if (typeof canvas.setPointerCapture === 'function') {
+              canvas.setPointerCapture(activePointerId);
+            }
           } catch {
             // Ignore capture failures cleanly.
           }
+          refreshBatchUi();
+          return;
         }
-        dragStart = toNormalized(e.clientX, e.clientY);
-        dragCurrent = dragStart;
-        dragPoints = activeMode === 'pen' ? [dragStart] : null;
+        if (pointerType !== 'touch' && button !== 0) {
+          return;
+        }
+        safePreventDefault(e);
+        activePointerId = pointerId !== undefined ? pointerId : 0;
+        try {
+          if (nativeSetPointerCapture) {
+            nativeSetPointerCapture.call(canvas, activePointerId);
+          } else if (typeof canvas.setPointerCapture === 'function') {
+            canvas.setPointerCapture(activePointerId);
+          }
+        } catch {
+          // Ignore capture failures cleanly.
+        }
+        const view = getEffectiveView(slide);
+        const viewPt = toNormalized(clientX, clientY);
+        dragStart = viewPt;
+        dragCurrent = viewPt;
+        if (activeMode === 'pen') {
+          lastDragViewPt = viewPt;
+          dragPoints = [toFullNormalizedPoint(view, viewPt)];
+        } else {
+          lastDragViewPt = null;
+          dragPoints = null;
+        }
         drawPreviewNow();
       });
 
-      canvas.addEventListener('pointermove', (e) => {
+      nativeAddEventListener.call(canvas, 'pointermove', (e) => {
+        const pointerId = getEvProp(nativePointerIdDesc, e, 'pointerId');
+        const resolvedId = pointerId !== undefined ? pointerId : 0;
+        if (activePointerId === null || resolvedId !== activePointerId) {
+          return;
+        }
+        const clientX = getEvProp(nativeClientXDesc, e, 'clientX');
+        const clientY = getEvProp(nativeClientYDesc, e, 'clientY');
+        if (scrollPanState) {
+          safePreventDefault(e);
+          if (nativeNumberIsFinite(clientX) && nativeNumberIsFinite(clientY)) {
+            stage.scrollLeft = scrollPanState.startScrollLeft - (clientX - scrollPanState.startX);
+            stage.scrollTop = scrollPanState.startScrollTop - (clientY - scrollPanState.startY);
+          }
+          return;
+        }
         if (!dragStart) {
           return;
         }
-        e.preventDefault();
-        const pt = toNormalized(e.clientX, e.clientY);
-        dragCurrent = pt;
-        if (dragPoints && dragPoints.length < MAX_PEN_POINTS_PER_STROKE) {
-          const prev = dragPoints[dragPoints.length - 1];
-          const dxPx = (pt.x - prev.x) * previewW;
-          const dyPx = (pt.y - prev.y) * previewH;
+        safePreventDefault(e);
+        const slide = getCurrentSlide();
+        const view = getEffectiveView(slide);
+        const viewPt = toNormalized(clientX, clientY);
+        dragCurrent = viewPt;
+        if (dragPoints && dragPoints.length < MAX_PEN_POINTS_PER_STROKE && lastDragViewPt) {
+          const dxPx = (viewPt.x - lastDragViewPt.x) * previewW;
+          const dyPx = (viewPt.y - lastDragViewPt.y) * previewH;
           if (dxPx * dxPx + dyPx * dyPx >= 6.25) {
-            dragPoints.push(pt);
+            lastDragViewPt = viewPt;
+            nativeArrayPush.call(dragPoints, toFullNormalizedPoint(view, viewPt));
           }
         }
         schedulePreviewDraw();
@@ -6918,109 +7769,163 @@
       }
 
       function finishDrag(e) {
+        const pointerId = getEvProp(nativePointerIdDesc, e, 'pointerId');
+        const resolvedId = pointerId !== undefined ? pointerId : 0;
+        if (activePointerId === null || resolvedId !== activePointerId) {
+          return;
+        }
+        if (scrollPanState) {
+          resetActiveDrag();
+          focusCanvasQuiet();
+          refreshBatchUi();
+          return;
+        }
         if (!dragStart) {
           return;
         }
-        const end = toNormalized(e.clientX, e.clientY);
-        const startPt = dragStart;
-        const points = dragPoints;
-        dragStart = null;
-        dragCurrent = null;
-        dragPoints = null;
         const slide = getCurrentSlide();
+        const view = getEffectiveView(slide);
+        const clientX = getEvProp(nativeClientXDesc, e, 'clientX');
+        const clientY = getEvProp(nativeClientYDesc, e, 'clientY');
+        const endViewPt = toNormalized(clientX, clientY);
+        const startViewPt = dragStart;
+        const points = dragPoints;
+        resetActiveDrag();
 
+        if (activeMode === 'crop') {
+          const cx = nativeMathMin(startViewPt.x, endViewPt.x);
+          const cy = nativeMathMin(startViewPt.y, endViewPt.y);
+          const cw = nativeMathAbs(endViewPt.x - startViewPt.x);
+          const ch = nativeMathAbs(endViewPt.y - startViewPt.y);
+          const minCropW = nativeMathMin(12, nativeMathMax(4, previewW * 0.25));
+          const minCropH = nativeMathMin(12, nativeMathMax(4, previewH * 0.25));
+          if (
+            !slide.skipped &&
+            cw * previewW >= minCropW &&
+            ch * previewH >= minCropH &&
+            (cw < 0.995 || ch < 0.995)
+          ) {
+            nativeArrayPush.call(slide.undoHistory, {
+              kind: 'crop',
+              prevCrop: isActiveCropRegion(slide.crop) ? { ...slide.crop } : null,
+            });
+            slide.crop = { x: cx, y: cy, w: cw, h: ch };
+            focusCanvasQuiet();
+          }
+          refreshBatchUi();
+          drawPreviewNow();
+          return;
+        }
+
+        const fullEnd = toFullNormalizedPoint(view, endViewPt);
         if (points) {
           if (points.length > 0 && points.length < MAX_PEN_POINTS_PER_STROKE) {
             const last = points[points.length - 1];
-            if (last.x !== end.x || last.y !== end.y) {
-              points.push(end);
+            if (last.x !== fullEnd.x || last.y !== fullEnd.y) {
+              nativeArrayPush.call(points, fullEnd);
             }
           }
           let totalSpanPx = 0;
           if (points.length >= 2) {
-            const bounds = getStrokeBoundingBox({ mode: 'pen', points });
-            totalSpanPx = bounds
-              ? Math.max(bounds.w * previewW, bounds.h * previewH)
-              : 0;
-            const endDistPx = Math.hypot((end.x - startPt.x) * previewW, (end.y - startPt.y) * previewH);
-            totalSpanPx = Math.max(totalSpanPx, endDistPx);
+            const mappedStroke = mapBoxesToRegion([{ mode: 'pen', points }], view)[0];
+            const bounds = getStrokeBoundingBox(mappedStroke);
+            totalSpanPx = bounds ? nativeMathMax(bounds.w * previewW, bounds.h * previewH) : 0;
+            const endDistPx = nativeMathHypot(
+              (endViewPt.x - startViewPt.x) * previewW,
+              (endViewPt.y - startViewPt.y) * previewH
+            );
+            totalSpanPx = nativeMathMax(totalSpanPx, endDistPx);
           }
           if (!slide.skipped && points.length >= 2 && totalSpanPx >= 3) {
-            slide.boxes.push({ mode: 'pen', color: activeColor, points });
+            nativeArrayPush.call(slide.boxes, {
+              mode: 'pen',
+              color: activeColor,
+              weight: activeWeight,
+              points,
+            });
+            nativeArrayPush.call(slide.undoHistory, { kind: 'box' });
             selectedBoxIdx = -1;
             rebuildCommittedPreview();
             focusCanvasQuiet();
           } else if (!slide.skipped) {
-            selectedBoxIdx = selectItemAtPoint(slide, end);
+            selectedBoxIdx = selectItemAtPoint(slide, fullEnd);
+            focusCanvasQuiet();
           }
         } else {
-          const x = Math.min(startPt.x, end.x);
-          const y = Math.min(startPt.y, end.y);
-          const w = Math.abs(end.x - startPt.x);
-          const h = Math.abs(end.y - startPt.y);
-          if (!slide.skipped && w * previewW >= 4 && h * previewH >= 4) {
-            slide.boxes.push({ x, y, w, h, mode: activeMode, color: activeColor });
+          const viewW = nativeMathAbs(endViewPt.x - startViewPt.x);
+          const viewH = nativeMathAbs(endViewPt.y - startViewPt.y);
+          if (!slide.skipped && viewW * previewW >= 4 && viewH * previewH >= 4) {
+            const fullStart = toFullNormalizedPoint(view, startViewPt);
+            const x = nativeMathMin(fullStart.x, fullEnd.x);
+            const y = nativeMathMin(fullStart.y, fullEnd.y);
+            const w = nativeMathAbs(fullEnd.x - fullStart.x);
+            const h = nativeMathAbs(fullEnd.y - fullStart.y);
+            nativeArrayPush.call(slide.boxes, {
+              x,
+              y,
+              w,
+              h,
+              mode: activeMode,
+              color: activeColor,
+              weight: activeMode === 'outline' ? activeWeight : undefined,
+            });
+            nativeArrayPush.call(slide.undoHistory, { kind: 'box' });
             selectedBoxIdx = slide.boxes.length - 1;
             rebuildCommittedPreview();
             focusCanvasQuiet();
           } else if (!slide.skipped) {
-            selectedBoxIdx = selectItemAtPoint(slide, end);
+            selectedBoxIdx = selectItemAtPoint(slide, fullEnd);
+            focusCanvasQuiet();
           }
         }
         refreshBatchUi();
         drawPreviewNow();
       }
 
-      canvas.addEventListener('pointerup', finishDrag);
-      canvas.addEventListener('pointercancel', () => {
-        dragStart = null;
-        dragCurrent = null;
-        dragPoints = null;
+      function cancelActiveDrag(e) {
+        const pointerId = getEvProp(nativePointerIdDesc, e, 'pointerId');
+        const resolvedId = pointerId !== undefined ? pointerId : 0;
+        if (activePointerId === null || resolvedId !== activePointerId) {
+          return;
+        }
+        resetActiveDrag();
+        refreshBatchUi();
         drawPreviewNow();
-      });
+      }
+
+      nativeAddEventListener.call(canvas, 'pointerup', finishDrag);
+      nativeAddEventListener.call(canvas, 'pointercancel', cancelActiveDrag);
+      nativeAddEventListener.call(canvas, 'lostpointercapture', cancelActiveDrag);
 
       if (isBatch) {
-        prevBtn.addEventListener('click', () => {
-          switchSlide(activeIdx > 0 ? activeIdx - 1 : slides.length - 1);
-        });
-        nextBtn.addEventListener('click', () => {
-          switchSlide(activeIdx < slides.length - 1 ? activeIdx + 1 : 0);
-        });
-        skipBtn.addEventListener('click', () => {
+        nativeAddEventListener.call(prevBtn, 'click', () => stepSlide(-1));
+        nativeAddEventListener.call(nextBtn, 'click', () => stepSlide(1));
+        nativeAddEventListener.call(skipBtn, 'click', () => {
           const slide = getCurrentSlide();
           slide.skipped = !slide.skipped;
-          dragStart = null;
-          dragCurrent = null;
-          dragPoints = null;
+          resetActiveDrag();
           refreshBatchUi();
           drawPreviewNow();
         });
       }
 
-      addBoxBtn.addEventListener('click', addKeyboardBox);
+      nativeAddEventListener.call(addBoxBtn, 'click', addKeyboardBox);
 
-      undoBtn.addEventListener('click', () => {
-        const slide = getCurrentSlide();
-        if (!slide.skipped && slide.boxes.length > 0) {
-          slide.boxes.pop();
-          selectedBoxIdx = slide.boxes.length > 0 ? Math.min(selectedBoxIdx, slide.boxes.length - 1) : -1;
-          rebuildCommittedPreview();
-          refreshBatchUi();
-          drawPreviewNow();
-        }
+      nativeAddEventListener.call(undoBtn, 'click', () => {
+        undoLastEdit(getCurrentSlide());
       });
-      clearBtn.addEventListener('click', () => {
+      nativeAddEventListener.call(clearBtn, 'click', () => {
         const slide = getCurrentSlide();
-        if (!slide.skipped && slide.boxes.length > 0) {
+        if (!slide.skipped && (slide.boxes.length > 0 || isActiveCropRegion(slide.crop))) {
           slide.boxes.length = 0;
+          slide.crop = null;
+          slide.undoHistory.length = 0;
           selectedBoxIdx = -1;
-          rebuildCommittedPreview();
-          refreshBatchUi();
-          drawPreviewNow();
+          refreshSlideCanvas(true);
         }
       });
 
-      const ac = typeof AbortController === 'function' ? new AbortController() : null;
+      const ac = makeAbortControllerSafe();
 
       function closeModalWith(confirmed) {
         if (closed) {
@@ -7029,14 +7934,14 @@
         closed = true;
         cancelScheduledPreviewDraw();
         if (ac) {
-          ac.abort();
+          abortSafe(ac);
         } else {
-          window.removeEventListener('keydown', onModalKeyDown, true);
+          nativeRemoveEventListener.call(window, 'keydown', onModalKeyDown, true);
         }
         releaseCanvasMemory(canvas);
         releaseCanvasMemory(committedCanvas);
         releaseAllCachedPreviews();
-        host.remove();
+        removeNodeSafe(host);
         if (
           previousFocused &&
           previousFocused.isConnected &&
@@ -7056,70 +7961,92 @@
         if (!e || !e.isTrusted) {
           return;
         }
+        const key = String(getEvProp(nativeKeyDesc, e, 'key') || '');
+        const lowerKey = key.toLowerCase();
         const slide = getCurrentSlide();
         const focused = shadow.activeElement;
         const isCanvasFocused = focused === canvas;
 
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopImmediatePropagation();
+        if (key === 'Escape') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           closeModalWith(false);
         } else if (
           isBatch &&
-          (e.key === 'PageUp' ||
-            e.key === 'PageDown' ||
-            (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')))
+          (key === 'PageUp' ||
+            key === 'PageDown' ||
+            (e.altKey && (key === 'ArrowLeft' || key === 'ArrowRight')))
         ) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          const goPrev = e.key === 'PageUp' || e.key === 'ArrowLeft';
-          switchSlide(
-            goPrev
-              ? activeIdx > 0
-                ? activeIdx - 1
-                : slides.length - 1
-              : activeIdx < slides.length - 1
-                ? activeIdx + 1
-                : 0
-          );
-        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'n') {
-          e.preventDefault();
-          e.stopImmediatePropagation();
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          const goPrev = key === 'PageUp' || key === 'ArrowLeft';
+          stepSlide(goPrev ? -1 : 1);
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'n') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           addKeyboardBox();
-        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'o') {
-          e.preventDefault();
-          e.stopImmediatePropagation();
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'o') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           if (!slide.skipped) {
             setActiveMode(activeMode === 'outline' ? 'solid' : 'outline', false);
           }
-        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.toLowerCase() === 'p') {
-          e.preventDefault();
-          e.stopImmediatePropagation();
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'p') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           if (!slide.skipped) {
             setActiveMode(activeMode === 'pen' ? 'solid' : 'pen', false);
           }
-        } else if (e.key === ' ' && isCanvasFocused) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'c') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          if (!slide.skipped) {
+            setActiveMode(activeMode === 'crop' ? 'solid' : 'crop', false);
+          }
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'h') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          if (!slide.skipped) {
+            setActiveMode(activeMode === 'scroll' ? 'solid' : 'scroll', false);
+          }
+        } else if (key === ' ' && isCanvasFocused) {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           addKeyboardBox();
-        } else if ((e.key === '[' || e.key === ']') && !slide.skipped && slide.boxes.length > 0) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          cycleSelectedBox(e.key === ']' ? 1 : -1);
         } else if (
-          (e.key === 'Delete' || e.key === 'Backspace') &&
-          isCanvasFocused &&
+          (key === '[' || key === ']') &&
           !slide.skipped &&
-          selectedBoxIdx >= 0
+          activeMode !== 'crop' &&
+          activeMode !== 'scroll' &&
+          slide.boxes.length > 0
         ) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          deleteSelectedBox();
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          cycleSelectedBox(key === ']' ? 1 : -1);
         } else if (
-          e.key === 'ArrowLeft' ||
-          e.key === 'ArrowRight' ||
-          e.key === 'ArrowUp' ||
-          e.key === 'ArrowDown'
+          (key === 'Delete' || key === 'Backspace') &&
+          isCanvasFocused &&
+          !slide.skipped
+        ) {
+          if (selectedBoxIdx >= 0) {
+            safePreventDefault(e);
+            safeStopImmediatePropagation(e);
+            deleteSelectedBox();
+          } else if (activeMode === 'crop' && isActiveCropRegion(slide.crop)) {
+            safePreventDefault(e);
+            safeStopImmediatePropagation(e);
+            nativeArrayPush.call(slide.undoHistory, {
+              kind: 'crop',
+              prevCrop: { ...slide.crop },
+            });
+            slide.crop = null;
+            refreshSlideCanvas(true);
+          }
+        } else if (
+          key === 'ArrowLeft' ||
+          key === 'ArrowRight' ||
+          key === 'ArrowUp' ||
+          key === 'ArrowDown'
         ) {
           if (
             isCanvasFocused &&
@@ -7128,32 +8055,29 @@
             selectedBoxIdx < slide.boxes.length &&
             !e.altKey
           ) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            const stepPx = Math.max(2, Math.round(Math.min(previewW, previewH) * 0.02));
-            const dx = stepPx / Math.max(1, previewW);
-            const dy = stepPx / Math.max(1, previewH);
+            safePreventDefault(e);
+            safeStopImmediatePropagation(e);
+            const view = getEffectiveView(slide);
+            const stepPx = nativeMathMax(2, nativeMathRound(nativeMathMin(previewW, previewH) * 0.02));
+            const dx = (stepPx / nativeMathMax(1, previewW)) * view.w;
+            const dy = (stepPx / nativeMathMax(1, previewH)) * view.h;
             if (e.shiftKey) {
-              if (e.key === 'ArrowLeft') resizeSelectedBox(-dx, 0);
-              else if (e.key === 'ArrowRight') resizeSelectedBox(dx, 0);
-              else if (e.key === 'ArrowUp') resizeSelectedBox(0, -dy);
+              if (key === 'ArrowLeft') resizeSelectedBox(-dx, 0);
+              else if (key === 'ArrowRight') resizeSelectedBox(dx, 0);
+              else if (key === 'ArrowUp') resizeSelectedBox(0, -dy);
               else resizeSelectedBox(0, dy);
             } else {
-              if (e.key === 'ArrowLeft') moveSelectedBox(-dx, 0);
-              else if (e.key === 'ArrowRight') moveSelectedBox(dx, 0);
-              else if (e.key === 'ArrowUp') moveSelectedBox(0, -dy);
+              if (key === 'ArrowLeft') moveSelectedBox(-dx, 0);
+              else if (key === 'ArrowRight') moveSelectedBox(dx, 0);
+              else if (key === 'ArrowUp') moveSelectedBox(0, -dy);
               else moveSelectedBox(0, dy);
             }
-          } else if (isBatch && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-            if (e.key === 'ArrowLeft') {
-              switchSlide(activeIdx > 0 ? activeIdx - 1 : slides.length - 1);
-            } else {
-              switchSlide(activeIdx < slides.length - 1 ? activeIdx + 1 : 0);
-            }
+          } else if (isBatch && (key === 'ArrowLeft' || key === 'ArrowRight')) {
+            safePreventDefault(e);
+            safeStopImmediatePropagation(e);
+            stepSlide(key === 'ArrowLeft' ? -1 : 1);
           }
-        } else if (e.key === 'Tab') {
+        } else if (key === 'Tab') {
           handleModalTabKey(e, shadow, [
             ...(isBatch
               ? [prevBtn, ...pillFlowElements, nextBtn, ...(slideSelect ? [slideSelect] : []), skipBtn]
@@ -7161,7 +8085,10 @@
             coverModeBtn,
             outlineModeBtn,
             penModeBtn,
-            ...colorButtons.map((c) => c.btn),
+            cropModeBtn,
+            scrollModeBtn,
+            ...nativeArrayMap.call(colorButtons, (c) => c.btn),
+            ...nativeArrayMap.call(weightButtons, (w) => w.btn),
             canvas,
             addBoxBtn,
             undoBtn,
@@ -7169,7 +8096,7 @@
             cancelBtn,
             sendBtn,
           ]);
-        } else if (e.key === 'Enter') {
+        } else if (key === 'Enter') {
           if (
             focused === cancelBtn ||
             focused === addBoxBtn ||
@@ -7184,43 +8111,43 @@
             focused === coverModeBtn ||
             focused === outlineModeBtn ||
             focused === penModeBtn ||
-            colorButtons.some((c) => c.btn === focused) ||
-            pillButtons.includes(focused)
+            focused === cropModeBtn ||
+            focused === scrollModeBtn ||
+            nativeArraySome.call(colorButtons, (c) => c.btn === focused) ||
+            nativeArraySome.call(weightButtons, (w) => w.btn === focused) ||
+            nativeArrayIncludes.call(pillButtons, focused)
           ) {
             return;
           }
           if (sendBtn.disabled) {
             return;
           }
-          e.preventDefault();
-          e.stopImmediatePropagation();
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
           closeModalWith(true);
-        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          if (!slide.skipped && slide.boxes.length > 0) {
-            slide.boxes.pop();
-            selectedBoxIdx = slide.boxes.length > 0 ? Math.min(selectedBoxIdx, slide.boxes.length - 1) : -1;
-            rebuildCommittedPreview();
-            refreshBatchUi();
-            drawPreviewNow();
-          }
+        } else if ((e.ctrlKey || e.metaKey) && lowerKey === 'z') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          undoLastEdit(slide);
         }
       }
 
-      cancelBtn.addEventListener('click', () => closeModalWith(false));
-      sendBtn.addEventListener('click', () => {
+      nativeAddEventListener.call(cancelBtn, 'click', () => closeModalWith(false));
+      nativeAddEventListener.call(sendBtn, 'click', () => {
         if (!sendBtn.disabled) {
           closeModalWith(true);
         }
       });
       if (ac) {
-        window.addEventListener('keydown', onModalKeyDown, { capture: true, signal: ac.signal });
+        nativeAddEventListener.call(window, 'keydown', onModalKeyDown, {
+          capture: true,
+          signal: ac.signal,
+        });
       } else {
-        window.addEventListener('keydown', onModalKeyDown, true);
+        nativeAddEventListener.call(window, 'keydown', onModalKeyDown, true);
       }
 
-      const footer = document.createElement('div');
+      const footer = safeCreateElement('div');
       footer.style.display = 'flex';
       footer.style.alignItems = 'center';
       footer.style.justifyContent = 'space-between';
@@ -7228,40 +8155,40 @@
       footer.style.flexWrap = 'wrap';
       footer.style.paddingTop = '2px';
 
-      const hintEl = document.createElement('span');
+      const hintEl = safeCreateElement('span');
       hintEl.style.fontSize = '11px';
       hintEl.style.color = palette.muted;
-      hintEl.textContent = isBatch ? i18n.redactModalHintBatch : i18n.redactModalHint;
+      setSafeText(hintEl, isBatch ? i18n.redactModalHintBatch : i18n.redactModalHint);
 
-      const actions = document.createElement('div');
+      const actions = safeCreateElement('div');
       actions.style.display = 'flex';
       actions.style.alignItems = 'center';
       actions.style.flexWrap = 'wrap';
-      actions.style.gap = '6px';
-      const actionDivider = document.createElement('span');
-      actionDivider.setAttribute('aria-hidden', 'true');
-      actionDivider.style.width = '1px';
-      actionDivider.style.height = '18px';
-      actionDivider.style.margin = '0 2px';
-      actionDivider.style.background = palette.border;
-      actions.appendChild(addBoxBtn);
-      actions.appendChild(undoBtn);
-      actions.appendChild(clearBtn);
-      actions.appendChild(actionDivider);
-      actions.appendChild(cancelBtn);
-      actions.appendChild(sendBtn);
+      actions.style.gap = '5px';
+      const footerActionBtns = [addBoxBtn, undoBtn, clearBtn, cancelBtn, sendBtn];
+      for (let i = 0; i < footerActionBtns.length; i += 1) {
+        footerActionBtns[i].style.padding = '0 9px';
+      }
+      const actionDivider = makeBarDivider();
+      actionDivider.style.margin = '0 1px';
+      appendChildSafe(actions, addBoxBtn);
+      appendChildSafe(actions, undoBtn);
+      appendChildSafe(actions, clearBtn);
+      appendChildSafe(actions, actionDivider);
+      appendChildSafe(actions, cancelBtn);
+      appendChildSafe(actions, sendBtn);
 
-      footer.appendChild(hintEl);
-      footer.appendChild(actions);
+      appendChildSafe(footer, hintEl);
+      appendChildSafe(footer, actions);
 
-      stage.appendChild(canvas);
-      modal.appendChild(header);
-      modal.appendChild(toolBar);
-      modal.appendChild(stage);
-      modal.appendChild(footer);
-      scrim.appendChild(modal);
-      shadow.appendChild(scrim);
-      mountTarget.appendChild(host);
+      appendChildSafe(stage, canvas);
+      appendChildSafe(modal, header);
+      appendChildSafe(modal, toolBar);
+      appendChildSafe(modal, stage);
+      appendChildSafe(modal, footer);
+      appendChildSafe(scrim, modal);
+      appendChildSafe(shadow, scrim);
+      appendChildSafe(mountTarget, host);
 
       switchSlide(0);
       focusCanvasQuiet();
@@ -7269,13 +8196,16 @@
   }
 
   async function shouldResizeRasterForOptimize(file, width, height) {
-    if (!state.optimizeImage || Math.max(width, height) <= MAX_OPTIMIZE_EDGE) {
+    if (!state.optimizeImage || nativeMathMax(width, height) <= MAX_OPTIMIZE_EDGE) {
       return false;
     }
     const mime = (file.type || '').toLowerCase().split(';')[0].trim();
     if (mime === 'image/gif' || (file.name || '').toLowerCase().endsWith('.gif')) {
+      if (file.size > 32 * 1024 * 1024) {
+        return false;
+      }
       if (readBlobArrayBuffer) {
-        const bytes = new Uint8Array(await readBlobArrayBuffer.call(file));
+        const bytes = new NativeUint8Array(await readBlobArrayBuffer.call(file));
         return !isAnimatedGifBytes(bytes);
       }
       return false;
@@ -7283,13 +8213,21 @@
     return true;
   }
 
-  async function renderLoadedRasterCanvas(file, loaded, boxes) {
-    const safeBoxes = Array.isArray(boxes) ? boxes : [];
+  async function renderLoadedRasterCanvas(file, loaded, boxes, crop, options) {
+    const safeBoxes = nativeIsArray(boxes) ? boxes : [];
+    const hasCrop = isActiveCropRegion(crop);
+    const cropRegion = hasCrop ? normalizeCropRegion(crop) : { x: 0, y: 0, w: 1, h: 1 };
+    const effW = nativeMathMax(1, nativeMathRound(loaded.width * cropRegion.w));
+    const effH = nativeMathMax(1, nativeMathRound(loaded.height * cropRegion.h));
+    const forceExport = Boolean(options && options.forceExport);
     const isExoticRaster = isExoticRasterCandidate(file);
-    const needsResize = await shouldResizeRasterForOptimize(file, loaded.width, loaded.height);
+    const needsResize =
+      forceExport || safeBoxes.length > 0 || hasCrop || isExoticRaster
+        ? false
+        : await shouldResizeRasterForOptimize(file, effW, effH);
 
-    if (safeBoxes.length === 0 && !needsResize && !isExoticRaster) {
-      return { canceled: false, blob: null, ext: null, mime: null, touched: false };
+    if (!forceExport && safeBoxes.length === 0 && !hasCrop && !needsResize && !isExoticRaster) {
+      return { blob: null, ext: null, mime: null, touched: false };
     }
 
     const outFmt = resolveCanvasOutputFormat(file);
@@ -7299,13 +8237,13 @@
       loaded.height,
       safeBoxes,
       outFmt,
-      Boolean(state.optimizeImage)
+      Boolean(state.optimizeImage),
+      crop
     );
     if (!blob) {
-      return { canceled: false, blob: null, ext: null, mime: null, touched: false };
+      return { blob: null, ext: null, mime: null, touched: false };
     }
     return {
-      canceled: false,
       blob,
       ext: outFmt.ext,
       mime: outFmt.mime,
@@ -7313,14 +8251,14 @@
     };
   }
 
-  async function processSingleRasterCanvas(file, boxes) {
-    const safeBoxes = Array.isArray(boxes) ? boxes : [];
+  async function processSingleRasterCanvas(file, boxes, crop, options) {
+    const safeBoxes = nativeIsArray(boxes) ? boxes : [];
     let loaded = null;
     try {
       loaded = await decodeSourceFromFile(file);
-      return await renderLoadedRasterCanvas(file, loaded, safeBoxes);
+      return await renderLoadedRasterCanvas(file, loaded, safeBoxes, crop, options);
     } catch {
-      return { canceled: false, blob: null, ext: null, mime: null, touched: false };
+      return { blob: null, ext: null, mime: null, touched: false };
     } finally {
       releaseImageSource(loaded);
     }
@@ -7383,7 +8321,16 @@
             } else {
               releaseImageSource(fullLoaded);
             }
-            const slide = { file: f, width, height, preview, boxes: [], skipped: false };
+            const slide = {
+              file: f,
+              width,
+              height,
+              preview,
+              boxes: [],
+              crop: null,
+              undoHistory: [],
+              skipped: false,
+            };
             nativeArrayPush.call(batchSlides, slide);
             mapSet(slideByIndex, i, slide);
           } catch {
@@ -7395,8 +8342,10 @@
           logDiag('Media', 'redactBatch', {
             slides: batchSlides.length,
             confirmed: Boolean(modalRes.confirmed),
-            skippedCount: batchSlides.filter((s) => s.skipped).length,
-            totalBoxes: batchSlides.reduce((acc, s) => acc + s.boxes.length, 0),
+            skippedCount: nativeArrayFilter.call(batchSlides, (s) => s.skipped).length,
+            croppedCount: nativeArrayFilter.call(batchSlides, (s) => isActiveCropRegion(s.crop))
+              .length,
+            totalBoxes: nativeArrayReduce.call(batchSlides, (acc, s) => acc + s.boxes.length, 0),
           });
           if (!modalRes.confirmed) {
             return { canceled: true, dataTransfer: null, renamedNames: [], cleanedCount: 0 };
@@ -7418,12 +8367,19 @@
           if (slide.skipped) {
             continue;
           }
+          const hasCrop = isActiveCropRegion(slide.crop);
+          const effCrop = hasCrop ? normalizeCropRegion(slide.crop) : { x: 0, y: 0, w: 1, h: 1 };
+          const effW = nativeMathMax(1, nativeMathRound(slide.width * effCrop.w));
+          const effH = nativeMathMax(1, nativeMathRound(slide.height * effCrop.h));
           const needsCanvasExport =
+            hasCrop ||
             slide.boxes.length > 0 ||
             isExoticRasterCandidate(file) ||
-            (await shouldResizeRasterForOptimize(file, slide.width, slide.height));
+            (await shouldResizeRasterForOptimize(file, effW, effH));
           if (needsCanvasExport) {
-            const canvasRes = await processSingleRasterCanvas(file, slide.boxes);
+            const canvasRes = await processSingleRasterCanvas(file, slide.boxes, slide.crop, {
+              forceExport: true,
+            });
             if (canvasRes.touched && canvasRes.blob) {
               appendCanvasOutputFile(file, canvasRes, dataTransfer, renamedNames);
               cleanedCount += 1;
@@ -7435,9 +8391,6 @@
           ((state.optimizeImage && isRasterCandidate(file)) || isExoticRasterCandidate(file))
         ) {
           const canvasRes = await processSingleRasterCanvas(file);
-          if (canvasRes.canceled) {
-            return { canceled: true, dataTransfer: null, renamedNames: [], cleanedCount: 0 };
-          }
           if (canvasRes.touched && canvasRes.blob) {
             appendCanvasOutputFile(file, canvasRes, dataTransfer, renamedNames);
             cleanedCount += 1;
@@ -7597,7 +8550,6 @@
 
   function handleDragEnter(event) {
     if (
-      isInstanceSuperseded ||
       !state.enabled ||
       !event ||
       isProcessedEvent(event) ||
@@ -7612,14 +8564,16 @@
   }
 
   function handleDragLeave(event) {
-    if (isInstanceSuperseded || !event || isProcessedEvent(event)) {
+    if (!event || isProcessedEvent(event)) {
       return;
     }
     const target = getEventPathTarget(event);
     if (target) {
       setDelete(enteredDragTargets, target);
     }
-    if (!event.relatedTarget || (typeof event.clientX === 'number' && event.clientX <= 0 && event.clientY <= 0)) {
+    const cx = getEvProp(nativeClientXDesc, event, 'clientX');
+    const cy = getEvProp(nativeClientYDesc, event, 'clientY');
+    if (!event.relatedTarget || (typeof cx === 'number' && cx <= 0 && cy <= 0)) {
       setClear(enteredDragTargets);
     }
   }
@@ -7629,7 +8583,7 @@
   }
 
   function handleDragEnd(event) {
-    if (isInstanceSuperseded || !event || isProcessedEvent(event)) {
+    if (!event || isProcessedEvent(event)) {
       return;
     }
     setClear(enteredDragTargets);
@@ -7650,7 +8604,7 @@
         dataTransfer,
       });
       markSyntheticEvent(ev);
-      target.dispatchEvent(ev);
+      dispatchEventSafe(target, ev);
     } catch {
       try {
         const ev = new NativeDragEvent(eventType, {
@@ -7661,7 +8615,7 @@
           clientY: -1,
         });
         markSyntheticEvent(ev);
-        target.dispatchEvent(ev);
+        dispatchEventSafe(target, ev);
       } catch {
         // Ignore non-dispatchable targets cleanly.
       }
@@ -7679,7 +8633,9 @@
     }
     const leaveDt = new NativeDataTransfer();
     const list =
-      Array.isArray(targetsSnapshot) && targetsSnapshot.length > 0 ? targetsSnapshot : [fallbackTarget];
+      nativeIsArray(targetsSnapshot) && targetsSnapshot.length > 0
+        ? targetsSnapshot
+        : [fallbackTarget];
     for (let i = 0; i < list.length; i += 1) {
       const t = list[i];
       const liveTarget = t && (t === window || t.isConnected) ? t : fallbackTarget;
@@ -7699,7 +8655,7 @@
   }
 
   function sanitizeClipboardStrings(strings) {
-    if (!Array.isArray(strings) || strings.length === 0) {
+    if (!nativeIsArray(strings) || strings.length === 0) {
       return { strings, changed: false };
     }
     if (!state.maskSecrets && !state.maskPii && !state.customWords) {
@@ -7763,7 +8719,7 @@
   }
 
   function handleTransferEvent(event, propName, eventName, preSnapshot) {
-    if (isInstanceSuperseded || !state.enabled || !event || isProcessedEvent(event)) {
+    if (!state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const original =
@@ -7777,7 +8733,7 @@
     }
 
     const { files, strings, stringsModified } = preSnapshot || snapshotDataTransfer(original);
-    const dragTargetsSnapshot = eventName === 'drop' ? Array.from(enteredDragTargets) : [];
+    const dragTargetsSnapshot = eventName === 'drop' ? setToArray(enteredDragTargets) : [];
     if (eventName === 'drop') {
       setClear(enteredDragTargets);
     }
@@ -7831,8 +8787,10 @@
     const rawTarget = getEventPathTarget(event);
     const initialTarget =
       rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
-    const clientX = typeof event.clientX === 'number' ? event.clientX : 0;
-    const clientY = typeof event.clientY === 'number' ? event.clientY : 0;
+    const rawX = getEvProp(nativeClientXDesc, event, 'clientX');
+    const rawY = getEvProp(nativeClientYDesc, event, 'clientY');
+    const clientX = typeof rawX === 'number' ? rawX : 0;
+    const clientY = typeof rawY === 'number' ? rawY : 0;
     haltEvent(event);
 
     logDiag('Files', `${eventName}:asyncStart`, {
@@ -7844,8 +8802,12 @@
     const asyncPromise = processFilesAsync(files);
     const onProcessed = ({ canceled, dataTransfer, renamedNames, cleanedCount }) => {
       const pointTarget =
-        eventName === 'drop' && typeof document.elementFromPoint === 'function'
-          ? document.elementFromPoint(clientX, clientY)
+        eventName === 'drop'
+          ? nativeElementFromPoint
+            ? nativeElementFromPoint.call(document, clientX, clientY)
+            : typeof document.elementFromPoint === 'function'
+              ? document.elementFromPoint(clientX, clientY)
+              : null
           : null;
       if (canceled || !dataTransfer) {
         logDiag('Files', `${eventName}:asyncCanceled`, { site: window.location.hostname });
@@ -7900,7 +8862,7 @@
         overrideEventTransfer(synthetic, propName, dataTransfer);
       }
       markSyntheticEvent(synthetic);
-      const notCanceled = dispatchTarget.dispatchEvent(synthetic);
+      const notCanceled = dispatchEventSafe(dispatchTarget, synthetic);
       logDiag('Files', `${eventName}:asyncDispatched`, {
         site: window.location.hostname,
         targetTag: dispatchTarget.tagName || 'WINDOW',
@@ -7918,7 +8880,7 @@
   }
 
   function handlePaste(event) {
-    if (isInstanceSuperseded || !state.enabled || !event || isProcessedEvent(event)) {
+    if (!state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const clipboardData = getClipboardData(event);
@@ -7958,7 +8920,7 @@
   }
 
   function handleCopyDeTokenize(event) {
-    if (isInstanceSuperseded || !state.enabled || mapSize(sessionTokenToRaw) === 0 || !event) {
+    if (!state.enabled || mapSize(sessionTokenToRaw) === 0 || !event) {
       return;
     }
     const rawTarget = getEventPathTarget(event);
@@ -7991,14 +8953,11 @@
   }
 
   function handleDrop(event) {
-    if (isInstanceSuperseded) {
-      return;
-    }
     handleTransferEvent(event, 'dataTransfer', 'drop');
   }
 
   function handleFileInputChange(event) {
-    if (isInstanceSuperseded || !state.enabled || !event || isProcessedEvent(event)) {
+    if (!state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const input = getEventPathTarget(event);
@@ -8074,7 +9033,11 @@
       if (canceled || !dataTransfer) {
         logDiag('Files', 'fileInput:asyncCanceled', { site: window.location.hostname });
         try {
-          input.value = '';
+          if (inputValueDescriptor && typeof inputValueDescriptor.set === 'function') {
+            inputValueDescriptor.set.call(input, '');
+          } else {
+            input.value = '';
+          }
         } catch {
           // Ignore reset rejection safely.
         }
@@ -8095,10 +9058,10 @@
       });
       const syntheticInput = new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
       markSyntheticEvent(syntheticInput);
-      input.dispatchEvent(syntheticInput);
+      dispatchEventSafe(input, syntheticInput);
       const syntheticChange = new NativeEvent('change', { bubbles: true, cancelable: false, composed: false });
       markSyntheticEvent(syntheticChange);
-      input.dispatchEvent(syntheticChange);
+      dispatchEventSafe(input, syntheticChange);
     };
     const onInputError = () => {
       wsDelete(pendingAsyncInputs, input);
@@ -8111,7 +9074,7 @@
   }
 
   const COMMAND_TOGGLE_META = Object.freeze(
-    Object.assign(Object.create(null), {
+    (nativeObjAssign || Object.assign)((nativeObjCreate || Object.create)(null), {
       'toggle-enabled': {
         key: 'enabled',
         onTitle: 'activeTitle',
@@ -8197,6 +9160,18 @@
     })
   );
 
+  function commitStateChange(clearReason) {
+    if (!state.enabled || (!state.maskSecrets && !state.maskPii && !state.customWords)) {
+      clearEphemeralSecretDraft(clearReason);
+      clearOneTimeRawBypass(clearReason);
+      clearSessionTokenVault();
+    }
+    storageResetOccurred = false;
+    storageResetNoticePending = false;
+    clearStorageResetFallbackTimer();
+    syncStoredState();
+  }
+
   function applyCommand(command) {
     if (!nativeHasOwn(COMMAND_TOGGLE_META, command)) {
       return;
@@ -8206,15 +9181,7 @@
       return;
     }
     state[meta.key] = !state[meta.key];
-    if (!state.enabled || (!state.maskSecrets && !state.maskPii && !state.customWords)) {
-      clearEphemeralSecretDraft('toggle-off');
-      clearOneTimeRawBypass('toggle-off');
-      clearSessionTokenVault();
-    }
-    storageResetOccurred = false;
-    storageResetNoticePending = false;
-    clearStorageResetFallbackTimer();
-    syncStoredState();
+    commitStateChange('toggle-off');
     logDiag('Cmd', 'toggle', {
       site: window.location.hostname,
       command,
@@ -8231,7 +9198,7 @@
   }
 
   function processBridgeData(data, replyPort) {
-    if (isInstanceSuperseded || !data || data.__clipzero !== TO_MAIN || !data.payload) {
+    if (!data || data.__clipzero !== TO_MAIN || !data.payload) {
       return false;
     }
     const msgToken = data.token;
@@ -8246,13 +9213,17 @@
 
     const { requestId, payload } = data;
     if (payload.type === 'clipzero:i18n' && payload.strings && typeof payload.strings === 'object') {
-      i18n = { ...i18n, ...payload.strings };
+      i18n = nativeObjAssign
+        ? nativeObjAssign({}, i18n, payload.strings)
+        : { ...i18n, ...payload.strings };
       flushStorageResetNotice();
       return true;
     }
 
     if (payload.shortcuts && typeof payload.shortcuts === 'object') {
-      shortcuts = { ...shortcuts, ...payload.shortcuts };
+      shortcuts = nativeObjAssign
+        ? nativeObjAssign({}, shortcuts, payload.shortcuts)
+        : { ...shortcuts, ...payload.shortcuts };
     }
 
     if (payload.type === 'clipzero:command' && typeof payload.command === 'string') {
@@ -8262,15 +9233,7 @@
       typeof payload.customWords === 'string'
     ) {
       state.customWords = sanitizeCustomWords(payload.customWords);
-      if (!state.enabled || (!state.maskSecrets && !state.maskPii && !state.customWords)) {
-        clearEphemeralSecretDraft('custom-words-cleared');
-        clearOneTimeRawBypass('custom-words-cleared');
-        clearSessionTokenVault();
-      }
-      storageResetOccurred = false;
-      storageResetNoticePending = false;
-      clearStorageResetFallbackTimer();
-      syncStoredState();
+      commitStateChange('custom-words-cleared');
     }
 
     if (requestId) {
@@ -8282,8 +9245,8 @@
         state: snapshotState(),
       };
       if (replyPort) {
-        replyPort.postMessage(reply);
-      } else if (targetOrigin && targetOrigin !== 'null') {
+        postPortMessageSafe(replyPort, reply);
+      } else if (bridgePort === null && targetOrigin && targetOrigin !== 'null') {
         nativePostMessage(reply, targetOrigin);
       }
     }
@@ -8291,17 +9254,23 @@
   }
 
   function handleBridgeMessage(event) {
-    if (isInstanceSuperseded || !event || !event.isTrusted || bridgePort !== null) {
+    if (!event || !event.isTrusted) {
       return;
     }
-    const src = msgSourceDesc && typeof msgSourceDesc.get === 'function' ? msgSourceDesc.get.call(event) : event.source;
-    const ori = msgOriginDesc && typeof msgOriginDesc.get === 'function' ? msgOriginDesc.get.call(event) : event.origin;
+    const src = getEvProp(msgSourceDesc, event, 'source');
+    const ori = getEvProp(msgOriginDesc, event, 'origin');
     if (src !== window || ori !== targetOrigin) {
       return;
     }
-    const data = msgDataDesc && typeof msgDataDesc.get === 'function' ? msgDataDesc.get.call(event) : event.data;
-    const ports = msgPortsDesc && typeof msgPortsDesc.get === 'function' ? msgPortsDesc.get.call(event) : event.ports;
+    const data = getEvProp(msgDataDesc, event, 'data');
+    const ports = getEvProp(msgPortsDesc, event, 'ports');
     if (!data || data.__clipzero !== TO_MAIN || !data.payload) {
+      return;
+    }
+    if (bridgePort !== null) {
+      if (sessionBridgeToken !== null && data.token === sessionBridgeToken) {
+        safeStopImmediatePropagation(event);
+      }
       return;
     }
     const wasUnbound = sessionBridgeToken === null;
@@ -8309,19 +9278,19 @@
       return;
     }
     safeStopImmediatePropagation(event);
-    if (wasUnbound && ports && ports[0]) {
+    if (
+      wasUnbound &&
+      ports &&
+      ports.length > 0 &&
+      (!NativeMessagePort || ports[0] instanceof NativeMessagePort)
+    ) {
       bridgePort = ports[0];
-      bridgePort.onmessage = (portEv) => {
-        const pData =
-          portEv && msgDataDesc && typeof msgDataDesc.get === 'function'
-            ? msgDataDesc.get.call(portEv)
-            : portEv
-              ? portEv.data
-              : null;
+      setPortOnMessageSafe(bridgePort, (portEv) => {
+        const pData = portEv ? getEvProp(msgDataDesc, portEv, 'data') : null;
         processBridgeData(pData, bridgePort);
-      };
+      });
       try {
-        bridgePort.postMessage({
+        postPortMessageSafe(bridgePort, {
           __clipzero: TO_ISOLATED,
           token: sessionBridgeToken,
           requestId: 0,
@@ -8356,9 +9325,7 @@
         configurable: true,
         writable: true,
         value: function clipZeroFileTrigger() {
-          if (!isInstanceSuperseded) {
-            attachFileInputListeners(this);
-          }
+          attachFileInputListeners(this);
           return nativeMethod.apply(this, arguments);
         },
       });
@@ -8368,9 +9335,6 @@
   }
 
   function handleWindowClickForShadowInput(event) {
-    if (isInstanceSuperseded) {
-      return;
-    }
     const target = getEventPathTarget(event);
     attachFileInputListeners(target);
   }

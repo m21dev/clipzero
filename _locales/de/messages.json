@@ -234,12 +234,6 @@
   "hintSecrets": {
     "message": "Keys"
   },
-  "hintNotice": {
-    "message": "Hinweis"
-  },
-  "hintSave": {
-    "message": "Merken"
-  },
   "toastActiveTitle": {
     "message": "ClipZero aktiv"
   },
@@ -485,5 +479,20 @@
   },
   "popupTabProtection": {
     "message": "Schutz"
+  },
+  "redactModeCrop": {
+    "message": "Zuschneiden"
+  },
+  "redactModeScroll": {
+    "message": "Scrollen"
+  },
+  "redactWeightThin": {
+    "message": "Dünn"
+  },
+  "redactWeightMedium": {
+    "message": "Mittel"
+  },
+  "redactWeightThick": {
+    "message": "Dick"
   }
 }

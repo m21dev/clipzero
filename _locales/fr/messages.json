@@ -234,12 +234,6 @@
   "hintSecrets": {
     "message": "clés"
   },
-  "hintNotice": {
-    "message": "avis"
-  },
-  "hintSave": {
-    "message": "sauver"
-  },
   "toastActiveTitle": {
     "message": "ClipZero actif"
   },
@@ -485,5 +479,20 @@
   },
   "popupTabProtection": {
     "message": "Protection"
+  },
+  "redactModeCrop": {
+    "message": "Rogner"
+  },
+  "redactModeScroll": {
+    "message": "Défiler"
+  },
+  "redactWeightThin": {
+    "message": "Fin"
+  },
+  "redactWeightMedium": {
+    "message": "Moyen"
+  },
+  "redactWeightThick": {
+    "message": "Épais"
   }
 }

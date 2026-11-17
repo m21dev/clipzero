@@ -234,12 +234,6 @@
   "hintSecrets": {
     "message": "claves"
   },
-  "hintNotice": {
-    "message": "aviso"
-  },
-  "hintSave": {
-    "message": "recordar"
-  },
   "toastActiveTitle": {
     "message": "ClipZero activo"
   },
@@ -485,5 +479,20 @@
   },
   "popupTabProtection": {
     "message": "Protección"
+  },
+  "redactModeCrop": {
+    "message": "Recortar"
+  },
+  "redactModeScroll": {
+    "message": "Desplazar"
+  },
+  "redactWeightThin": {
+    "message": "Fino"
+  },
+  "redactWeightMedium": {
+    "message": "Medio"
+  },
+  "redactWeightThick": {
+    "message": "Grueso"
   }
 }

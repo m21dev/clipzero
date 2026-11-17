@@ -8,6 +8,10 @@
 const ext = globalThis.browser || globalThis.chrome;
 let armedReload = null;
 
+function isValidTabId(tabId) {
+  return typeof tabId === 'number' && Number.isInteger(tabId) && tabId >= 0;
+}
+
 /**
  * Consumes and returns the pending tab reload id if valid and unexpired.
  * @param {number} [tabIdHint]
@@ -18,13 +22,14 @@ function consumeArmedReload(tabIdHint) {
     return null;
   }
   const { tabId, expiresAt } = armedReload;
-  armedReload = null;
   if (Date.now() > expiresAt) {
+    armedReload = null;
     return null;
   }
-  if (typeof tabIdHint === 'number' && tabId !== tabIdHint) {
+  if (isValidTabId(tabIdHint) && tabId !== tabIdHint) {
     return null;
   }
+  armedReload = null;
   return tabId;
 }
 
@@ -33,7 +38,7 @@ function consumeArmedReload(tabIdHint) {
  * @param {number} tabId
  */
 function safeReloadTab(tabId) {
-  if (typeof tabId !== 'number' || !Number.isInteger(tabId) || tabId < 0) {
+  if (!isValidTabId(tabId)) {
     return;
   }
   if (ext?.tabs?.reload) {
@@ -62,7 +67,7 @@ async function getShortcutMap() {
  * @param {string} text
  */
 function setTabBadge(tabId, text) {
-  if (typeof tabId !== 'number' || !Number.isInteger(tabId) || tabId < 0) {
+  if (!isValidTabId(tabId)) {
     return;
   }
   if (!ext?.action?.setBadgeText) {
@@ -112,9 +117,7 @@ async function flagOpenTabsNeedingReload() {
     const candidates = tabs.filter(
       (t) =>
         t &&
-        typeof t.id === 'number' &&
-        Number.isInteger(t.id) &&
-        t.id >= 0 &&
+        isValidTabId(t.id) &&
         !t.discarded &&
         typeof t.url === 'string' &&
         findSite(t.url, manifest)
@@ -177,7 +180,7 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || typeof message.type !== 'string') {
     return undefined;
   }
-  if (!sender || (ext?.runtime?.id && sender.id !== ext.runtime.id)) {
+  if (!ext?.runtime?.id || !sender || sender.id !== ext.runtime.id) {
     return undefined;
   }
   if (sender.tab) {
@@ -188,16 +191,23 @@ ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   if (message.type === 'clipzero:arm-reload') {
-    if (typeof message.tabId === 'number' && Number.isInteger(message.tabId) && message.tabId >= 0) {
+    if (isValidTabId(message.tabId)) {
       armedReload = { tabId: message.tabId, expiresAt: Date.now() + 60000 };
     }
     sendResponse({ ok: true });
     return false;
   }
+  if (message.type === 'clipzero:disarm-reload') {
+    if (isValidTabId(message.tabId)) {
+      consumeArmedReload(message.tabId);
+    }
+    sendResponse({ ok: true });
+    return false;
+  }
   if (message.type === 'clipzero:reload-armed-tab') {
-    if (typeof message.tabId === 'number' && Number.isInteger(message.tabId) && message.tabId >= 0) {
+    if (isValidTabId(message.tabId)) {
       const tabId = consumeArmedReload(message.tabId);
-      if (typeof tabId === 'number') {
+      if (isValidTabId(tabId)) {
         safeReloadTab(tabId);
       }
     }

@@ -54,8 +54,6 @@
       hintExif: msg('hintExif', 'metadata'),
       hintRedact: msg('hintRedact', 'redact'),
       hintSecrets: msg('hintSecrets', 'secrets'),
-      hintNotice: msg('hintNotice', 'notice'),
-      hintSave: msg('hintSave', 'save'),
       activeTitle: msg('toastActiveTitle', 'ClipZero active'),
       activeSub: msg('toastActiveSub', 'Uploads will be anonymized'),
       pausedTitle: msg('toastPausedTitle', 'ClipZero paused'),
@@ -152,6 +150,11 @@
       redactModeCover: msg('redactModeCover', 'Cover'),
       redactModeOutline: msg('redactModeOutline', 'Outline'),
       redactModePen: msg('redactModePen', 'Pen'),
+      redactModeCrop: msg('redactModeCrop', 'Crop'),
+      redactModeScroll: msg('redactModeScroll', 'Scroll'),
+      redactWeightThin: msg('redactWeightThin', 'Thin'),
+      redactWeightMedium: msg('redactWeightMedium', 'Medium'),
+      redactWeightThick: msg('redactWeightThick', 'Thick'),
       redactColorBlack: msg('redactColorBlack', 'Black'),
       redactColorWhite: msg('redactColorWhite', 'White'),
       redactColorRed: msg('redactColorRed', 'Red'),
@@ -226,8 +229,8 @@
 
   window.addEventListener('message', handleIsolatedReply, true);
 
-  function postMessageToMain(messageObj, transfer) {
-    if (bridgePort && !transfer && (channelConfirmed || pendingPorts.size === 1)) {
+  function postMessageToMain(messageObj) {
+    if (bridgePort && (channelConfirmed || pendingPorts.size === 1)) {
       try {
         bridgePort.postMessage(messageObj);
         return;
@@ -236,11 +239,7 @@
         channelConfirmed = false;
       }
     }
-    if (transfer && transfer.length > 0) {
-      window.postMessage(messageObj, targetOrigin, transfer);
-    } else {
-      window.postMessage(messageObj, targetOrigin);
-    }
+    window.postMessage(messageObj, targetOrigin);
   }
 
   function sendHandshake() {
@@ -289,8 +288,10 @@
       postMessageToMain(messageObj);
       return;
     }
-    // Cold-start recovery: if MAIN missed the initial MessageChannel transfer, re-send once.
-    sendHandshake();
+    // Cold-start recovery: only create a handshake channel if none is currently pending.
+    if (pendingPorts.size === 0) {
+      sendHandshake();
+    }
     setTimeout(() => {
       postMessageToMain(messageObj);
     }, 30);

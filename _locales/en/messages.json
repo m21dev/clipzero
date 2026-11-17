@@ -234,12 +234,6 @@
   "hintSecrets": {
     "message": "secrets"
   },
-  "hintNotice": {
-    "message": "notice"
-  },
-  "hintSave": {
-    "message": "save"
-  },
   "toastActiveTitle": {
     "message": "ClipZero active"
   },
@@ -485,5 +479,20 @@
   },
   "popupTabProtection": {
     "message": "Protection"
+  },
+  "redactModeCrop": {
+    "message": "Crop"
+  },
+  "redactModeScroll": {
+    "message": "Scroll"
+  },
+  "redactWeightThin": {
+    "message": "Thin"
+  },
+  "redactWeightMedium": {
+    "message": "Medium"
+  },
+  "redactWeightThick": {
+    "message": "Thick"
   }
 }

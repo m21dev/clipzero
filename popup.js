@@ -124,7 +124,7 @@ function renderSupportedState(state, hostPrefix) {
     if (state.storageReset && !state.saveSite) {
       hostLabelEl.textContent =
         msg('popupSubtitleReset', [prefix]) ||
-        `${prefix}_… · Reset (corrupt data cleared)`;
+        `${prefix}_… · Reset (corrupt data)`;
     } else {
       hostLabelEl.textContent = state.saveSite
         ? msg('popupSubtitleSaved', [prefix]) || `${prefix}_… · Saved on site`
@@ -234,8 +234,8 @@ function renderReloadRequiredState(tabId) {
     bannerText:
       msg('popupReloadBanner') ||
       'ClipZero updated.\nReload this tab (F5) once to activate all new controls.',
-    buttonText: typeof tabId === 'number' ? msg('popupReloadBtn') || 'Reload tab' : '',
-    action: typeof tabId === 'number' ? { type: 'reload', tabId } : null,
+    buttonText: isValidTabId(tabId) ? msg('popupReloadBtn') || 'Reload tab' : '',
+    action: isValidTabId(tabId) ? { type: 'reload', tabId } : null,
   });
 }
 
@@ -330,6 +330,16 @@ function renderAlreadyOpenTabReloadState(tabId, hostname) {
 }
 
 /**
+ * Finds whether a URL belongs to one of ClipZero's manifest content_scripts.
+ * @param {string} tabUrl
+ */
+function matchTabSite(tabUrl) {
+  const manifest = ext?.runtime?.getManifest?.();
+  const findSite = globalThis.clipzeroFindMatchedSite;
+  return typeof findSite === 'function' ? findSite(tabUrl || '', manifest) : null;
+}
+
+/**
  * Resolves why the active tab did not return live content-script state.
  * Uses host_permissions-scoped tab.url to flag already-open supported tabs without activeTab,
  * while keeping unrelated pages (e.g. Google Drive) cleanly in Standby.
@@ -342,10 +352,7 @@ async function resolveUnavailableTabState(tab, precomputedMissingPromise) {
     renderStandbyState();
     return;
   }
-  const manifest = ext?.runtime?.getManifest?.();
-  const findSite = globalThis.clipzeroFindMatchedSite;
-  const matched =
-    typeof findSite === 'function' ? findSite(tab?.url || '', manifest) : null;
+  const matched = matchTabSite(tab?.url || '');
   if (matched) {
     renderAlreadyOpenTabReloadState(tabId, matched.hostname);
     return;
@@ -427,15 +434,12 @@ async function initPopup() {
 
   const activeTab = tabs?.[0];
   const tabId = activeTab?.id;
-  if (typeof tabId !== 'number') {
+  if (!isValidTabId(tabId)) {
     renderStandbyState();
     return;
   }
 
-  const manifest = ext?.runtime?.getManifest?.();
-  const findSite = globalThis.clipzeroFindMatchedSite;
-  const matched =
-    typeof findSite === 'function' ? findSite(activeTab?.url || '', manifest) : null;
+  const matched = matchTabSite(activeTab?.url || '');
 
   const badgePromise = ext?.action?.getBadgeText
     ? Promise.resolve(ext.action.getBadgeText({ tabId })).catch(() => '')
@@ -505,7 +509,7 @@ async function handleActiveTabDisconnected() {
 
 for (const rowEl of toggleRows) {
   rowEl.addEventListener('click', async () => {
-    if (isPendingCommand || typeof activeTabId !== 'number') {
+    if (isPendingCommand || !isValidTabId(activeTabId)) {
       return;
     }
 
@@ -522,13 +526,7 @@ for (const rowEl of toggleRows) {
         command,
         shortcuts: currentShortcuts,
       });
-      if (response?.ok && response.state) {
-        if (!hasCompleteState(response.state)) {
-          renderReloadRequiredState(currentTabId);
-          return;
-        }
-        renderSupportedState(response.state, response.hostPrefix || '');
-      } else {
+      if (!applyLiveTabResponse(currentTabId, response)) {
         await handleActiveTabDisconnected();
       }
     } catch {
@@ -540,7 +538,7 @@ for (const rowEl of toggleRows) {
 }
 
 async function sendCustomWordsUpdate() {
-  if (!customWordsInputEl || typeof activeTabId !== 'number') {
+  if (!customWordsInputEl || !isValidTabId(activeTabId)) {
     return;
   }
   if (customWordsDebounceTimer !== null) {
@@ -563,14 +561,8 @@ async function sendCustomWordsUpdate() {
       type: 'clipzero:set-custom-words',
       customWords: nextWords,
     });
-    if (response?.ok && response.state) {
-      if (!hasCompleteState(response.state)) {
-        renderReloadRequiredState(currentTabId);
-        return;
-      }
-      renderSupportedState(response.state, response.hostPrefix || '');
-    } else {
-      renderReloadRequiredState(currentTabId);
+    if (!applyLiveTabResponse(currentTabId, response)) {
+      await handleActiveTabDisconnected();
     }
   } catch {
     await handleActiveTabDisconnected();
@@ -656,6 +648,10 @@ if (noticeActionBtnEl) {
             }
           }
           window.close();
+        } else if (hasValidTab && ext?.runtime?.sendMessage) {
+          ext.runtime
+            .sendMessage({ type: 'clipzero:disarm-reload', tabId: targetTabId })
+            .catch(() => {});
         }
       });
     }

@@ -234,12 +234,6 @@
   "hintSecrets": {
     "message": "密钥"
   },
-  "hintNotice": {
-    "message": "提示"
-  },
-  "hintSave": {
-    "message": "保存"
-  },
   "toastActiveTitle": {
     "message": "ClipZero 已启用"
   },
@@ -485,5 +479,20 @@
   },
   "popupTabProtection": {
     "message": "隐私保护"
+  },
+  "redactModeCrop": {
+    "message": "裁剪"
+  },
+  "redactModeScroll": {
+    "message": "滚动"
+  },
+  "redactWeightThin": {
+    "message": "细"
+  },
+  "redactWeightMedium": {
+    "message": "中"
+  },
+  "redactWeightThick": {
+    "message": "粗"
   }
 }

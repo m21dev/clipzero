@@ -1,117 +1,137 @@
+<div align="center">
+
+<img src="icons/icon-128.png" width="84" height="84" alt="ClipZero">
+
 # ClipZero
 
-**100% local upload & clipboard privacy shield for AI chats, social media, messaging, and webmail.**
+**100% local upload, metadata, canvas & secret firewall inside Firefox.**
 
-Firefox MV3 (`140+` Desktop / `142+` Android) · **Zero API permissions** · **Zero network calls** · **Zero telemetry** · **`GPL-3.0-or-later`**
+[![Firefox Add-ons](https://img.shields.io/amo/v/clipzero?label=Firefox%20AMO&color=ff7139&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/clipzero/)
+[![CI](https://github.com/m21dev/clipzero/actions/workflows/ci.yml/badge.svg)](https://github.com/m21dev/clipzero/actions/workflows/ci.yml)
+![Firefox Support](https://img.shields.io/badge/Firefox-140%2B%20%7C%20Android%20142%2B-0060df)
+![Zero Permissions](https://img.shields.io/badge/API%20Permissions-0-16a34a)
+![Zero Telemetry](https://img.shields.io/badge/Network%20%26%20Telemetry-0-09090b)
+![License](https://img.shields.io/badge/License-GPL--3.0--or--later-2563eb)
+
+[Install on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/clipzero/) · [What's New in v1.3.1](#whats-new-in-v131) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
+
+<br>
+
+<img src="assets/canvas-editor.png" width="760" alt="ClipZero v1.3.1 Canvas Redactor showing Cover, Outline, Pen, Crop, Scroll, colors, and stroke weights">
+
+</div>
 
 ---
 
 ## Why ClipZero?
 
-Every time you paste a screenshot, drag a photo, attach a PDF, or paste logs/code into an AI chat or web app, browsers can leak original filenames (`Screenshot 2026-11-17...`), GPS/EXIF camera metadata, PDF author tags, or API tokens and personal contacts.
+Every screenshot pasted into an AI chat, photo dragged into webmail, or log snippet pasted online can leak **camera GPS**, **OS filenames**, **PDF author tags**, or **live credentials**. ClipZero sanitizes everything **in memory inside your tab** before websites read the event—with zero external requests and zero API permissions.
 
-ClipZero intercepts uploads and pastes **locally inside your browser tab** before websites read them—with zero external requests, zero analytics, and zero API permissions in `manifest.json`.
-
----
-
-## Features
-
-- **Privacy Upload Renamer:** Intercepts paste, drag-and-drop, and `<input type="file">` uploads and replaces local filenames (`clip_XXXXXX.png`, or `doc_XXXXXX.*` when *Rename all files* is enabled), using bounded LRU collision avoidance.
-- **Exotic Format Flattening:** Automatically converts decodable `.bmp`, `.ico`, `.tiff`, and `.heic`/`.heif` rasters to clean `.png` via local Canvas so web apps accept them reliably.
-- **Lossless Metadata & Document Cleaning:**
-  - **JPEG:** Strips EXIF, GPS, XMP, and APP0 RGB thumbnails while rebuilding a safe orientation tag (`0x0112`) so portrait photos stay upright.
-  - **PNG & WebP:** Rebuilds files using strict chunk allowlists (removing `eXIf`, `tEXt`, `zTXt`, `iTXt`, `iDOT`, `C2PA`, etc.).
-  - **GIF:** Strips Comment and XMP extensions while preserving animated `NETSCAPE2.0` frames.
-  - **AVIF:** Detects EXIF/XMP metadata markers in static AVIF headers and re-exports cleanly via local Canvas.
-  - **SVG:** Sanitizes active scripts, `on*` attributes, `<foreignObject>`, unsafe URIs, external CSS URLs/@import rules, and editor namespaces (Figma, Sketch, Illustrator, Inkscape, etc.) up to `8 MB`.
-  - **PDF:** Blanks `/Info` (direct, `#xx` hex names, and indirect references) and XMP packets in-place with whitespace of identical byte length up to `50 MB`, keeping `xref` tables and `/Outlines` bookmarks intact.
-- **Pre-Upload Canvas Redactor & Optimizer:**
-  - **Cover:** Irreversible opaque solid fill across 6 high-contrast colors (`#09090b`, `#ffffff`, `#ef4444`, `#2563eb`, `#16a34a`, `#eab308`)—zero reversible blur or mosaic filters.
-  - **Outline:** Color frames to highlight areas while keeping inner content visible.
-  - **Pen:** Freehand drawing smoothed with quadratic curves at export resolution.
-  - **Low-RAM Batch Streaming:** Uses native `ImageBitmap` decoding (`imageOrientation: 'from-image'`), cached `1400 px` preview windows (max `2` live batch slides), windowed pagination + quick slide jump selector, `Skip` / `Include` per slide, optional max `2048 px` resize, sequential 1-by-1 export, and immediate `.close()` + `<canvas>` memory release.
-- **Secret, PII & Custom Hidden Words Guard:**
-  - Masks pasted API keys, tokens, JWTs, Luhn-valid payment cards, IBANs, URL credentials, private PEM keys, optional emails/phones/IPs, and user-defined comma-separated **Custom hidden words** with consistent session placeholders (`[REDACTED_EMAIL_1]`), bounded by a `500`-entry / `1 MB` LRU session vault.
-  - Includes a selective **Review** modal (uncheck individual findings) and a **Restore originals** toast button when copying masked tokens back from chat responses.
-- **Smart Site Profiles & Tab Reload Detection:**
-  - Defaults to full Secret + Metadata protection on AI chats & GitHub, and seamless Metadata + Renaming protection on social media, messaging, and webmail.
-  - Automatically flags already-open supported tabs (`!`) after install or update with a 1-click **Reload tab** button in the compact tabbed popup (**Protection** | **More settings**), plus cold-start handshake recovery.
+| What You Share | Without ClipZero | With ClipZero |
+| :--- | :--- | :--- |
+| **Filenames** | `Screenshot 2026-11-17 1742.png` exposes OS, date & language | Anonymized to `clip_a4f9c2.png` (`doc_*` in strict mode) |
+| **Photos & Docs** | GPS EXIF, thumbnails, PNG text chunks, SVG scripts, PDF authors | Stripped losslessly while keeping upright orientation & bookmarks |
+| **Sensitive Screens** | Raw tokens, usernames, emails or faces visible | Permanent **Cover**, **Outline**, **Pen**, **Crop (`C`)** & **Scroll (`H`)** |
+| **Pasted Text & Code** | API keys, JWTs, Luhn cards, IBANs, IPs or codenames exposed | Numbered `[REDACTED_*_N]` placeholders + **Restore originals** |
 
 ---
 
-## Supported Sites (55 Host Patterns)
+## What's New in `v1.3.1`
 
-- **AI Chats & Builders:** Gemini (`gemini.google.com`), Google AI Studio, ChatGPT, Claude, Perplexity, Grok, Mistral (`chat.mistral.ai`, `lechat.mistral.ai`), Microsoft Copilot, Poe, HuggingChat, DeepSeek, Qwen, Kimi, Z.ai, ChatGLM, Doubao, Yuanbao, Ernie/Yiyan, NotebookLM, v0, Bolt, Lovable, OpenRouter, Duck.ai.
-- **Developer Platforms:** GitHub (`github.com`).
-- **Messaging & Social:** WhatsApp Web, Telegram Web, Discord, Messenger, Facebook (`facebook.com`, `m.facebook.com`), Instagram, X / Twitter, Reddit, LinkedIn.
-- **Webmail:** Gmail (`mail.google.com`) and Outlook (`outlook.live.com`, `outlook.office.com`, `outlook.office365.com`, `outlook.cloud.microsoft`).
+- **Single-Touch `pointerId` Lock:** Ignores accidental secondary fingers and palm contacts mid-stroke on Firefox Android (`142+`) and touchscreens, with `lostpointercapture` cleanup.
+- **Stroke Weights (`Thin` / `Medium` / `Thick`):** Adjustable widths for **Outline** and **Pen**, scaled cleanly to export resolution.
+- **Non-Destructive Crop (`C`):** Interactive margin trimming with live `W×H` readout, exact coordinate mapping alongside redactions, and arrow clamping inside active crops.
+- **Scroll Mode (`H`) & Tall-Portrait Layout:** Native touch pan (`pan-x pan-y`) plus desktop mouse drag-to-pan and scrollable viewport sizing for long vertical phone screenshots.
+- **Chronological Multi-Action Undo & Hardening:** `Delete`/`Backspace` on boxes is now undoable via `Undo` / `Ctrl+Z`, `+ Box` (`N`) switches out of `Crop`/`Scroll`, and `document_start` prototype isolation + SVG/PDF/bridge guards were tightened.
+
+---
+
+## Feature Matrix
+
+### Visual Canvas Editor
+
+| Tool / Control | Shortcut | Behavior |
+| :--- | :---: | :--- |
+| **Cover** | `N` / Drag | Irreversible solid fill in 6 high-contrast colors (no reversible blur/mosaic) |
+| **Outline** | `O` | Crisp highlight frames leaving inner content readable (`Thin` / `Med` / `Thick`) |
+| **Pen** | `P` | Smooth freehand quadratic strokes (`Thin` / `Med` / `Thick`) |
+| **Crop** | `C` | Non-destructive region trim aligned pixel-for-pixel with all boxes |
+| **Scroll** | `H` | Pan long vertical captures via touch or mouse drag without accidental strokes |
+| **Precision Controls** | `Arrows` / `[` `]` | Move, `Shift+Arrow` resize, cycle boxes, `Del` (undoable), `PgUp`/`PgDn` slides |
+
+### Lossless Metadata & Document Sanitizers
+
+| Format | Local Sanitization | Limit / Notes |
+| :--- | :--- | :--- |
+| **JPEG** | Strips EXIF, GPS, XMP, and APP0 RGB thumbnails; rebuilds orientation (`0x0112`) | Handles progressive scans & trailers |
+| **PNG & WebP** | Rebuilds from strict chunk allowlists (`iDOT`, `C2PA`, `tEXt`/`iTXt` purged) | Byte-exact lossless |
+| **GIF & AVIF** | Strips GIF Comment/XMP extensions; re-exports static AVIFs carrying metadata | Preserves animated `NETSCAPE2.0` |
+| **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs, CSS `@import`, `marker` URLs | Up to `8 MB` |
+| **PDF** | Blanks `/Info` (direct, `#xx`, indirect refs) & XMP packets in-place | Up to `50 MB`; `xref` & bookmarks intact |
+| **Exotic Rasters** | Flattens `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` cleanly to `.png` via Canvas | Only when browser decodes |
+
+### Secret Guard, Session Tokens & Compact Popup
+
+<div align="center">
+<img src="assets/popup-ui.png" width="760" alt="ClipZero v1.3.1 Protection and More settings popup tabs">
+</div>
+
+- **Session Tokenization:** Consistent numbered placeholders (`[REDACTED_EMAIL_1]`, `[REDACTED_OPENAI_KEY_2]`) inside a bounded LRU vault (`<= 500` entries / `<= 1 MB`), selective **Review** checkboxes, **Custom hidden words**, and a **Restore originals** copy toast.
+- **Zero-Permission Tab Detection:** `55` matched host patterns default to full Secret + Metadata protection on AI chats/GitHub and seamless Metadata + Renaming on social/webmail; already-open tabs show a `!` badge with a 1-click **Reload tab** button.
+
+---
+
+## Supported Sites (`55` Host Patterns)
+
+| Category | Supported Domains |
+| :--- | :--- |
+| **AI Chats & Builders** | Gemini, AI Studio, ChatGPT, Claude, Perplexity, Grok, Mistral (`chat`/`lechat`), Copilot, Poe, HuggingChat (`/chat/*`), DeepSeek, Qwen, Kimi, Z.ai, ChatGLM, Doubao, Yuanbao, Ernie/Yiyan, NotebookLM, v0, Bolt, Lovable, OpenRouter, Duck.ai |
+| **Developer** | GitHub |
+| **Messaging & Social** | WhatsApp Web, Telegram Web, Discord, Messenger, Facebook (`www`/`m`), Instagram, X / Twitter, Reddit, LinkedIn |
+| **Webmail** | Gmail, Outlook (`live.com`, `office.com`, `office365.com`, `cloud.microsoft`) |
 
 ---
 
 ## Keyboard Shortcuts
 
-| Shortcut (Windows / Linux) | macOS | Action |
+| Windows / Linux | macOS | Action |
 | :--- | :--- | :--- |
-| `Alt+Shift+P` | `MacCtrl+Shift+P` | Pause / resume ClipZero on the active tab (`toggle-enabled`) |
-| `Alt+Shift+S` | `MacCtrl+Shift+S` | Toggle rename all files & documents (`toggle-strict`) |
-| `Alt+Shift+E` | `MacCtrl+Shift+E` | Toggle lossless metadata cleaning (`toggle-exif`) |
-| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas visual redactor (`toggle-redact`) |
-| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret & API Key Guard on paste (`toggle-secrets`) |
-| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen confirmation notice (`toggle-toast`) |
-| `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for this site (`toggle-save`) |
-
-Inside the **Canvas Redactor** modal: `N` adds a box, `O` selects **Outline**, `P` selects **Pen**, `Arrow` keys move/resize (hold `Shift` for resize), `Delete`/`Backspace` removes selected box, `PageUp`/`PageDown` switches slides, and `Enter` uploads.
+| `Alt+Shift+P` | `MacCtrl+Shift+P` | Pause / resume protection on active tab |
+| `Alt+Shift+S` | `MacCtrl+Shift+S` | Rename all files & documents (`strictMode`) |
+| `Alt+Shift+E` | `MacCtrl+Shift+E` | Toggle lossless metadata cleaning |
+| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas visual editor |
+| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret & API Key Guard on paste |
+| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen confirmation notice |
+| `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for current site |
 
 ---
 
 ## Installation
 
-### Official Signed Add-on (Recommended)
-Install ClipZero directly from **[Mozilla Firefox Add-ons (AMO)](https://addons.mozilla.org/firefox/addon/clipzero/)**. Standard Firefox releases require Mozilla-signed `.xpi` packages.
-
-### Load Unpacked Source in Firefox (Development)
-1. Clone or download this repository (`git clone https://github.com/m21dev/clipzero.git`).
-2. Open `about:debugging#/runtime/this-firefox` in Firefox.
-3. Click **Load Temporary Add-on…** and select `manifest.json` from the repository root.
+- **Official Firefox Release (Recommended):** Install the Mozilla-signed add-on from **[addons.mozilla.org/firefox/addon/clipzero](https://addons.mozilla.org/firefox/addon/clipzero/)**.
+- **Load Unpacked Source (Dev):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json).
 
 ---
 
-## Architecture & Security
+<details>
+<summary><strong>Architecture, Memory Bounds & Local Verification</strong></summary>
 
-1. **`content.js` (`MAIN` world at `document_start`):** Captures native browser globals at startup, enforces filename/metadata/canvas/secret sanitization locally, isolates UI inside closed Shadow DOM (`:host{all:initial...}`), and explicitly releases `ImageBitmap` / `<canvas>` memory.
-2. **`bridge.js` (`ISOLATED` world at `document_start`):** Loaded after `content.js`; supplies localized strings (`browser.i18n`, 6 locales: `de`, `en`, `es`, `fr`, `pt_BR`, `zh_CN`), command relays, and popup state queries over a private `MessageChannel` with cold-start retry recovery.
-3. **`site_match.js` & `background.js`:** Detects already-open supported tabs needing a reload after install/update (`!`), manages permission-request auto-reloads cleanly, and relays keyboard commands without requiring `"tabs"` or `"activeTab"`.
-4. **`popup.html` / `popup.css` / `popup.js`:** Tabbed popup (`408 px` wide, zero vertical scrollbars) with non-blocking initialization and instant `!` reload guidance.
+1. **`content.js` (`MAIN` world @ `document_start`):** Captures native DOM/Canvas/Event/MessagePort globals at startup, enforces fail-closed sanitization, isolates UI in closed Shadow DOM (`:host{all:initial...}`), streams `ImageBitmap` previews (`<= 2` live cached slides at `1400 px`), exports sequentially, and zeroes `<canvas>` buffers immediately.
+2. **`bridge.js` (`ISOLATED` world @ `document_start`):** Runs after `content.js`; relays i18n (`6` locales × `152` keys), commands, and popup state over a validated `MessageChannel` with cold-start retry recovery.
+3. **`site_match.js` & `background.js`:** Event-driven tab reload flagging (`!`), permission-prompt reload arming/disarming, and strict `sender.id` command relay with `0` API permissions.
+4. **Checks & Packaging (Python `3.9+`):**
+   ```bash
+   python tests/verify_repo.py   # Manifest, locales (152 keys x6), static sinks & JS syntax
+   python scripts/package.py     # Builds clean runtime ZIP inside dist/
+   ```
+   No bundlers or minifiers are used—source files shipped to AMO match this repository verbatim.
 
-No build step or minification is used: all JavaScript, HTML, and CSS files shipped to AMO match this repository.
-
----
-
-## Verification & Packaging
-
-Run the standalone repository integrity & security checks (requires Python `3.9+`, optional Node.js for JS syntax checking):
-
-```bash
-python tests/verify_repo.py
-```
-
-Build a clean runtime ZIP into `dist/` (excluded by `.gitignore`):
-
-```bash
-python scripts/package.py
-```
-
----
-
-## Roadmap & Security
-
-- See [ROADMAP.md](ROADMAP.md) for upcoming milestones (`v1.3.1`, `v1.4.0`, `v2.0.0`).
-- See [SECURITY.md](SECURITY.md) for responsible disclosure instructions.
-- See [CHANGELOG.md](CHANGELOG.md) for version history.
+</details>
 
 ---
 
 ## License & Support
 
-- Licensed under the **GNU General Public License v3.0 or later (`GPL-3.0-or-later`)** — see [LICENSE](LICENSE).
-- Voluntary support (optional): [GitHub Sponsors (`m21dev`)](https://github.com/sponsors/m21dev).
+- **License:** [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](LICENSE)
+- **Security:** See [SECURITY.md](SECURITY.md) for responsible disclosure rules
+- **Support (Optional):** [Sponsor `@m21dev` on GitHub](https://github.com/sponsors/m21dev)
