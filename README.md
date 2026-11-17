@@ -1,137 +1,137 @@
 <div align="center">
 
-<img src="icons/icon-128.png" width="84" height="84" alt="ClipZero">
+<img src="icons/icon-128.png" width="72" height="72" alt="ClipZero">
 
 # ClipZero
 
-**100% local upload, metadata, canvas & secret firewall inside Firefox.**
+**Local-only upload, metadata, visual redaction, and secret firewall for Firefox.**
 
-[![Firefox Add-ons](https://img.shields.io/amo/v/clipzero?label=Firefox%20AMO&color=ff7139&logo=firefoxbrowser&logoColor=white)](https://addons.mozilla.org/firefox/addon/clipzero/)
-[![CI](https://github.com/m21dev/clipzero/actions/workflows/ci.yml/badge.svg)](https://github.com/m21dev/clipzero/actions/workflows/ci.yml)
-![Firefox Support](https://img.shields.io/badge/Firefox-140%2B%20%7C%20Android%20142%2B-0060df)
-![Zero Permissions](https://img.shields.io/badge/API%20Permissions-0-16a34a)
-![Zero Telemetry](https://img.shields.io/badge/Network%20%26%20Telemetry-0-09090b)
-![License](https://img.shields.io/badge/License-GPL--3.0--or--later-2563eb)
+[![Firefox Add-ons](https://img.shields.io/amo/v/clipzero?label=Firefox%20AMO&style=flat-square&color=0060df)](https://addons.mozilla.org/firefox/addon/clipzero/)
+[![CI](https://img.shields.io/github/actions/workflow/status/m21dev/clipzero/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/m21dev/clipzero/actions/workflows/ci.yml)
+![Zero Permissions](https://img.shields.io/badge/API%20Permissions-0-16a34a?style=flat-square)
+![License](https://img.shields.io/badge/License-GPL--3.0-52525b?style=flat-square)
 
-[Install on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/clipzero/) · [What's New in v1.3.1](#whats-new-in-v131) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
+[Install on Firefox Add-ons](https://addons.mozilla.org/firefox/addon/clipzero/) · [Releases](https://github.com/m21dev/clipzero/releases) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
 
 <br>
 
-<img src="assets/canvas-editor.png" width="760" alt="ClipZero v1.3.1 Canvas Redactor showing Cover, Outline, Pen, Crop, Scroll, colors, and stroke weights">
+<img src="assets/01-canvas-editor.png" width="840" alt="ClipZero pre-upload Canvas Redactor">
 
 </div>
 
+<br>
+
+ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab** before websites read them—with **zero API permissions**, **zero network calls**, and **unminified source code**.
+
+- **Anonymize upload filenames:** Renames pasted, dropped, and picked files (`clip_XXXXXX.png` / `doc_XXXXXX.*`) and converts `.bmp`, `.ico`, `.tiff`, and `.heic` rasters to `.png`.
+- **Strip metadata losslessly:** Cleans JPEG EXIF/GPS/APP0, PNG and WebP chunks (`iDOT`, `C2PA`, text), GIF comments/XMP, static AVIF markers, active SVG vectors, and PDF `/Info` + XMP fields in-place.
+- **Redact & crop before upload (`v1.3.1`):** Draw irreversible **Cover** fills, **Outline** boxes, or **Pen** strokes (`Thin` / `Medium` / `Thick`), trim margins with **Crop (`C`)**, or pan tall mobile screenshots with **Scroll (`H`)**.
+- **Mask secrets & PII on paste:** Replaces API keys, tokens, JWTs, Luhn cards, IBANs, URL credentials, optional contacts/IPs, and **Custom hidden words** with consistent session tokens (`[REDACTED_*_N]`).
+
+<br>
+
+## Interface Overview
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="assets/02-secret-guard.png"><img src="assets/02-secret-guard.png" alt="Secret and PII Guard on paste"></a>
+      <br><sub><b>Secret, PII &amp; Custom Words Guard</b> — Numbered session placeholders, per-item Review checkboxes, and one-click Restore originals.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="assets/03-popup-controls.png"><img src="assets/03-popup-controls.png" alt="ClipZero zero-permission tabbed popup"></a>
+      <br><sub><b>Per-Tab Controls (Zero API Permissions)</b> — Compact Protection &amp; More settings tabs with volatile defaults, reload badges (<code>!</code>), and 6 languages.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <a href="assets/01-canvas-editor.png"><img src="assets/01-canvas-editor.png" alt="Pre-upload Canvas Redactor"></a>
+      <br><sub><b>Mobile &amp; Desktop Canvas Editor</b> — Single-finger <code>pointerId</code> lock, chronological Undo, and low-RAM <code>ImageBitmap</code> previews.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <a href="assets/04-metadata-privacy.png"><img src="assets/04-metadata-privacy.png" alt="Lossless metadata and filename cleaner"></a>
+      <br><sub><b>Lossless Metadata &amp; File Shield</b> — Strips identifying headers in tab memory while preserving upright photos, animations, and PDF links.</sub>
+    </td>
+  </tr>
+</table>
+
 ---
 
-## Why ClipZero?
+## Install
 
-Every screenshot pasted into an AI chat, photo dragged into webmail, or log snippet pasted online can leak **camera GPS**, **OS filenames**, **PDF author tags**, or **live credentials**. ClipZero sanitizes everything **in memory inside your tab** before websites read the event—with zero external requests and zero API permissions.
+- **Firefox Desktop (`140+`) & Android (`142+`):** Install the signed release from **[addons.mozilla.org/firefox/addon/clipzero](https://addons.mozilla.org/firefox/addon/clipzero/)**.
+- **Unpacked source (development):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json).
 
-| What You Share | Without ClipZero | With ClipZero |
+---
+
+## Technical Reference
+
+<details>
+<summary>What's new in v1.3.1</summary>
+
+- **Active `pointerId` multi-touch lock:** Ignores secondary finger or palm contacts mid-stroke, with `lostpointercapture` cleanup.
+- **Stroke weight selector:** Added **Thin**, **Medium**, and **Thick** sizes for **Outline** and **Pen**, scaled accurately at export resolution.
+- **Non-destructive Crop (`C`):** Interactive margin cropping with live dimensions, aligned box mapping, and arrow-key clamping inside active crops.
+- **Scroll mode (`H`) & tall-portrait layout:** Touch `pan-x pan-y` plus desktop mouse drag-to-pan alongside scrollable tall-portrait canvas sizing.
+- **Chronological Undo & hardening:** `Delete` / `Backspace` on boxes is now undoable via `Undo` (`Ctrl/Cmd+Z`), expanded `document_start` native captures, widened SVG `marker` URL & PDF XMP sanitization, hardened `MessagePort` handshakes, and `clipzero:disarm-reload` cleanup (`152` locale keys × 6).
+
+</details>
+
+<details>
+<summary>Supported file formats &amp; limits</summary>
+
+| Format | Sanitization | Notes |
 | :--- | :--- | :--- |
-| **Filenames** | `Screenshot 2026-11-17 1742.png` exposes OS, date & language | Anonymized to `clip_a4f9c2.png` (`doc_*` in strict mode) |
-| **Photos & Docs** | GPS EXIF, thumbnails, PNG text chunks, SVG scripts, PDF authors | Stripped losslessly while keeping upright orientation & bookmarks |
-| **Sensitive Screens** | Raw tokens, usernames, emails or faces visible | Permanent **Cover**, **Outline**, **Pen**, **Crop (`C`)** & **Scroll (`H`)** |
-| **Pasted Text & Code** | API keys, JWTs, Luhn cards, IBANs, IPs or codenames exposed | Numbered `[REDACTED_*_N]` placeholders + **Restore originals** |
+| **JPEG** | Strips EXIF, GPS, XMP &amp; APP0 RGB thumbnails | Preserves safe orientation tag (`0x0112`) across progressive scans |
+| **PNG / WebP** | Rebuilt via strict chunk allowlists | Removes `iDOT`, `C2PA`, `eXIf`, `tEXt`, `zTXt`, `iTXt` |
+| **GIF / AVIF** | Strips GIF Comment/XMP; re-exports static AVIFs with metadata | Keeps animated `NETSCAPE2.0` GIF frames intact |
+| **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs, CSS URLs &amp; `marker` URLs | Up to `8 MB` |
+| **PDF** | Blanks `/Info` (direct, `#xx`, indirect) &amp; XMP packets in-place | Up to `50 MB`; `xref` tables &amp; bookmarks preserved |
+| **Exotic Rasters** | Flattens `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` cleanly to `.png` | Handled via local Canvas when browser-decodable |
 
----
+</details>
 
-## What's New in `v1.3.1`
+<details>
+<summary>Supported websites (55 host patterns)</summary>
 
-- **Single-Touch `pointerId` Lock:** Ignores accidental secondary fingers and palm contacts mid-stroke on Firefox Android (`142+`) and touchscreens, with `lostpointercapture` cleanup.
-- **Stroke Weights (`Thin` / `Medium` / `Thick`):** Adjustable widths for **Outline** and **Pen**, scaled cleanly to export resolution.
-- **Non-Destructive Crop (`C`):** Interactive margin trimming with live `W×H` readout, exact coordinate mapping alongside redactions, and arrow clamping inside active crops.
-- **Scroll Mode (`H`) & Tall-Portrait Layout:** Native touch pan (`pan-x pan-y`) plus desktop mouse drag-to-pan and scrollable viewport sizing for long vertical phone screenshots.
-- **Chronological Multi-Action Undo & Hardening:** `Delete`/`Backspace` on boxes is now undoable via `Undo` / `Ctrl+Z`, `+ Box` (`N`) switches out of `Crop`/`Scroll`, and `document_start` prototype isolation + SVG/PDF/bridge guards were tightened.
+- **AI Chats & Builders:** Gemini, AI Studio, ChatGPT, Claude, Perplexity, Grok, Mistral (`chat.mistral.ai`, `lechat.mistral.ai`), Copilot, Poe, HuggingChat (`/chat/*`), DeepSeek, Qwen, Kimi, Z.ai, ChatGLM, Doubao, Yuanbao, Ernie/Yiyan, NotebookLM, v0, Bolt, Lovable, OpenRouter, Duck.ai.
+- **Developer:** GitHub.
+- **Messaging & Social:** WhatsApp Web, Telegram Web, Discord, Messenger, Facebook (`www`, `m`), Instagram, X / Twitter, Reddit, LinkedIn.
+- **Webmail:** Gmail, Outlook (`live.com`, `office.com`, `office365.com`, `cloud.microsoft`).
 
----
+</details>
 
-## Feature Matrix
-
-### Visual Canvas Editor
-
-| Tool / Control | Shortcut | Behavior |
-| :--- | :---: | :--- |
-| **Cover** | `N` / Drag | Irreversible solid fill in 6 high-contrast colors (no reversible blur/mosaic) |
-| **Outline** | `O` | Crisp highlight frames leaving inner content readable (`Thin` / `Med` / `Thick`) |
-| **Pen** | `P` | Smooth freehand quadratic strokes (`Thin` / `Med` / `Thick`) |
-| **Crop** | `C` | Non-destructive region trim aligned pixel-for-pixel with all boxes |
-| **Scroll** | `H` | Pan long vertical captures via touch or mouse drag without accidental strokes |
-| **Precision Controls** | `Arrows` / `[` `]` | Move, `Shift+Arrow` resize, cycle boxes, `Del` (undoable), `PgUp`/`PgDn` slides |
-
-### Lossless Metadata & Document Sanitizers
-
-| Format | Local Sanitization | Limit / Notes |
-| :--- | :--- | :--- |
-| **JPEG** | Strips EXIF, GPS, XMP, and APP0 RGB thumbnails; rebuilds orientation (`0x0112`) | Handles progressive scans & trailers |
-| **PNG & WebP** | Rebuilds from strict chunk allowlists (`iDOT`, `C2PA`, `tEXt`/`iTXt` purged) | Byte-exact lossless |
-| **GIF & AVIF** | Strips GIF Comment/XMP extensions; re-exports static AVIFs carrying metadata | Preserves animated `NETSCAPE2.0` |
-| **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs, CSS `@import`, `marker` URLs | Up to `8 MB` |
-| **PDF** | Blanks `/Info` (direct, `#xx`, indirect refs) & XMP packets in-place | Up to `50 MB`; `xref` & bookmarks intact |
-| **Exotic Rasters** | Flattens `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` cleanly to `.png` via Canvas | Only when browser decodes |
-
-### Secret Guard, Session Tokens & Compact Popup
-
-<div align="center">
-<img src="assets/popup-ui.png" width="760" alt="ClipZero v1.3.1 Protection and More settings popup tabs">
-</div>
-
-- **Session Tokenization:** Consistent numbered placeholders (`[REDACTED_EMAIL_1]`, `[REDACTED_OPENAI_KEY_2]`) inside a bounded LRU vault (`<= 500` entries / `<= 1 MB`), selective **Review** checkboxes, **Custom hidden words**, and a **Restore originals** copy toast.
-- **Zero-Permission Tab Detection:** `55` matched host patterns default to full Secret + Metadata protection on AI chats/GitHub and seamless Metadata + Renaming on social/webmail; already-open tabs show a `!` badge with a 1-click **Reload tab** button.
-
----
-
-## Supported Sites (`55` Host Patterns)
-
-| Category | Supported Domains |
-| :--- | :--- |
-| **AI Chats & Builders** | Gemini, AI Studio, ChatGPT, Claude, Perplexity, Grok, Mistral (`chat`/`lechat`), Copilot, Poe, HuggingChat (`/chat/*`), DeepSeek, Qwen, Kimi, Z.ai, ChatGLM, Doubao, Yuanbao, Ernie/Yiyan, NotebookLM, v0, Bolt, Lovable, OpenRouter, Duck.ai |
-| **Developer** | GitHub |
-| **Messaging & Social** | WhatsApp Web, Telegram Web, Discord, Messenger, Facebook (`www`/`m`), Instagram, X / Twitter, Reddit, LinkedIn |
-| **Webmail** | Gmail, Outlook (`live.com`, `office.com`, `office365.com`, `cloud.microsoft`) |
-
----
-
-## Keyboard Shortcuts
+<details>
+<summary>Keyboard shortcuts (Global &amp; Canvas Modal)</summary>
 
 | Windows / Linux | macOS | Action |
 | :--- | :--- | :--- |
 | `Alt+Shift+P` | `MacCtrl+Shift+P` | Pause / resume protection on active tab |
-| `Alt+Shift+S` | `MacCtrl+Shift+S` | Rename all files & documents (`strictMode`) |
+| `Alt+Shift+S` | `MacCtrl+Shift+S` | Rename all files &amp; documents |
 | `Alt+Shift+E` | `MacCtrl+Shift+E` | Toggle lossless metadata cleaning |
-| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas visual editor |
-| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret & API Key Guard on paste |
-| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen confirmation notice |
+| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas editor |
+| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret &amp; API Key Guard |
+| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen notice |
 | `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for current site |
 
----
+Inside the Canvas modal: `N` (add box), `O` (Outline), `P` (Pen), `C` (Crop), `H` (Scroll), `[` / `]` (cycle boxes), `Arrows` / `Shift+Arrows` (move / resize), `Del` (remove, undoable), `Ctrl`/`Cmd+Z` (Undo), `PageUp`/`PageDown` (slides), `Enter` (Upload).
 
-## Installation
-
-- **Official Firefox Release (Recommended):** Install the Mozilla-signed add-on from **[addons.mozilla.org/firefox/addon/clipzero](https://addons.mozilla.org/firefox/addon/clipzero/)**.
-- **Load Unpacked Source (Dev):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json).
-
----
+</details>
 
 <details>
-<summary><strong>Architecture, Memory Bounds & Local Verification</strong></summary>
+<summary>Architecture &amp; repository checks</summary>
 
-1. **`content.js` (`MAIN` world @ `document_start`):** Captures native DOM/Canvas/Event/MessagePort globals at startup, enforces fail-closed sanitization, isolates UI in closed Shadow DOM (`:host{all:initial...}`), streams `ImageBitmap` previews (`<= 2` live cached slides at `1400 px`), exports sequentially, and zeroes `<canvas>` buffers immediately.
-2. **`bridge.js` (`ISOLATED` world @ `document_start`):** Runs after `content.js`; relays i18n (`6` locales × `152` keys), commands, and popup state over a validated `MessageChannel` with cold-start retry recovery.
-3. **`site_match.js` & `background.js`:** Event-driven tab reload flagging (`!`), permission-prompt reload arming/disarming, and strict `sender.id` command relay with `0` API permissions.
-4. **Checks & Packaging (Python `3.9+`):**
-   ```bash
-   python tests/verify_repo.py   # Manifest, locales (152 keys x6), static sinks & JS syntax
-   python scripts/package.py     # Builds clean runtime ZIP inside dist/
-   ```
-   No bundlers or minifiers are used—source files shipped to AMO match this repository verbatim.
+1. **`content.js` (`MAIN` @ `document_start`):** Captures native DOM/Canvas/MessagePort/Event globals early, sanitizes locally, isolates UI in closed Shadow DOM, and cleans up `ImageBitmap` / `<canvas>` buffers immediately.
+2. **`bridge.js` (`ISOLATED` @ `document_start`):** Relays localized strings (`6` locales × `152` keys), commands, and state queries over a confirmed `MessageChannel`.
+3. **`site_match.js` &amp; `background.js`:** Detects open tabs missing injection (`!`) after install/update, manages permission-reload arming/disarming, and forwards shortcuts with `0` API permissions.
+
+```bash
+python tests/verify_repo.py   # Manifest, locales (152 keys x6), static sinks & JS syntax
+python scripts/package.py     # Builds clean runtime ZIP inside dist/
+```
 
 </details>
 
 ---
 
-## License & Support
-
-- **License:** [GNU General Public License v3.0 or later (`GPL-3.0-or-later`)](LICENSE)
-- **Security:** See [SECURITY.md](SECURITY.md) for responsible disclosure rules
-- **Support (Optional):** [Sponsor `@m21dev` on GitHub](https://github.com/sponsors/m21dev)
+[GNU General Public License v3.0 or later](LICENSE) · [Security Policy](SECURITY.md) · [Support `@m21dev` on GitHub Sponsors](https://github.com/sponsors/m21dev)
