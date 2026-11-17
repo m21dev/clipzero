@@ -67,7 +67,7 @@ Inside the **Canvas Redactor** modal: `N` adds a box, `O` selects **Outline**, `
 ## Installation
 
 ### Official Signed Add-on (Recommended)
-Install ClipZero directly from **Mozilla Firefox Add-ons (AMO)** (search **ClipZero** by `m21dev`). Standard Firefox releases require Mozilla-signed `.xpi` packages.
+Install ClipZero directly from **[Mozilla Firefox Add-ons (AMO)](https://addons.mozilla.org/firefox/addon/clipzero/)**. Standard Firefox releases require Mozilla-signed `.xpi` packages.
 
 ### Load Unpacked Source in Firefox (Development)
 1. Clone or download this repository (`git clone https://github.com/m21dev/clipzero.git`).

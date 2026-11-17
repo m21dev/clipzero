@@ -1,0 +1,21 @@
+# Packages & build outputs
+*.zip
+*.xpi
+*.crx
+*.pem
+dist/
+
+# OS & editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Python / Node caches & dependencies
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
