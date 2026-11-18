@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProjetTitan, Jean Dupont"
   },
+  "optCustomWordsClear": {
+    "message": "Effacer"
+  },
   "tokensDetectedCopyTitle": {
     "message": "Jetons masqués copiés"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "Secrets masqués"
   },
+  "toastUploadSecretsTag": {
+    "message": "Secrets masqués"
+  },
   "toastSecretsMaskedSub": {
     "message": "éléments sensibles remplacés avant collage"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "Masquer"
+  },
+  "redactModePixel": {
+    "message": "Pixéliser"
   },
   "redactModeOutline": {
     "message": "Encadrer"

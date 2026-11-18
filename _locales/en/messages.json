@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProjectTitan, John Doe"
   },
+  "optCustomWordsClear": {
+    "message": "Clear"
+  },
   "tokensDetectedCopyTitle": {
     "message": "Masked tokens copied"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "Secrets masked"
   },
+  "toastUploadSecretsTag": {
+    "message": "Secrets masked"
+  },
   "toastSecretsMaskedSub": {
     "message": "sensitive items replaced before paste"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "Cover"
+  },
+  "redactModePixel": {
+    "message": "Pixelate"
   },
   "redactModeOutline": {
     "message": "Outline"

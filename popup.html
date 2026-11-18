@@ -14,7 +14,7 @@
         <div class="brand-text">
           <div class="title-row">
             <h1 class="title">ClipZero</h1>
-            <span class="version">1.3.1</span>
+            <span class="version">1.3.2</span>
           </div>
           <p class="subtitle" id="host-label" data-i18n="popupChecking">Checking tab…</p>
         </div>
@@ -151,10 +151,16 @@ Keyboard shortcuts apply to those tabs.</p>
       </button>
 
       <div class="custom-words-box">
-        <label class="custom-words-label" for="custom-words-input">
-          <span class="row-title" data-i18n="optCustomWordsTitle">Custom hidden words</span>
-          <span class="row-desc" data-i18n="optCustomWordsDesc">Comma-separated names, clients, or projects</span>
-        </label>
+        <div class="custom-words-header">
+          <label class="custom-words-label" for="custom-words-input">
+            <span class="row-title" data-i18n="optCustomWordsTitle">Custom hidden words</span>
+            <span class="row-desc" data-i18n="optCustomWordsDesc">Comma-separated names, clients, or projects</span>
+          </label>
+          <div class="custom-words-meta">
+            <span id="custom-words-count" class="kbd">0/50</span>
+            <button id="custom-words-clear" type="button" class="mini-link-btn" hidden data-i18n="optCustomWordsClear">Clear</button>
+          </div>
+        </div>
         <input type="text" id="custom-words-input" class="custom-words-input" maxlength="500" spellcheck="false" autocomplete="off" data-i18n-placeholder="optCustomWordsPlaceholder" placeholder="AcmeCorp, ProjectTitan, John Doe" disabled>
       </div>
 

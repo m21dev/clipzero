@@ -22,6 +22,8 @@
   let handshakeTimer = null;
   let cachedI18nStrings = null;
   let latestShortcuts = null;
+  const retryDelays = [90, 320];
+  let retryIdx = 0;
 
   function generateBridgeToken() {
     if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
@@ -101,6 +103,7 @@
       ),
       secretsMaskedTitle: msg('toastSecretsMaskedTitle', 'Secrets masked'),
       secretsMaskedSub: msg('toastSecretsMaskedSub', 'sensitive items replaced before paste'),
+      toastUploadSecretsTag: msg('toastUploadSecretsTag', 'Secrets masked'),
       toastSecretsReviewBtn: msg('toastSecretsReviewBtn', 'Review'),
       secretsModalTitle: msg('secretsModalTitle', 'Protected secrets'),
       secretsModalSub: msg(
@@ -148,6 +151,7 @@
       redactBtnCancel: msg('redactBtnCancel', 'Cancel'),
       redactBtnSend: msg('redactBtnSend', 'Upload'),
       redactModeCover: msg('redactModeCover', 'Cover'),
+      redactModePixel: msg('redactModePixel', 'Pixelate'),
       redactModeOutline: msg('redactModeOutline', 'Outline'),
       redactModePen: msg('redactModePen', 'Pen'),
       redactModeCrop: msg('redactModeCrop', 'Crop'),
@@ -167,6 +171,7 @@
   function closeUnusedPorts(keepPort) {
     for (const p of pendingPorts) {
       if (p !== keepPort) {
+        p.onmessage = null;
         try {
           p.close();
         } catch {
@@ -177,6 +182,23 @@
     pendingPorts.clear();
   }
 
+  function cleanupUnconfirmedHandshake() {
+    handshakeTimer = null;
+    if (channelConfirmed) {
+      return;
+    }
+    closeUnusedPorts(null);
+    bridgePort = null;
+    cachedI18nStrings = null;
+  }
+
+  function scheduleUnconfirmedCleanup(delayMs = 300) {
+    if (channelConfirmed || handshakeTimer !== null) {
+      return;
+    }
+    handshakeTimer = setTimeout(cleanupUnconfirmedHandshake, delayMs);
+  }
+
   function confirmChannelPort(port) {
     if (!port) {
       return;
@@ -184,6 +206,7 @@
     const firstConfirm = !channelConfirmed;
     channelConfirmed = true;
     bridgePort = port;
+    cachedI18nStrings = null;
     if (handshakeTimer !== null) {
       clearTimeout(handshakeTimer);
       handshakeTimer = null;
@@ -199,7 +222,23 @@
         });
       } catch {
         // Ignore shortcut push failures cleanly.
+      } finally {
+        latestShortcuts = null;
       }
+    }
+  }
+
+  function isExtensionContextAlive() {
+    try {
+      if (ext?.runtime && 'id' in ext.runtime && !ext.runtime.id) {
+        return false;
+      }
+      if (ext?.i18n && typeof ext.i18n.getMessage === 'function') {
+        ext.i18n.getMessage('extDescription');
+      }
+      return Boolean(ext?.runtime);
+    } catch {
+      return false;
     }
   }
 
@@ -207,13 +246,41 @@
     if (!data || data.__clipzero !== TO_ISOLATED || data.token !== bridgeToken) {
       return false;
     }
+    if (data.ping === true) {
+      if (fromPort) {
+        if (isExtensionContextAlive()) {
+          try {
+            fromPort.postMessage({
+              __clipzero: TO_MAIN,
+              token: bridgeToken,
+              requestId: 0,
+              payload: { type: 'clipzero:pong', alive: true },
+            });
+          } catch {
+            // Ignore closed port errors cleanly.
+          }
+        } else {
+          try {
+            fromPort.onmessage = null;
+            fromPort.close();
+          } catch {
+            // Ignore cleanup errors.
+          }
+        }
+      }
+      return true;
+    }
     if (fromPort) {
       confirmChannelPort(fromPort);
     }
     const resolve = pendingRequests.get(data.requestId);
     if (resolve) {
       pendingRequests.delete(data.requestId);
-      resolve({ ok: true, state: data.state || null, hostPrefix: data.hostPrefix || 'clip' });
+      if (data.ok === false || data.needsReload === true) {
+        resolve({ ok: false, needsReload: Boolean(data.needsReload), state: null });
+      } else {
+        resolve({ ok: true, state: data.state || null, hostPrefix: data.hostPrefix || 'clip' });
+      }
     }
     return true;
   }
@@ -235,6 +302,12 @@
         bridgePort.postMessage(messageObj);
         return;
       } catch {
+        try {
+          bridgePort.onmessage = null;
+          bridgePort.close();
+        } catch {
+          // Ignore already-closed port.
+        }
         bridgePort = null;
         channelConfirmed = false;
       }
@@ -253,7 +326,7 @@
       __clipzero: TO_MAIN,
       token: bridgeToken,
       requestId: 0,
-      payload: { type: 'clipzero:i18n', strings: cachedI18nStrings },
+      payload: { type: 'clipzero:i18n', strings: cachedI18nStrings, bridgeMode: 'isolated' },
     };
     if (typeof MessageChannel === 'function') {
       const channel = new MessageChannel();
@@ -273,6 +346,7 @@
         if (bridgePort === port1) {
           bridgePort = null;
         }
+        port1.onmessage = null;
         try {
           port1.close();
         } catch {
@@ -291,6 +365,9 @@
     // Cold-start recovery: only create a handshake channel if none is currently pending.
     if (pendingPorts.size === 0) {
       sendHandshake();
+      if (!channelConfirmed) {
+        scheduleUnconfirmedCleanup(700);
+      }
     }
     setTimeout(() => {
       postMessageToMain(messageObj);
@@ -345,10 +422,12 @@
 
   // Establish a dedicated private MessageChannel at document_start and auto-heal if MAIN lags.
   sendHandshake();
-  const retryDelays = [90, 320];
-  let retryIdx = 0;
   function scheduleHandshakeRetry() {
-    if (channelConfirmed || retryIdx >= retryDelays.length) {
+    if (channelConfirmed) {
+      return;
+    }
+    if (retryIdx >= retryDelays.length) {
+      scheduleUnconfirmedCleanup(300);
       return;
     }
     const waitMs = retryDelays[retryIdx];
@@ -363,12 +442,28 @@
   }
   scheduleHandshakeRetry();
 
+  window.addEventListener('pagehide', () => {
+    if (!channelConfirmed) {
+      if (handshakeTimer !== null) {
+        clearTimeout(handshakeTimer);
+        handshakeTimer = null;
+      }
+      cleanupUnconfirmedHandshake();
+    }
+  });
+
+  window.addEventListener('pageshow', (event) => {
+    if (event && event.persisted && !channelConfirmed && pendingPorts.size === 0) {
+      sendHandshake();
+      scheduleUnconfirmedCleanup(500);
+    }
+  });
+
   // Push active keyboard shortcuts cleanly once confirmed (or via single active channel).
   ext.runtime
     .sendMessage({ type: 'clipzero:get-shortcuts' })
     .then((shortcuts) => {
       if (shortcuts && typeof shortcuts === 'object') {
-        latestShortcuts = shortcuts;
         if (bridgePort && channelConfirmed) {
           postMessageToMain({
             __clipzero: TO_MAIN,
@@ -376,6 +471,9 @@
             requestId: 0,
             payload: { type: 'clipzero:shortcuts', shortcuts },
           });
+          latestShortcuts = channelConfirmed ? null : shortcuts;
+        } else {
+          latestShortcuts = shortcuts;
         }
       }
     })

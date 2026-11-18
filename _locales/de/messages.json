@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProjektTitan, Max Mustermann"
   },
+  "optCustomWordsClear": {
+    "message": "Leeren"
+  },
   "tokensDetectedCopyTitle": {
     "message": "Maskierte Tokens kopiert"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "Keys maskiert"
   },
+  "toastUploadSecretsTag": {
+    "message": "Secrets maskiert"
+  },
   "toastSecretsMaskedSub": {
     "message": "sensible Einträge vor dem Einfügen ersetzt"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "Verdecken"
+  },
+  "redactModePixel": {
+    "message": "Verpixeln"
   },
   "redactModeOutline": {
     "message": "Umranden"

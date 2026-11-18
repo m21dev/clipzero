@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.png" width="880" alt="ClipZero v1.3.1 overview">
+<img src="assets/banner.png" width="880" alt="ClipZero v1.3.2 overview">
 
 <br><br>
 
@@ -19,8 +19,8 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 
 - **Anonymize filenames:** Renames pasted, dropped, and picked files (`clip_XXXXXX.png` / `doc_XXXXXX.*`) and flattens `.bmp`, `.ico`, `.tiff`, and `.heic` rasters to `.png`.
 - **Clean metadata losslessly:** Strips JPEG EXIF/GPS/APP0, PNG and WebP chunks (`iDOT`, `C2PA`, text), GIF comments/XMP, static AVIF markers, active SVG vectors, and PDF `/Info` + XMP fields in-place.
-- **Redact & crop before upload (`v1.3.1`):** Permanent **Cover** fills, **Outline** boxes, and **Pen** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)**, mobile **Scroll (`H`)**, and single-touch `pointerId` lock.
-- **Mask secrets & PII on paste:** Replaces API keys, tokens, JWTs, Luhn cards, IBANs, URL credentials, optional contacts/IPs, and **Custom hidden words** with consistent session tokens (`[REDACTED_*_N]`).
+- **Redact & crop before upload (`v1.3.2`):** Irreversible **Cover** fills, **Pixelate (`P`)** quantized mosaic, **Outline (`O`)** boxes, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` pill, mobile **Scroll (`H`)**, and single-touch `pointerId` lock.
+- **Mask secrets & PII on paste & file upload:** Replaces API keys, tokens, JWTs, Luhn cards, IBANs, URL credentials, optional contacts/IPs, and **Custom hidden words** (`0/50` counter + `Clear` + auto-remember site) with consistent session tokens (`[REDACTED_*_N]`).
 
 ---
 
@@ -28,28 +28,28 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 
 <p align="center">
   <img src="assets/01-canvas-editor.png" width="800" alt="ClipZero pre-upload Canvas Redactor"><br>
-  <sub><b>Pre-upload Canvas Redactor</b> — Cover, Outline, Pen stroke widths, Crop (<code>C</code>), Scroll (<code>H</code>), and chronological Undo.</sub>
+  <sub><b>Pre-upload Canvas Redactor</b> — Cover, <b>Pixelate (<code>P</code>)</b>, Outline (<code>O</code>), Pen (<code>D</code>) stroke widths, Crop (<code>C</code>) with live output dimensions, Scroll (<code>H</code>), and Undo.</sub>
 </p>
 
 <br>
 
 <p align="center">
   <img src="assets/03-popup-controls.png" width="800" alt="ClipZero zero-permission tabbed popup"><br>
-  <sub><b>Zero-Permission Tabbed Popup</b> — Per-tab toggles, Custom hidden words, shortcuts, and automatic reload detection (<code>!</code>) across 55 hosts.</sub>
+  <sub><b>Zero-Permission Tabbed Popup</b> — Per-tab toggles, Custom hidden words (<code>0/50</code> + <b>Clear</b>), shortcuts, and automatic reload detection (<code>!</code>) across 55 hosts.</sub>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="assets/02-secret-guard.png" width="800" alt="ClipZero Secret and PII Guard on paste"><br>
-  <sub><b>Secret, PII &amp; Custom Words Guard</b> — Masks keys and contacts before paste with per-item Review checkboxes and Restore originals.</sub>
+  <img src="assets/02-secret-guard.png" width="800" alt="ClipZero Secret and PII Guard on paste and text uploads"><br>
+  <sub><b>Secret, PII &amp; Custom Words Guard</b> — Masks keys and contacts on paste &amp; text/code uploads with per-item Review checkboxes and Restore originals.</sub>
 </p>
 
 <br>
 
 <p align="center">
-  <img src="assets/04-metadata-privacy.png" width="800" alt="ClipZero lossless metadata and filename scrubbing"><br>
-  <sub><b>Filename Anonymizer &amp; Lossless Scrubber</b> — Cleans identifying metadata in tab memory without touching originals on disk.</sub>
+  <img src="assets/04-metadata-privacy.png" width="800" alt="ClipZero lossless metadata, filename scrubbing, and text file secret masking"><br>
+  <sub><b>Filename Anonymizer, Lossless Scrubber &amp; File Secret Guard</b> — Cleans metadata and masks text uploads in tab memory without touching originals on disk.</sub>
 </p>
 
 ---
@@ -64,13 +64,12 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 ## Reference
 
 <details>
-<summary>What's new in v1.3.1</summary>
+<summary>What's new in v1.3.2</summary>
 
-- **Active `pointerId` multi-touch lock:** Ignores secondary finger or palm contacts mid-stroke, with `lostpointercapture` cleanup.
-- **Stroke weight selector:** Added **Thin**, **Medium**, and **Thick** sizes for **Outline** and **Pen**, scaled accurately at export resolution.
-- **Non-destructive Crop (`C`):** Interactive margin cropping with live dimensions, aligned box mapping, and arrow-key clamping inside active crops.
-- **Scroll mode (`H`) & tall-portrait layout:** Touch `pan-x pan-y` plus desktop mouse drag-to-pan alongside scrollable tall-portrait canvas sizing.
-- **Chronological Undo & hardening:** `Delete` / `Backspace` on boxes is now undoable via `Undo` (`Ctrl/Cmd+Z`), expanded `document_start` native captures, widened SVG `marker` URL & PDF XMP sanitization, hardened `MessagePort` handshakes, and `clipzero:disarm-reload` cleanup (`152` locale keys × 6).
+- **Irreversible Pixelate (`P`) + reassigned Pen (`D`):** Added a quantized mosaic redactor backed by a solid matte base (`<= 64×64` zeroed buffer) alongside `Cover`, `Outline` (`O`), and `Pen` (`D`).
+- **Live output dimensions pill (`origW×origH → outW×outH`):** Live Canvas readout reflecting active crops and `2048 px` resize caps, with `28 px` footer controls and overflow-safe stage layout.
+- **Custom hidden words UX & text-file tags:** Added `0/50` word counter, **Clear** button, automatic per-site persistence when saving custom words, and `Secrets masked` upload toast tag for text/code files.
+- **Extension lifecycle safety & R2 RAM optimizations:** Added automatic `MAIN`-world self-teardown when the extension is removed/disabled (`teardownMainWorld`), `injectedAtDocumentStart` verification on already-open tabs, shared `XMLSerializer`, `256 KB` animated GIF probe, `<noscript>` HTML wrapper fix, `scheduleUnconfirmedCleanup(700)`, and `155` locale keys × 6.
 
 </details>
 
@@ -81,10 +80,11 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 | :--- | :--- | :--- |
 | **JPEG** | Strips EXIF, GPS, XMP &amp; APP0 RGB thumbnails | Preserves safe orientation tag (`0x0112`) across progressive scans |
 | **PNG / WebP** | Rebuilt via strict chunk allowlists | Removes `iDOT`, `C2PA`, `eXIf`, `tEXt`, `zTXt`, `iTXt` |
-| **GIF / AVIF** | Strips GIF Comment/XMP; re-exports static AVIFs with metadata | Keeps animated `NETSCAPE2.0` GIF frames intact |
+| **GIF / AVIF** | Strips GIF Comment/XMP; re-exports static AVIFs with metadata | `<= 256 KB` animated GIF probe; keeps animated frames intact |
 | **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs, CSS URLs &amp; `marker` URLs | Up to `8 MB` |
 | **PDF** | Blanks `/Info` (direct, `#xx`, indirect) &amp; XMP packets in-place | Up to `50 MB`; `xref` tables &amp; bookmarks preserved |
 | **Exotic Rasters** | Flattens `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` cleanly to `.png` | Handled via local Canvas when browser-decodable |
+| **Text / Code Files** | Masks secrets, PII &amp; custom words in `.txt`, `.env`, `.json`, `.md`, `.log`, etc. | Displays `Secrets masked` upload tag; disk originals untouched |
 
 </details>
 
@@ -111,19 +111,19 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 | `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen notice |
 | `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for current site |
 
-Inside the Canvas modal: `N` (add box), `O` (Outline), `P` (Pen), `C` (Crop), `H` (Scroll), `[` / `]` (cycle boxes), `Arrows` / `Shift+Arrows` (move / resize), `Del` (remove, undoable), `Ctrl`/`Cmd+Z` (Undo), `PageUp`/`PageDown` (slides), `Enter` (Upload).
+Inside the Canvas modal: `N` (add box), `P` (Pixelate), `O` (Outline), `D` (Pen), `C` (Crop), `H` (Scroll), `[` / `]` (cycle boxes), `Arrows` / `Shift+Arrows` (move / resize), `Del` (remove, undoable), `Ctrl`/`Cmd+Z` (Undo), `PageUp`/`PageDown` (slides), `Enter` (Upload).
 
 </details>
 
 <details>
 <summary>Architecture &amp; repository checks</summary>
 
-1. **`content.js` (`MAIN` @ `document_start`):** Captures native DOM/Canvas/MessagePort/Event globals early, sanitizes locally, isolates UI in closed Shadow DOM, and cleans up `ImageBitmap` / `<canvas>` buffers immediately.
-2. **`bridge.js` (`ISOLATED` @ `document_start`):** Relays localized strings (`6` locales × `152` keys), commands, and state queries over a confirmed `MessageChannel`.
+1. **`content.js` (`MAIN` @ `document_start`):** Captures native DOM/Canvas/MessagePort/Event globals early, verifies `injectedAtDocumentStart` on open tabs, runs `teardownMainWorld()` automatically when removed/disabled, isolates UI in closed Shadow DOM, and zeros `ImageBitmap` / `<canvas>` buffers immediately.
+2. **`bridge.js` (`ISOLATED` @ `document_start`):** Relays localized strings (`6` locales × `155` keys), commands, liveness pongs, and state queries over a confirmed `MessageChannel`.
 3. **`site_match.js` &amp; `background.js`:** Detects open tabs missing injection (`!`) after install/update, manages permission-reload arming/disarming, and forwards shortcuts with `0` API permissions.
 
 ```bash
-python tests/verify_repo.py   # Manifest, locales (152 keys x6), static sinks & JS syntax
+python tests/verify_repo.py   # Manifest, locales (155 keys x6), static sinks & JS syntax
 python scripts/package.py     # Builds clean runtime ZIP inside dist/
 ```
 

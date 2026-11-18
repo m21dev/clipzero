@@ -6,6 +6,8 @@
 (() => {
   'use strict';
 
+  const injectedAtDocumentStart = document.readyState === 'loading';
+
   // Capture pristine native APIs at document_start before page scripts execute.
   const NativeDataTransfer = window.DataTransfer;
   const NativeFile = window.File;
@@ -39,11 +41,19 @@
   const TextDecoderCtor = window.TextDecoder;
   const sharedTextEncoder = TextEncoderCtor ? new TextEncoderCtor() : null;
   const sharedTextDecoder = TextDecoderCtor ? new TextDecoderCtor('utf-8', { fatal: false }) : null;
+  let sharedLatin1Decoder = null;
+  function getSharedLatin1Decoder() {
+    if (!sharedLatin1Decoder && TextDecoderCtor) {
+      sharedLatin1Decoder = new TextDecoderCtor('latin1');
+    }
+    return sharedLatin1Decoder;
+  }
   const nativeConsoleLog =
     typeof console === 'object' && console && typeof console.log === 'function'
       ? console.log.bind(console)
       : null;
   const defineProperty = Object.defineProperty;
+  const nativeGetOwnPropDesc = Object.getOwnPropertyDescriptor;
   const nativeHasOwn =
     typeof Object.hasOwn === 'function'
       ? Object.hasOwn
@@ -71,6 +81,13 @@
     NativeMessagePort && NativeMessagePort.prototype
       ? Object.getOwnPropertyDescriptor(NativeMessagePort.prototype, 'onmessage')
       : null;
+  const nativePortClose =
+    NativeMessagePort &&
+    NativeMessagePort.prototype &&
+    typeof NativeMessagePort.prototype.close === 'function'
+      ? NativeMessagePort.prototype.close
+      : null;
+  const nativeDateNow = typeof Date === 'function' && typeof Date.now === 'function' ? Date.now : null;
   const nativeRAF =
     typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : null;
   const nativeCAF =
@@ -232,6 +249,12 @@
   const nativeCtxRestore = ctxProto && typeof ctxProto.restore === 'function' ? ctxProto.restore : null;
   const nativeCtxRect = ctxProto && typeof ctxProto.rect === 'function' ? ctxProto.rect : null;
   const nativeCtxClip = ctxProto && typeof ctxProto.clip === 'function' ? ctxProto.clip : null;
+  const nativeCtxGetImageData =
+    ctxProto && typeof ctxProto.getImageData === 'function' ? ctxProto.getImageData : null;
+  const nativeBlobSlice =
+    window.Blob && window.Blob.prototype && typeof window.Blob.prototype.slice === 'function'
+      ? window.Blob.prototype.slice
+      : null;
   const nativeAppendChild =
     typeof Node === 'function' && Node.prototype && typeof Node.prototype.appendChild === 'function'
       ? Node.prototype.appendChild
@@ -755,6 +778,20 @@
   // Privacy-safe diagnostics stay muted unless toggled in popup advanced settings.
   let sessionBridgeToken = null;
   let bridgePort = null;
+  let hasIsolatedBridge = false;
+  let isInstanceTornDown = false;
+  let pingCounter = 0;
+  let lastProactivePingAt = 0;
+  const pendingPings = [];
+  let origClipboardProtoWriteTextDesc = null;
+  let origNavigatorClipboardWriteTextDesc = null;
+  let origInputClickDesc = null;
+  let origInputShowPickerDesc = null;
+  let clipboardProtoWrappedFn = null;
+  let navClipboardWrappedFn = null;
+  let inputClickWrappedFn = null;
+  let inputShowPickerWrappedFn = null;
+  const hookedFileInputsList = new NativeSet();
   const targetOrigin = window.location.origin;
 
   function getSafeStorage() {
@@ -953,6 +990,7 @@
     tokensDetectedCopySub: 'Restore original values to clipboard for this copy?',
     tokensRestoreClipBtn: 'Restore originals',
     tokensRestoredClipTitle: 'Originals restored to clipboard',
+    toastUploadSecretsTag: 'Secrets masked',
     secretsChangedNotice: 'Edited block changed in chat; copy original manually if needed.',
     redactModalTitle: 'Redact before upload',
     redactModalHint: 'Drag or N/+ Box · Arrows move · Shift+Arrows resize · Del removes · Enter uploads',
@@ -968,6 +1006,7 @@
     redactBtnCancel: 'Cancel',
     redactBtnSend: 'Upload',
     redactModeCover: 'Cover',
+    redactModePixel: 'Pixelate',
     redactModeOutline: 'Outline',
     redactModePen: 'Pen',
     redactModeCrop: 'Crop',
@@ -991,6 +1030,8 @@
   const enteredDragTargets = new NativeSet();
   let ephemeralSecretDraft = null;
   let pendingRawPasteBypass = null;
+  const wrappedWriteTextFns = new NativeWeakSet();
+  let isInternalClipboardWrite = false;
   const MAX_SESSION_VAULT_ENTRIES = 500;
   const MAX_SESSION_VAULT_CHARS = 1024 * 1024;
   const MAX_TYPE_ENTITIES_CACHE = 200;
@@ -1255,7 +1296,9 @@
     return snap;
   }
 
-  loadStoredState();
+  if (injectedAtDocumentStart) {
+    loadStoredState();
+  }
 
   function formatShortcutHint() {
     const p = shortcuts['toggle-enabled'] || 'Alt+Shift+P';
@@ -1596,8 +1639,11 @@
     activeList[nextIdx].focus();
   }
 
-  function showUploadToast(renamedNames, strippedCount) {
-    if (!state.showToast || (renamedNames.length === 0 && strippedCount === 0)) {
+  function showUploadToast(renamedNames, strippedCount, totalFileSecretsMasked = 0) {
+    if (
+      !state.showToast ||
+      (renamedNames.length === 0 && strippedCount === 0 && !(totalFileSecretsMasked > 0))
+    ) {
       return;
     }
     const lead =
@@ -1606,7 +1652,14 @@
         : renamedNames.length > 1
           ? `ClipZero → ${renamedNames.length} ${i18n.filesWord} (${renamedNames[0]})`
           : 'ClipZero';
-    const title = strippedCount > 0 ? `${lead} · EXIF OK` : lead;
+    const tags = [];
+    if (strippedCount > 0) {
+      nativeArrayPush.call(tags, 'EXIF OK');
+    }
+    if (totalFileSecretsMasked > 0) {
+      nativeArrayPush.call(tags, i18n.toastUploadSecretsTag || 'Secrets masked');
+    }
+    const title = tags.length > 0 ? `${lead} · ${tags.join(' · ')}` : lead;
     const subtitle = !shownUploadHint ? formatShortcutHint() : '';
     const duration = !shownUploadHint ? 3400 : 1900;
     shownUploadHint = true;
@@ -1687,6 +1740,38 @@
       return false;
     }
     return !isSvgFile(file);
+  }
+
+  const SCANNABLE_TEXT_MIMES = new NativeSet([
+    'application/json',
+    'application/ld+json',
+    'application/xml',
+    'application/x-yaml',
+    'application/yaml',
+    'application/toml',
+    'application/javascript',
+    'application/x-javascript',
+    'application/typescript',
+    'application/x-sh',
+    'application/sql',
+  ]);
+
+  const SCANNABLE_TEXT_NAME_RE =
+    /^(?:\.env(?:\.[a-z0-9._-]+)?|dockerfile|makefile|.*\.(?:env|txt|log|md|markdown|rst|json|jsonc|jsonl|ya?ml|toml|ini|conf|cfg|properties|xml|csv|tsv|sql|sh|bash|zsh|ps1|bat|cmd|py|rb|php|pl|lua|r|jl|js|mjs|cjs|ts|tsx|jsx|vue|svelte|astro|html?|css|scss|less|go|rs|java|kt|kts|scala|c|h|cpp|hpp|cc|cs|swift|m|mm|dart|ex|exs|erl|hs|clj|tf|tfvars|hcl|pem|key|crt|csr|pub))$/i;
+
+  function isScannableTextFile(file) {
+    if (!file || typeof file.size !== 'number' || file.size <= 0 || file.size > MAX_SECRET_SCAN_CHARS) {
+      return false;
+    }
+    if (isImageFile(file) || detectExifFormat(file) === 'pdf') {
+      return false;
+    }
+    const mime = (typeof file.type === 'string' ? file.type : '').toLowerCase().split(';')[0].trim();
+    if ((mime.startsWith('text/') && mime !== 'text/html') || setHas(SCANNABLE_TEXT_MIMES, mime)) {
+      return true;
+    }
+    const baseName = (typeof file.name === 'string' ? file.name : '').trim().replace(/^.*[\\/]/, '');
+    return SCANNABLE_TEXT_NAME_RE.test(baseName);
   }
 
   function isExoticRasterCandidate(file) {
@@ -2700,6 +2785,118 @@
     return false;
   }
 
+  let sharedDomParser = null;
+  function getSharedDomParser() {
+    if (!sharedDomParser && NativeDOMParser) {
+      sharedDomParser = new NativeDOMParser();
+    }
+    return sharedDomParser;
+  }
+
+  const IMAGE_WRAPPER_IGNORED_TAGS = new NativeSet([
+    'style',
+    'script',
+    'noscript',
+    'template',
+    'meta',
+    'link',
+    'title',
+    'head',
+    'source',
+  ]);
+  const IMAGE_WRAPPER_FOREIGN_MEDIA_TAGS = new NativeSet([
+    'svg',
+    'video',
+    'audio',
+    'iframe',
+    'canvas',
+    'object',
+    'embed',
+  ]);
+
+  function isImageOnlyHtmlWrapper(html) {
+    if (typeof html !== 'string' || html.length === 0 || html.length > 65536) {
+      return false;
+    }
+    if (!/<img\b/i.test(html)) {
+      return false;
+    }
+    const parser = getSharedDomParser();
+    if (!parser) {
+      return false;
+    }
+    let doc = null;
+    try {
+      const parseInput = /<(?:!doctype|html|head|body)\b/i.test(html)
+        ? html
+        : `<body>${html}</body>`;
+      doc = nativeDomParse
+        ? nativeDomParse.call(parser, parseInput, 'text/html')
+        : parser.parseFromString(parseInput, 'text/html');
+      if (!doc || !doc.body) {
+        return false;
+      }
+      let imgCount = 0;
+      let hasTextOrForeignMedia = false;
+
+      function walk(node) {
+        if (hasTextOrForeignMedia || !node) {
+          return;
+        }
+        const children = node.childNodes;
+        if (!children) {
+          return;
+        }
+        for (let i = 0; i < children.length; i += 1) {
+          if (hasTextOrForeignMedia) {
+            return;
+          }
+          const child = children[i];
+          const nt = child.nodeType;
+          if (nt === 3 || nt === 4) {
+            const val = child.nodeValue;
+            if (val && val.trim().length > 0) {
+              hasTextOrForeignMedia = true;
+              return;
+            }
+            continue;
+          }
+          if (nt !== 1) {
+            continue;
+          }
+          const tag = (child.localName || child.nodeName || '').toLowerCase();
+          if (tag === 'img') {
+            imgCount += 1;
+            continue;
+          }
+          if (setHas(IMAGE_WRAPPER_FOREIGN_MEDIA_TAGS, tag)) {
+            hasTextOrForeignMedia = true;
+            return;
+          }
+          if (setHas(IMAGE_WRAPPER_IGNORED_TAGS, tag)) {
+            continue;
+          }
+          walk(child);
+        }
+      }
+
+      walk(doc.body);
+      return !hasTextOrForeignMedia && imgCount >= 1;
+    } catch {
+      return false;
+    } finally {
+      doc = null;
+    }
+  }
+
+  let sharedXmlSerializer = null;
+  function getSharedXmlSerializer() {
+    if (!sharedXmlSerializer && NativeXMLSerializer) {
+      sharedXmlSerializer = new NativeXMLSerializer();
+    }
+    return sharedXmlSerializer;
+  }
+
   function stripSvgBytes(bytes) {
     if (
       !NativeDOMParser ||
@@ -2715,7 +2912,10 @@
       const rawText = nativeTextDecode
         ? nativeTextDecode.call(sharedTextDecoder, bytes)
         : sharedTextDecoder.decode(bytes);
-      const parser = new NativeDOMParser();
+      const parser = getSharedDomParser();
+      if (!parser) {
+        return null;
+      }
       const doc = nativeDomParse
         ? nativeDomParse.call(parser, rawText, 'image/svg+xml')
         : parser.parseFromString(rawText, 'image/svg+xml');
@@ -2845,7 +3045,10 @@
       if (!modified) {
         return null;
       }
-      const serializer = new NativeXMLSerializer();
+      const serializer = getSharedXmlSerializer();
+      if (!serializer) {
+        return null;
+      }
       const serialized = nativeXmlSerialize
         ? nativeXmlSerialize.call(serializer, doc)
         : serializer.serializeToString(doc);
@@ -3145,8 +3348,106 @@
     return modified;
   }
 
-  function stripPdfBytes(bytes) {
-    if (!bytes || bytes.byteLength < 16 || bytes.byteLength > MAX_PDF_BYTES || !TextDecoderCtor) {
+  function hasPdfDictKeyBoundaryBefore(out, text, idx) {
+    if (idx <= 0) {
+      return true;
+    }
+    const prev = out[idx - 1];
+    if (
+      prev === 0x20 ||
+      prev === 0x09 ||
+      prev === 0x0a ||
+      prev === 0x0d ||
+      prev === 0x0c ||
+      prev === 0x00 ||
+      prev === 0x3c ||
+      prev === 0x3e ||
+      prev === 0x5d ||
+      prev === 0x29 ||
+      prev === 0x7d
+    ) {
+      return true;
+    }
+    if (prev === 0x52) {
+      const lookStart = nativeMathMax(0, idx - 24);
+      return /(?:^|[\s<>\[\]()/])\d{1,8}\s+\d{1,5}\s+R$/.test(text.slice(lookStart, idx));
+    }
+    return false;
+  }
+
+  function isInsidePdfLiteralOrComment(out, text, idx) {
+    let anchor = 0;
+    const minSearch = nativeMathMax(0, idx - 65536);
+    const lastEndObj = text.lastIndexOf('endobj', idx);
+    if (lastEndObj >= minSearch) {
+      const prevByte = lastEndObj > 0 ? out[lastEndObj - 1] : 0x20;
+      if (
+        lastEndObj === 0 ||
+        prevByte === 0x20 ||
+        prevByte === 0x0a ||
+        prevByte === 0x0d ||
+        prevByte === 0x09 ||
+        prevByte === 0x3e ||
+        prevByte === 0x5d
+      ) {
+        anchor = nativeMathMax(anchor, lastEndObj + 6);
+      }
+    }
+    const lastTrailer = text.lastIndexOf('trailer', idx);
+    if (lastTrailer >= minSearch) {
+      const prevByte = lastTrailer > 0 ? out[lastTrailer - 1] : 0x20;
+      if (
+        lastTrailer === 0 ||
+        prevByte === 0x20 ||
+        prevByte === 0x0a ||
+        prevByte === 0x0d ||
+        prevByte === 0x09
+      ) {
+        anchor = nativeMathMax(anchor, lastTrailer + 7);
+      }
+    }
+    const lastObj = text.lastIndexOf(' obj', idx);
+    if (lastObj >= minSearch && lastObj + 4 <= idx) {
+      const objHead = text.slice(nativeMathMax(minSearch, lastObj - 20), lastObj + 4);
+      if (/(?:^|[\s\r\n])\d{1,8}\s+\d{1,5}\s+obj$/.test(objHead)) {
+        anchor = nativeMathMax(anchor, lastObj + 4);
+      }
+    }
+    if (anchor === 0 && idx > 65536) {
+      anchor = minSearch;
+    }
+
+    let parenDepth = 0;
+    let inComment = false;
+    for (let p = anchor; p < idx; p += 1) {
+      const c = out[p];
+      if (inComment) {
+        if (c === 0x0a || c === 0x0d) {
+          inComment = false;
+        }
+        continue;
+      }
+      if (parenDepth > 0) {
+        if (c === 0x5c) {
+          p += 1;
+          continue;
+        }
+        if (c === 0x28) parenDepth += 1;
+        else if (c === 0x29) parenDepth -= 1;
+      } else {
+        if (c === 0x25) {
+          inComment = true;
+        } else if (c === 0x28) {
+          parenDepth = 1;
+        }
+      }
+    }
+    return inComment || parenDepth > 0;
+  }
+
+  function stripPdfBytes(bytes, inPlace = false) {
+    const latinDecoder = getSharedLatin1Decoder();
+    if (!bytes || bytes.byteLength < 16 || bytes.byteLength > MAX_PDF_BYTES || !latinDecoder) {
       return null;
     }
     let hasHeader = false;
@@ -3169,7 +3470,6 @@
 
     let text;
     try {
-      const latinDecoder = new TextDecoderCtor('latin1');
       text = nativeTextDecode ? nativeTextDecode.call(latinDecoder, bytes) : latinDecoder.decode(bytes);
     } catch {
       return null;
@@ -3178,35 +3478,58 @@
       return null;
     }
 
-    const out = new NativeUint8Array(bytes);
+    const out = inPlace ? bytes : new NativeUint8Array(bytes);
     let modified = false;
     const streamRanges = findPdfStreamRanges(text);
 
-    // Collect explicit /Info object numbers from trailer / XRef dictionaries.
+    // Collect explicit /Info object numbers from trailer / XRef dictionaries and neutralize /Info & /Metadata refs.
     const explicitInfoObjIds = new NativeSet();
     const infoRefRe = /\/Info\s+(\d{1,8})\s+(\d{1,5})\s+R\b/g;
     let infoRefMatch;
     while ((infoRefMatch = infoRefRe.exec(text)) !== null) {
-      if (!isInsideStreamRanges(infoRefMatch.index, streamRanges)) {
+      const idx = infoRefMatch.index;
+      if (
+        !isInsideStreamRanges(idx, streamRanges) &&
+        hasPdfDictKeyBoundaryBefore(out, text, idx) &&
+        !isInsidePdfLiteralOrComment(out, text, idx)
+      ) {
         setAdd(explicitInfoObjIds, `${infoRefMatch[1]}:${infoRefMatch[2]}`);
+        if (out[idx + 2] !== 0x5f) {
+          out[idx + 2] = 0x5f;
+          modified = true;
+        }
       }
     }
 
-    // Index non-stream `N G obj ... endobj` boundaries so we can resolve explicit /Info & indirect string objects.
-    const objIdAtDict = new NativeMap();
-    const objSpansById = new NativeMap();
-    const objHeaderRe = /\b(\d{1,8})\s+(\d{1,5})\s+obj\b/g;
-    let objMatch;
-    while ((objMatch = objHeaderRe.exec(text)) !== null) {
-      if (isInsideStreamRanges(objMatch.index, streamRanges)) {
-        continue;
+    const metadataRefRe = /\/Metadata\s+(\d{1,8})\s+(\d{1,5})\s+R\b/g;
+    let metadataRefMatch;
+    while ((metadataRefMatch = metadataRefRe.exec(text)) !== null) {
+      const idx = metadataRefMatch.index;
+      if (
+        !isInsideStreamRanges(idx, streamRanges) &&
+        hasPdfDictKeyBoundaryBefore(out, text, idx) &&
+        !isInsidePdfLiteralOrComment(out, text, idx)
+      ) {
+        if (out[idx + 2] !== 0x5f) {
+          out[idx + 2] = 0x5f;
+          modified = true;
+        }
       }
-      const idKey = `${objMatch[1]}:${objMatch[2]}`;
-      const bodyStart = objMatch.index + objMatch[0].length;
-      const endObjIdx = text.indexOf('endobj', bodyStart);
-      if (endObjIdx > bodyStart && endObjIdx - bodyStart < 262144) {
-        mapSet(objSpansById, idKey, [bodyStart, endObjIdx]);
-        if (setHas(explicitInfoObjIds, idKey)) {
+    }
+
+    // Index explicit /Info `N G obj ... endobj` boundaries only when /Info references were found.
+    const objIdAtDict = new NativeMap();
+    if (setSize(explicitInfoObjIds) > 0) {
+      const objHeaderRe = /\b(\d{1,8})\s+(\d{1,5})\s+obj\b/g;
+      let objMatch;
+      while ((objMatch = objHeaderRe.exec(text)) !== null) {
+        const idKey = `${objMatch[1]}:${objMatch[2]}`;
+        if (!setHas(explicitInfoObjIds, idKey) || isInsideStreamRanges(objMatch.index, streamRanges)) {
+          continue;
+        }
+        const bodyStart = objMatch.index + objMatch[0].length;
+        const endObjIdx = text.indexOf('endobj', bodyStart);
+        if (endObjIdx > bodyStart && endObjIdx - bodyStart < 262144) {
           const dictStart = text.indexOf('<<', bodyStart);
           if (dictStart >= bodyStart && dictStart < endObjIdx) {
             mapSet(objIdAtDict, dictStart, idKey);
@@ -3270,12 +3593,27 @@
     }
 
     if (setSize(indirectTargets) > 0) {
+      const objSpansById = new NativeMap();
+      const objHeaderRe = /\b(\d{1,8})\s+(\d{1,5})\s+obj\b/g;
+      let objMatch;
+      while ((objMatch = objHeaderRe.exec(text)) !== null) {
+        const idKey = `${objMatch[1]}:${objMatch[2]}`;
+        if (!setHas(indirectTargets, idKey) || isInsideStreamRanges(objMatch.index, streamRanges)) {
+          continue;
+        }
+        const bodyStart = objMatch.index + objMatch[0].length;
+        const endObjIdx = text.indexOf('endobj', bodyStart);
+        if (endObjIdx > bodyStart && endObjIdx - bodyStart < 262144) {
+          mapSet(objSpansById, idKey, [bodyStart, endObjIdx]);
+        }
+      }
       for (let i = 0; i < indirectTargetsList.length; i += 1) {
         const span = mapGet(objSpansById, indirectTargetsList[i]);
         if (span && blankPdfStringValue(out, text, span[0], span[1], false, null).modified) {
           modified = true;
         }
       }
+      mapClear(objSpansById);
     }
 
     const xmpSpans = collectPdfXmpSpans(text);
@@ -3290,7 +3628,6 @@
     streamRanges.length = 0;
     setClear(explicitInfoObjIds);
     mapClear(objIdAtDict);
-    mapClear(objSpansById);
     setClear(indirectTargets);
     indirectTargetsList.length = 0;
 
@@ -3358,7 +3695,7 @@
       else if (fmt === 'webp') out = stripWebpBytes(bytes);
       else if (fmt === 'gif') out = stripGifBytes(bytes);
       else if (fmt === 'svg') out = stripSvgBytes(bytes);
-      else if (fmt === 'pdf') out = stripPdfBytes(bytes);
+      else if (fmt === 'pdf') out = stripPdfBytes(bytes, true);
       // Drop input ArrayBuffer references immediately so large media buffers can be reclaimed.
       bytes = null;
       buf = null;
@@ -4121,6 +4458,63 @@
     return { text, count: counter.count, findings, totalFindings, segments };
   }
 
+  async function sanitizeTextFileSecrets(file) {
+    const hasCustomWords = Boolean(state.customWords && state.customWords.trim());
+    if (!state.maskSecrets && !state.maskPii && !hasCustomWords) {
+      return null;
+    }
+    if (!isScannableTextFile(file) || !readBlobArrayBuffer || !sharedTextDecoder || !sharedTextEncoder) {
+      return null;
+    }
+    let buf = null;
+    let bytes = null;
+    try {
+      buf = await readBlobArrayBuffer.call(file);
+      bytes = new NativeUint8Array(buf);
+      if (bytes.byteLength === 0 || bytes.byteLength > MAX_SECRET_SCAN_CHARS) {
+        bytes = null;
+        buf = null;
+        return null;
+      }
+      const probeLen = nativeMathMin(bytes.byteLength, 4096);
+      for (let i = 0; i < probeLen; i += 1) {
+        if (bytes[i] === 0x00) {
+          bytes = null;
+          buf = null;
+          return null;
+        }
+      }
+      let rawText = nativeTextDecode
+        ? nativeTextDecode.call(sharedTextDecoder, bytes)
+        : sharedTextDecoder.decode(bytes);
+      bytes = null;
+      buf = null;
+      const res = maskSensitiveText(rawText, {
+        secrets: state.maskSecrets,
+        pii: state.maskPii,
+      });
+      if (!res || res.count <= 0 || res.text === rawText) {
+        rawText = '';
+        return null;
+      }
+      const encodedBytes = nativeTextEncode
+        ? nativeTextEncode.call(sharedTextEncoder, res.text)
+        : sharedTextEncoder.encode(res.text);
+      return {
+        bytes: encodedBytes,
+        maskedCount: res.count,
+        findings: res.findings,
+        rawText,
+        maskedText: res.text,
+      };
+    } catch {
+      return null;
+    } finally {
+      bytes = null;
+      buf = null;
+    }
+  }
+
   function logDiag(area, step, payload) {
     if (!state.debugLogs || !nativeConsoleLog) {
       return;
@@ -4281,7 +4675,7 @@
   }
 
   function describeDomNode(node) {
-    if (!node) {
+    if (!state.debugLogs || !node) {
       return null;
     }
     const el = node.nodeType === 3 ? node.parentElement : node;
@@ -4315,11 +4709,11 @@
     };
   }
 
-  function collectCompactText(container, collapseWhitespace) {
+  function collectCompactText(container, collapseWhitespace, includeDiag) {
     const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
     let compactText = '';
     const charCoords = [];
-    const specialChars = new Set();
+    const specialChars = includeDiag ? new NativeSet() : null;
     let textNodeCount = 0;
     let prevWasSpace = false;
     let node;
@@ -4330,15 +4724,16 @@
         const ch = val[i];
         const code = ch.charCodeAt(0);
         if (
-          code === 0x00a0 ||
-          (code >= 0x200b && code <= 0x200f) ||
-          code === 0x2060 ||
-          code === 0xfeff ||
-          code === 0x2013 ||
-          code === 0x2014 ||
-          code === 0x09
+          specialChars &&
+          (code === 0x00a0 ||
+            (code >= 0x200b && code <= 0x200f) ||
+            code === 0x2060 ||
+            code === 0xfeff ||
+            code === 0x2013 ||
+            code === 0x2014 ||
+            code === 0x09)
         ) {
-          specialChars.add(`U+${code.toString(16).toUpperCase().padStart(4, '0')}`);
+          setAdd(specialChars, `U+${code.toString(16).toUpperCase().padStart(4, '0')}`);
         }
         if (isSkippableCompactCode(code)) {
           continue;
@@ -4418,7 +4813,7 @@
       return { ok: false, reason: 'container-detached-or-null' };
     }
     const compactNeedle = normalizeNeedleCompact(maskedText, false);
-    const { compactText, specialChars, textNodeCount } = collectCompactText(container, false);
+    const { compactText, specialChars, textNodeCount } = collectCompactText(container, false, true);
     const idx = compactText.lastIndexOf(compactNeedle);
     if (idx >= 0) {
       return {
@@ -5296,11 +5691,25 @@
   async function copyRawTextToClipboard(rawText, hostRoot) {
     try {
       if (nativeClipboardWriteText) {
-        await nativeClipboardWriteText(rawText);
+        let writePromise;
+        isInternalClipboardWrite = true;
+        try {
+          writePromise = nativeClipboardWriteText(rawText);
+        } finally {
+          isInternalClipboardWrite = false;
+        }
+        await writePromise;
         return true;
       }
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-        await navigator.clipboard.writeText(rawText);
+        let writePromise;
+        isInternalClipboardWrite = true;
+        try {
+          writePromise = navigator.clipboard.writeText(rawText);
+        } finally {
+          isInternalClipboardWrite = false;
+        }
+        await writePromise;
         return true;
       }
     } catch {
@@ -5337,7 +5746,15 @@
         ta.focus();
       }
       ta.select();
-      const ok = typeof document.execCommand === 'function' && document.execCommand('copy');
+      let ok = false;
+      if (typeof document.execCommand === 'function') {
+        isInternalClipboardWrite = true;
+        try {
+          ok = document.execCommand('copy');
+        } finally {
+          isInternalClipboardWrite = false;
+        }
+      }
       if (textAreaValueDescriptor && typeof textAreaValueDescriptor.set === 'function') {
         textAreaValueDescriptor.set.call(ta, '');
       } else {
@@ -6185,7 +6602,123 @@
     };
   }
 
-  function applyRedactionBoxes(ctx, boxes, w, h) {
+  function renderPixelatedBox(ctx, sourceImage, boxRect, cropPxRect, targetW, targetH) {
+    if (!ctx || !boxRect) {
+      return;
+    }
+    const cw = targetW || (ctx.canvas && ctx.canvas.width > 0 ? ctx.canvas.width : 0);
+    const ch = targetH || (ctx.canvas && ctx.canvas.height > 0 ? ctx.canvas.height : 0);
+    if (cw <= 0 || ch <= 0) {
+      return;
+    }
+    const rx = boxRect.x * cw;
+    const ry = boxRect.y * ch;
+    const rw = boxRect.w * cw;
+    const rh = boxRect.h * ch;
+    if (rw < 2 || rh < 2 || rx + rw <= 0 || ry + rh <= 0 || rx >= cw || ry >= ch) {
+      return;
+    }
+    const xInt = nativeMathMax(0, nativeMathFloor(rx));
+    const yInt = nativeMathMax(0, nativeMathFloor(ry));
+    const wInt = nativeMathMin(cw, nativeMathCeil(rx + rw)) - xInt;
+    const hInt = nativeMathMin(ch, nativeMathCeil(ry + rh)) - yInt;
+    if (wInt < 2 || hInt < 2) {
+      return;
+    }
+
+    const cellSize = nativeMathMax(12, nativeMathRound(nativeMathMax(cw, ch) / 48));
+    const cols = nativeMathMax(1, nativeMathMin(64, nativeMathCeil(wInt / cellSize)));
+    const rows = nativeMathMax(1, nativeMathMin(64, nativeMathCeil(hInt / cellSize)));
+
+    const src = sourceImage || (ctx && ctx.canvas ? ctx.canvas : null);
+    let sampleCanvas = null;
+    let imgData = null;
+    try {
+      if (src) {
+        const srcTotalW = src.naturalWidth || src.width || cw;
+        const srcTotalH = src.naturalHeight || src.height || ch;
+        const baseX = cropPxRect && nativeNumberIsFinite(cropPxRect.x) ? cropPxRect.x : 0;
+        const baseY = cropPxRect && nativeNumberIsFinite(cropPxRect.y) ? cropPxRect.y : 0;
+        const baseW =
+          cropPxRect && nativeNumberIsFinite(cropPxRect.w) && cropPxRect.w > 0
+            ? cropPxRect.w
+            : srcTotalW;
+        const baseH =
+          cropPxRect && nativeNumberIsFinite(cropPxRect.h) && cropPxRect.h > 0
+            ? cropPxRect.h
+            : srcTotalH;
+        const sx = baseX + (xInt / cw) * baseW;
+        const sy = baseY + (yInt / ch) * baseH;
+        const sw = nativeMathMax(1, (wInt / cw) * baseW);
+        const sh = nativeMathMax(1, (hInt / ch) * baseH);
+
+        sampleCanvas = safeCreateElement('canvas');
+        sampleCanvas.width = cols;
+        sampleCanvas.height = rows;
+        const sampleCtx = nativeCanvasGetContext
+          ? nativeCanvasGetContext.call(sampleCanvas, '2d')
+          : sampleCanvas.getContext('2d');
+        if (sampleCtx) {
+          sampleCtx.imageSmoothingEnabled = true;
+          sampleCtx.imageSmoothingQuality = 'medium';
+          if (nativeCtxDrawImage) {
+            nativeCtxDrawImage.call(sampleCtx, src, sx, sy, sw, sh, 0, 0, cols, rows);
+          } else {
+            sampleCtx.drawImage(src, sx, sy, sw, sh, 0, 0, cols, rows);
+          }
+          imgData = nativeCtxGetImageData
+            ? nativeCtxGetImageData.call(sampleCtx, 0, 0, cols, rows)
+            : sampleCtx.getImageData(0, 0, cols, rows);
+        }
+      }
+    } catch {
+      imgData = null;
+    } finally {
+      releaseCanvasMemory(sampleCanvas);
+      sampleCanvas = null;
+    }
+
+    // Always destroy underlying pixels first with solid #09090b base fill.
+    ctx.fillStyle = '#09090b';
+    if (nativeCtxFillRect) {
+      nativeCtxFillRect.call(ctx, xInt, yInt, wInt, hInt);
+    } else {
+      ctx.fillRect(xInt, yInt, wInt, hInt);
+    }
+
+    if (!imgData || !imgData.data) {
+      return;
+    }
+    const data = imgData.data;
+    for (let r = 0; r < rows; r += 1) {
+      const by0 = yInt + nativeMathFloor((r * hInt) / rows);
+      const by1 = yInt + nativeMathFloor(((r + 1) * hInt) / rows);
+      const bh = by1 - by0;
+      if (bh <= 0) continue;
+      for (let c = 0; c < cols; c += 1) {
+        const bx0 = xInt + nativeMathFloor((c * wInt) / cols);
+        const bx1 = xInt + nativeMathFloor(((c + 1) * wInt) / cols);
+        const bw = bx1 - bx0;
+        if (bw <= 0) continue;
+        const idx = (r * cols + c) * 4;
+        if (data[idx + 3] < 16) {
+          continue;
+        }
+        const qr = nativeMathMin(240, nativeMathMax(0, nativeMathRound(data[idx] / 16) * 16));
+        const qg = nativeMathMin(240, nativeMathMax(0, nativeMathRound(data[idx + 1] / 16) * 16));
+        const qb = nativeMathMin(240, nativeMathMax(0, nativeMathRound(data[idx + 2] / 16) * 16));
+        ctx.fillStyle = `rgb(${qr},${qg},${qb})`;
+        if (nativeCtxFillRect) {
+          nativeCtxFillRect.call(ctx, bx0, by0, bw, bh);
+        } else {
+          ctx.fillRect(bx0, by0, bw, bh);
+        }
+      }
+    }
+    imgData = null;
+  }
+
+  function applyRedactionBoxes(ctx, boxes, w, h, sourceImage, cropPxRect) {
     if (!nativeIsArray(boxes) || boxes.length === 0 || w <= 0 || h <= 0) {
       return;
     }
@@ -6203,6 +6736,10 @@
       const weights = computeToolStrokeWeights(w, h, box.weight);
       if (box.mode === 'pen') {
         drawPenStroke(ctx, box, w, h, weights.pen);
+        continue;
+      }
+      if (box.mode === 'pixel') {
+        renderPixelatedBox(ctx, sourceImage || null, box, cropPxRect || null, w, h);
         continue;
       }
       const rx = box.x * w;
@@ -6317,7 +6854,12 @@
           : null;
         const exportBoxes = pixelCropRegion ? mapBoxesToRegion(boxes, pixelCropRegion) : boxes;
         if (exportBoxes && exportBoxes.length > 0) {
-          applyRedactionBoxes(ctx, exportBoxes, outW, outH);
+          applyRedactionBoxes(ctx, exportBoxes, outW, outH, source, {
+            x: sx,
+            y: sy,
+            w: sw,
+            h: sh,
+          });
         }
         canvasToBlob.call(
           canvas,
@@ -6343,6 +6885,28 @@
     setAttrSafe(svg, 'height', '12');
     setAttrSafe(svg, 'viewBox', '0 0 16 16');
     setAttrSafe(svg, 'aria-hidden', 'true');
+    if (toolMode === 'pixel') {
+      const cells = [
+        [2, 2, '1'],
+        [8.5, 2, '0.45'],
+        [2, 8.5, '0.45'],
+        [8.5, 8.5, '1'],
+      ];
+      for (let i = 0; i < cells.length; i += 1) {
+        const sq = safeCreateElementNS('http://www.w3.org/2000/svg', 'rect');
+        setAttrSafe(sq, 'x', String(cells[i][0]));
+        setAttrSafe(sq, 'y', String(cells[i][1]));
+        setAttrSafe(sq, 'width', '5.5');
+        setAttrSafe(sq, 'height', '5.5');
+        setAttrSafe(sq, 'rx', '1');
+        setAttrSafe(sq, 'fill', 'currentColor');
+        if (cells[i][2] !== '1') {
+          setAttrSafe(sq, 'fill-opacity', cells[i][2]);
+        }
+        appendChildSafe(svg, sq);
+      }
+      return svg;
+    }
     if (toolMode === 'pen') {
       const p1 = safeCreateElementNS('http://www.w3.org/2000/svg', 'path');
       setAttrSafe(p1, 'd', 'M11.6 2.1a1.5 1.5 0 0 1 2.1 2.1L5.8 12.1 2.4 13.4l1.3-3.4z');
@@ -6658,11 +7222,13 @@
       }
 
       const coverModeBtn = makeModeButton(i18n.redactModeCover, 'solid');
+      const pixelModeBtn = makeModeButton(i18n.redactModePixel, 'pixel');
       const outlineModeBtn = makeModeButton(i18n.redactModeOutline, 'outline');
       const penModeBtn = makeModeButton(i18n.redactModePen, 'pen');
       const cropModeBtn = makeModeButton(i18n.redactModeCrop, 'crop');
       const scrollModeBtn = makeModeButton(i18n.redactModeScroll, 'scroll');
       appendChildSafe(modeGroup, coverModeBtn);
+      appendChildSafe(modeGroup, pixelModeBtn);
       appendChildSafe(modeGroup, outlineModeBtn);
       appendChildSafe(modeGroup, penModeBtn);
       appendChildSafe(modeGroup, cropModeBtn);
@@ -6746,7 +7312,8 @@
       stage.style.minHeight = '140px';
       stage.style.alignItems = 'center';
       stage.style.justifyContent = 'center';
-      stage.style.overflow = 'auto';
+      stage.style.overflowX = 'hidden';
+      stage.style.overflowY = 'auto';
       stage.style.borderRadius = '10px';
       stage.style.background = '#0d0d11';
       stage.style.border = `1px solid ${palette.border}`;
@@ -6757,7 +7324,7 @@
       setAttrSafe(canvas, 'role', 'application');
       setAttrSafe(canvas, 'aria-label', i18n.redactModalTitle);
       canvas.style.display = 'block';
-      canvas.style.maxWidth = 'min(86vw, 900px)';
+      canvas.style.maxWidth = '100%';
       canvas.style.maxHeight = 'min(62vh, calc(92vh - 245px))';
       canvas.style.width = 'auto';
       canvas.style.height = 'auto';
@@ -6886,7 +7453,7 @@
           canvas.style.height = 'auto';
         } else {
           stage.style.alignItems = 'center';
-          canvas.style.maxWidth = 'min(86vw, 900px)';
+          canvas.style.maxWidth = '100%';
           canvas.style.maxHeight = 'min(62vh, calc(92vh - 245px))';
           canvas.style.width = 'auto';
           canvas.style.height = 'auto';
@@ -6962,7 +7529,13 @@
         committedCtx.clearRect(0, 0, previewW, previewH);
         drawSlideBaseToContext(committedCtx, slide, view);
         const viewBoxes = mapBoxesToRegion(slide.boxes, view);
-        applyRedactionBoxes(committedCtx, viewBoxes, previewW, previewH);
+        const pSrc = slide && slide.preview && slide.preview.source ? slide.preview.source : null;
+        const srcW = (slide && slide.preview && slide.preview.width) || previewW;
+        const srcH = (slide && slide.preview && slide.preview.height) || previewH;
+        const pCropPx = isActiveCropRegion(view)
+          ? { x: view.x * srcW, y: view.y * srcH, w: view.w * srcW, h: view.h * srcH }
+          : { x: 0, y: 0, w: srcW, h: srcH };
+        applyRedactionBoxes(committedCtx, viewBoxes, previewW, previewH, pSrc, pCropPx);
       }
 
       function drawCropOverlay(rectNorm) {
@@ -7006,7 +7579,20 @@
           }
         } else {
           drawSlideBaseToContext(ctx, slide, view);
-          applyRedactionBoxes(ctx, mapBoxesToRegion(slide.boxes, view), previewW, previewH);
+          const pSrc = slide && slide.preview && slide.preview.source ? slide.preview.source : null;
+          const srcW = (slide && slide.preview && slide.preview.width) || previewW;
+          const srcH = (slide && slide.preview && slide.preview.height) || previewH;
+          const pCropPx = isActiveCropRegion(view)
+            ? { x: view.x * srcW, y: view.y * srcH, w: view.w * srcW, h: view.h * srcH }
+            : { x: 0, y: 0, w: srcW, h: srcH };
+          applyRedactionBoxes(
+            ctx,
+            mapBoxesToRegion(slide.boxes, view),
+            previewW,
+            previewH,
+            pSrc,
+            pCropPx
+          );
         }
         if (
           !slide.skipped &&
@@ -7052,6 +7638,9 @@
                 ? normalizeCropRegion(slide.crop)
                 : null;
           drawCropOverlay(liveCrop);
+          if (dragStart && dragCurrent) {
+            updateDimBadge(slide, liveCrop);
+          }
         } else if (dragPoints && dragPoints.length >= 2) {
           const weights = computeToolStrokeWeights(previewW, previewH, activeWeight);
           const previewStroke = mapBoxesToRegion(
@@ -7195,14 +7784,21 @@
       function refreshToolBarUi() {
         const slide = getCurrentSlide();
         const disabled = Boolean(slide && slide.skipped);
-        const colorDisabled = disabled || activeMode === 'crop' || activeMode === 'scroll';
-        const weightEnabled = !disabled && (activeMode === 'outline' || activeMode === 'pen');
+        const hideSubTools = activeMode === 'pixel';
+        subToolGroup.hidden = hideSubTools;
+        subToolGroup.style.display = hideSubTools ? 'none' : 'inline-flex';
+        const colorDisabled =
+          disabled || hideSubTools || activeMode === 'crop' || activeMode === 'scroll';
+        const weightEnabled =
+          !disabled && !hideSubTools && (activeMode === 'outline' || activeMode === 'pen');
         styleModeButton(coverModeBtn, activeMode === 'solid');
+        styleModeButton(pixelModeBtn, activeMode === 'pixel');
         styleModeButton(outlineModeBtn, activeMode === 'outline');
         styleModeButton(penModeBtn, activeMode === 'pen');
         styleModeButton(cropModeBtn, activeMode === 'crop');
         styleModeButton(scrollModeBtn, activeMode === 'scroll');
         coverModeBtn.disabled = disabled;
+        pixelModeBtn.disabled = disabled;
         outlineModeBtn.disabled = disabled;
         penModeBtn.disabled = disabled;
         cropModeBtn.disabled = disabled;
@@ -7232,6 +7828,7 @@
 
       function setActiveMode(nextMode, refocus) {
         const normalized =
+          nextMode === 'pixel' ||
           nextMode === 'outline' ||
           nextMode === 'pen' ||
           nextMode === 'crop' ||
@@ -7287,6 +7884,9 @@
       nativeAddEventListener.call(coverModeBtn, 'click', (e) => {
         setActiveMode('solid', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
       });
+      nativeAddEventListener.call(pixelModeBtn, 'click', (e) => {
+        setActiveMode('pixel', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
+      });
       nativeAddEventListener.call(outlineModeBtn, 'click', (e) => {
         setActiveMode('outline', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
       });
@@ -7300,6 +7900,39 @@
         setActiveMode('scroll', (getEvProp(nativeDetailDesc, e, 'detail') || 0) > 0);
       });
 
+      function updateDimBadge(slide, cropOverride) {
+        if (!slide) {
+          return;
+        }
+        const naturalW = slide.width;
+        const naturalH = slide.height;
+        const candidateCrop = cropOverride !== undefined ? cropOverride : slide.crop;
+        const hasCrop = isActiveCropRegion(candidateCrop);
+        const cropRegion = hasCrop ? normalizeCropRegion(candidateCrop) : { x: 0, y: 0, w: 1, h: 1 };
+        const sx = hasCrop
+          ? nativeMathMax(0, nativeMathMin(naturalW - 1, nativeMathRound(cropRegion.x * naturalW)))
+          : 0;
+        const sy = hasCrop
+          ? nativeMathMax(0, nativeMathMin(naturalH - 1, nativeMathRound(cropRegion.y * naturalH)))
+          : 0;
+        const sw = hasCrop
+          ? nativeMathMax(1, nativeMathMin(naturalW - sx, nativeMathRound(cropRegion.w * naturalW)))
+          : naturalW;
+        const sh = hasCrop
+          ? nativeMathMax(1, nativeMathMin(naturalH - sy, nativeMathRound(cropRegion.h * naturalH)))
+          : naturalH;
+        const safeCap = state.optimizeImage ? MAX_OPTIMIZE_EDGE : 8192;
+        const maxSide = nativeMathMax(sw, sh);
+        const scale = maxSide > safeCap ? safeCap / maxSide : 1;
+        const outW = nativeMathMax(1, nativeMathRound(sw * scale));
+        const outH = nativeMathMax(1, nativeMathRound(sh * scale));
+        const changed = hasCrop || outW !== naturalW || outH !== naturalH;
+        setSafeText(
+          dimEl,
+          changed ? `${naturalW}×${naturalH} → ${outW}×${outH}` : `${naturalW}×${naturalH}`
+        );
+      }
+
       function refreshBatchUi() {
         const slide = getCurrentSlide();
         if (selectedBoxIdx >= slide.boxes.length) {
@@ -7308,14 +7941,7 @@
         const counterStr = isBatch ? ` (${activeIdx + 1}/${slides.length})` : '';
         setSafeText(titleEl, `${i18n.redactModalTitle}${counterStr}`);
         const hasCrop = isActiveCropRegion(slide.crop);
-        const effCrop = hasCrop ? normalizeCropRegion(slide.crop) : null;
-        const shownW = effCrop
-          ? nativeMathMax(1, nativeMathRound(slide.width * effCrop.w))
-          : slide.width;
-        const shownH = effCrop
-          ? nativeMathMax(1, nativeMathRound(slide.height * effCrop.h))
-          : slide.height;
-        setSafeText(dimEl, `${shownW}×${shownH}`);
+        updateDimBadge(slide);
         skippedTagEl.style.display = slide.skipped ? 'inline-block' : 'none';
         canvas.style.opacity = slide.skipped ? '0.35' : '1';
         canvas.style.touchAction = activeMode === 'scroll' && !slide.skipped ? 'pan-x pan-y' : 'none';
@@ -7410,7 +8036,8 @@
         const cascade = (slide.boxes.length % 5) * 0.03;
         const xView = nativeMathMax(0, nativeMathMin(1 - minWView, 0.5 - minWView / 2 + cascade));
         const yView = nativeMathMax(0, nativeMathMin(1 - minHView, 0.5 - minHView / 2 + cascade));
-        const isBoxMode = activeMode === 'solid' || activeMode === 'outline';
+        const isBoxMode =
+          activeMode === 'solid' || activeMode === 'pixel' || activeMode === 'outline';
         const boxMode = isBoxMode ? activeMode : 'solid';
         const boxColor = isBoxMode ? activeColor : modeColors.solid;
         const boxEntry = {
@@ -7995,6 +8622,12 @@
           safePreventDefault(e);
           safeStopImmediatePropagation(e);
           if (!slide.skipped) {
+            setActiveMode(activeMode === 'pixel' ? 'solid' : 'pixel', false);
+          }
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'd') {
+          safePreventDefault(e);
+          safeStopImmediatePropagation(e);
+          if (!slide.skipped) {
             setActiveMode(activeMode === 'pen' ? 'solid' : 'pen', false);
           }
         } else if (!e.ctrlKey && !e.metaKey && !e.altKey && lowerKey === 'c') {
@@ -8083,6 +8716,7 @@
               ? [prevBtn, ...pillFlowElements, nextBtn, ...(slideSelect ? [slideSelect] : []), skipBtn]
               : []),
             coverModeBtn,
+            pixelModeBtn,
             outlineModeBtn,
             penModeBtn,
             cropModeBtn,
@@ -8109,6 +8743,7 @@
             focused === rightDotsBtn ||
             focused === slideSelect ||
             focused === coverModeBtn ||
+            focused === pixelModeBtn ||
             focused === outlineModeBtn ||
             focused === penModeBtn ||
             focused === cropModeBtn ||
@@ -8153,7 +8788,7 @@
       footer.style.justifyContent = 'space-between';
       footer.style.gap = '10px';
       footer.style.flexWrap = 'wrap';
-      footer.style.paddingTop = '2px';
+      footer.style.paddingTop = '4px';
 
       const hintEl = safeCreateElement('span');
       hintEl.style.fontSize = '11px';
@@ -8164,10 +8799,11 @@
       actions.style.display = 'flex';
       actions.style.alignItems = 'center';
       actions.style.flexWrap = 'wrap';
-      actions.style.gap = '5px';
+      actions.style.gap = '6px';
       const footerActionBtns = [addBoxBtn, undoBtn, clearBtn, cancelBtn, sendBtn];
       for (let i = 0; i < footerActionBtns.length; i += 1) {
-        footerActionBtns[i].style.padding = '0 9px';
+        footerActionBtns[i].style.height = '28px';
+        footerActionBtns[i].style.padding = '0 11px';
       }
       const actionDivider = makeBarDivider();
       actionDivider.style.margin = '0 1px';
@@ -8205,8 +8841,14 @@
         return false;
       }
       if (readBlobArrayBuffer) {
-        const bytes = new NativeUint8Array(await readBlobArrayBuffer.call(file));
-        return !isAnimatedGifBytes(bytes);
+        const probeBlob =
+          nativeBlobSlice && file.size > 262144 ? nativeBlobSlice.call(file, 0, 262144) : file;
+        let buf = await readBlobArrayBuffer.call(probeBlob);
+        let bytes = new NativeUint8Array(buf);
+        const animated = isAnimatedGifBytes(bytes);
+        bytes = null;
+        buf = null;
+        return !animated;
       }
       return false;
     }
@@ -8285,6 +8927,7 @@
     const newName = generateUniqueName(file, canvasRes.ext);
     const outName = newName || replaceFileExtension(file.name, canvasRes.ext);
     const outFile = new NativeFile([canvasRes.blob], outName, { type: canvasRes.mime });
+    canvasRes.blob = null;
     wsAdd(processedFiles, outFile);
     safeDtItemsAdd(dataTransfer, outFile);
     if (newName || outName !== file.name) {
@@ -8293,9 +8936,31 @@
   }
 
   async function processFilesAsync(files) {
+    const buildPassthroughRes = () => {
+      const origDt = new NativeDataTransfer();
+      for (let i = 0; i < files.length; i += 1) {
+        if (files[i]) {
+          safeDtItemsAdd(origDt, files[i]);
+        }
+      }
+      return {
+        canceled: false,
+        passthrough: true,
+        dataTransfer: origDt,
+        renamedNames: [],
+        cleanedCount: 0,
+        totalFileSecretsMasked: 0,
+      };
+    };
+
+    if (isInstanceTornDown || (hasIsolatedBridge && !(await checkBridgeAlive(45)))) {
+      return buildPassthroughRes();
+    }
+
     const dataTransfer = new NativeDataTransfer();
     const renamedNames = [];
     let cleanedCount = 0;
+    let totalFileSecretsMasked = 0;
 
     const slideByIndex = new NativeMap();
     const batchSlides = [];
@@ -8348,7 +9013,13 @@
             totalBoxes: nativeArrayReduce.call(batchSlides, (acc, s) => acc + s.boxes.length, 0),
           });
           if (!modalRes.confirmed) {
-            return { canceled: true, dataTransfer: null, renamedNames: [], cleanedCount: 0 };
+            return {
+              canceled: true,
+              dataTransfer: null,
+              renamedNames: [],
+              cleanedCount: 0,
+              totalFileSecretsMasked: 0,
+            };
           }
         }
       }
@@ -8400,8 +9071,12 @@
 
         if (state.stripExif && detectExifFormat(file) === 'avif' && readBlobArrayBuffer) {
           try {
-            const avifBuf = await readBlobArrayBuffer.call(file);
-            if (hasAvifMetadataMarkers(new NativeUint8Array(avifBuf))) {
+            let avifBuf = await readBlobArrayBuffer.call(file);
+            let avifBytes = new NativeUint8Array(avifBuf);
+            const hasAvifMeta = hasAvifMetadataMarkers(avifBytes);
+            avifBytes = null;
+            avifBuf = null;
+            if (hasAvifMeta) {
               const avifCanvasRes = await processSingleRasterCanvas(file);
               if (avifCanvasRes.touched && avifCanvasRes.blob) {
                 appendCanvasOutputFile(file, avifCanvasRes, dataTransfer, renamedNames);
@@ -8416,10 +9091,31 @@
 
         const newName = generateUniqueName(file);
         const finalName = newName || file.name;
-        const cleanBytes = state.stripExif ? await stripFileMetadataBytes(file) : null;
+        let cleanBytes = state.stripExif ? await stripFileMetadataBytes(file) : null;
+        let textRes = !cleanBytes && isScannableTextFile(file) ? await sanitizeTextFileSecrets(file) : null;
 
-        if (cleanBytes) {
+        if (textRes && textRes.bytes) {
+          const outFile = new NativeFile([textRes.bytes], finalName, {
+            type: file.type || 'text/plain',
+          });
+          totalFileSecretsMasked += textRes.maskedCount;
+          logDiag('Files', 'textFileSecretsMasked', {
+            ext: resolveExtension(file, false) || 'none',
+            maskedCount: textRes.maskedCount,
+          });
+          textRes.bytes = null;
+          textRes.rawText = '';
+          textRes.maskedText = '';
+          textRes.findings = null;
+          textRes = null;
+          wsAdd(processedFiles, outFile);
+          safeDtItemsAdd(dataTransfer, outFile);
+          if (newName) {
+            nativeArrayPush.call(renamedNames, finalName);
+          }
+        } else if (cleanBytes) {
           const cleanFile = new NativeFile([cleanBytes], finalName, { type: file.type });
+          cleanBytes = null;
           wsAdd(processedFiles, cleanFile);
           safeDtItemsAdd(dataTransfer, cleanFile);
           cleanedCount += 1;
@@ -8437,7 +9133,7 @@
         }
       }
 
-      return { canceled: false, dataTransfer, renamedNames, cleanedCount };
+      return { canceled: false, dataTransfer, renamedNames, cleanedCount, totalFileSecretsMasked };
     } finally {
       for (let i = 0; i < batchSlides.length; i += 1) {
         const slide = batchSlides[i];
@@ -8449,33 +9145,98 @@
     }
   }
 
-  function snapshotDataTransfer(original) {
+  function getDataTransferStringTypes(original) {
+    const stringTypes = [];
+    const seen = new NativeSet();
+    const items =
+      dtItemsDesc && typeof dtItemsDesc.get === 'function'
+        ? dtItemsDesc.get.call(original)
+        : original.items;
+    if (items && items.length > 0) {
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        const kind =
+          dtiKindDesc && typeof dtiKindDesc.get === 'function'
+            ? dtiKindDesc.get.call(item)
+            : item.kind;
+        const type =
+          dtiTypeDesc && typeof dtiTypeDesc.get === 'function'
+            ? dtiTypeDesc.get.call(item)
+            : item.type;
+        if (kind === 'string' && type && !setHas(seen, type)) {
+          setAdd(seen, type);
+          nativeArrayPush.call(stringTypes, type);
+        }
+      }
+    }
+    if (stringTypes.length === 0) {
+      const types =
+        dtTypesDesc && typeof dtTypesDesc.get === 'function'
+          ? dtTypesDesc.get.call(original)
+          : original.types;
+      if (types && types.length > 0) {
+        for (let i = 0; i < types.length; i += 1) {
+          const type = types[i];
+          if (
+            typeof type === 'string' &&
+            type &&
+            type !== 'Files' &&
+            type !== 'application/x-moz-file' &&
+            !setHas(seen, type)
+          ) {
+            setAdd(seen, type);
+            nativeArrayPush.call(stringTypes, type);
+          }
+        }
+      }
+    }
+    return stringTypes;
+  }
+
+  function snapshotDataTransferMeta(original) {
     const files = [];
-    const strings = [];
-    const items = dtItemsDesc && typeof dtItemsDesc.get === 'function' ? dtItemsDesc.get.call(original) : original.items;
+    const stringTypes = [];
+    const seenTypes = new NativeSet();
+    let hasPlainText = false;
+    let hasWrapperOrUrlTypes = false;
+    const items =
+      dtItemsDesc && typeof dtItemsDesc.get === 'function'
+        ? dtItemsDesc.get.call(original)
+        : original.items;
 
     if (items && items.length > 0) {
       for (let i = 0; i < items.length; i += 1) {
         const item = items[i];
-        const kind = dtiKindDesc && typeof dtiKindDesc.get === 'function' ? dtiKindDesc.get.call(item) : item.kind;
-        const type = dtiTypeDesc && typeof dtiTypeDesc.get === 'function' ? dtiTypeDesc.get.call(item) : item.type;
+        const kind =
+          dtiKindDesc && typeof dtiKindDesc.get === 'function'
+            ? dtiKindDesc.get.call(item)
+            : item.kind;
+        const type =
+          dtiTypeDesc && typeof dtiTypeDesc.get === 'function'
+            ? dtiTypeDesc.get.call(item)
+            : item.type;
         if (kind === 'file') {
           const f = dtiGetAsFile ? dtiGetAsFile.call(item) : item.getAsFile();
           if (f) {
             nativeArrayPush.call(files, f);
           }
-        } else if (kind === 'string' && type) {
-          try {
-            const text = safeDtGetData(original, type);
-            if (text) {
-              nativeArrayPush.call(strings, { type, text });
-            }
-          } catch {
-            // Ignore restricted or unsupported MIME types safely.
+        } else if (kind === 'string' && type && !setHas(seenTypes, type)) {
+          setAdd(seenTypes, type);
+          nativeArrayPush.call(stringTypes, type);
+          const base = type.toLowerCase().split(';')[0].trim();
+          if (base === 'text/plain') {
+            hasPlainText = true;
+          } else if (
+            base === 'text/html' ||
+            base === 'text/uri-list' ||
+            base === 'text/x-moz-url'
+          ) {
+            hasWrapperOrUrlTypes = true;
           }
         }
       }
-    } else {
+    }
+    if (files.length === 0) {
       const origFiles = safeDtFiles(original);
       if (origFiles && origFiles.length > 0) {
         for (let i = 0; i < origFiles.length; i += 1) {
@@ -8483,13 +9244,67 @@
         }
       }
     }
+    if (stringTypes.length === 0) {
+      const fallbackTypes = getDataTransferStringTypes(original);
+      for (let i = 0; i < fallbackTypes.length; i += 1) {
+        const type = fallbackTypes[i];
+        nativeArrayPush.call(stringTypes, type);
+        const base = type.toLowerCase().split(';')[0].trim();
+        if (base === 'text/plain') {
+          hasPlainText = true;
+        } else if (
+          base === 'text/html' ||
+          base === 'text/uri-list' ||
+          base === 'text/x-moz-url'
+        ) {
+          hasWrapperOrUrlTypes = true;
+        }
+      }
+    }
 
-    return { files, strings };
+    return { files, stringTypes, hasPlainText, hasWrapperOrUrlTypes };
+  }
+
+  function readDataTransferStrings(original, stringTypes, filterBaseMimeSet) {
+    const typesList = nativeIsArray(stringTypes) ? stringTypes : getDataTransferStringTypes(original);
+    const strings = [];
+    for (let i = 0; i < typesList.length; i += 1) {
+      const type = typesList[i];
+      if (!type) {
+        continue;
+      }
+      if (filterBaseMimeSet) {
+        const base = type.toLowerCase().split(';')[0].trim();
+        if (!setHas(filterBaseMimeSet, base)) {
+          continue;
+        }
+      }
+      try {
+        const text = safeDtGetData(original, type);
+        if (text) {
+          nativeArrayPush.call(strings, { type, text });
+        }
+      } catch {
+        // Ignore restricted or unsupported MIME types safely.
+      }
+    }
+    return strings;
+  }
+
+  function snapshotDataTransfer(original) {
+    const meta = snapshotDataTransferMeta(original);
+    const strings =
+      meta.files.length > 0 ? readDataTransferStrings(original, meta.stringTypes, null) : [];
+    return { files: meta.files, strings };
   }
 
   function batchNeedsAction(files) {
     const seenBatchImageNames = new NativeSet();
     const skippedImages = [];
+    const textSecretScanActive = Boolean(
+      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
+    );
+    let needsSync = false;
     for (let i = 0; i < files.length; i += 1) {
       const f = files[i];
       if (!f || wsHas(processedFiles, f)) {
@@ -8508,18 +9323,23 @@
           return 'async';
         }
       }
+      if (textSecretScanActive && isScannableTextFile(f)) {
+        return 'async';
+      }
       const isImg = isImageFile(f);
       const name = (f.name || '').trim();
       if (
         shouldRenameFile(f, isImg) ||
         (isImg && name && (setHas(usedNames, name) || setHas(seenBatchImageNames, name)))
       ) {
-        return 'sync';
-      }
-      if (isImg && name) {
+        needsSync = true;
+      } else if (isImg && name) {
         setAdd(seenBatchImageNames, name);
         nativeArrayPush.call(skippedImages, f);
       }
+    }
+    if (needsSync) {
+      return 'sync';
     }
     for (let i = 0; i < skippedImages.length; i += 1) {
       const f = skippedImages[i];
@@ -8550,6 +9370,7 @@
 
   function handleDragEnter(event) {
     if (
+      isInstanceTornDown ||
       !state.enabled ||
       !event ||
       isProcessedEvent(event) ||
@@ -8557,6 +9378,7 @@
     ) {
       return;
     }
+    triggerProactiveBridgeCheck();
     const target = getEventPathTarget(event);
     if (target) {
       setAdd(enteredDragTargets, target);
@@ -8654,24 +9476,41 @@
     }
   }
 
-  function sanitizeClipboardStrings(strings) {
+  function sanitizeClipboardStrings(strings, files) {
     if (!nativeIsArray(strings) || strings.length === 0) {
-      return { strings, changed: false };
+      return { strings: strings || [], changed: false, textSecretsMasked: false };
     }
-    if (!state.maskSecrets && !state.maskPii && !state.customWords) {
-      return { strings, changed: false };
+    const hasImageFile =
+      nativeIsArray(files) && files.length > 0 && nativeArraySome.call(files, isImageFile);
+    const maskActive = Boolean(
+      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
+    );
+    if (!hasImageFile && !maskActive) {
+      return { strings, changed: false, textSecretsMasked: false };
     }
     let changed = false;
+    let textSecretsMasked = false;
     const processed = [];
     for (let i = 0; i < strings.length; i += 1) {
       const entry = strings[i];
       if (!entry || typeof entry.text !== 'string') {
         continue;
       }
-      if (entry.type === 'text/plain') {
+      const baseMime =
+        typeof entry.type === 'string' ? entry.type.toLowerCase().split(';')[0].trim() : '';
+      if (hasImageFile && (baseMime === 'text/uri-list' || baseMime === 'text/x-moz-url')) {
+        changed = true;
+        continue;
+      }
+      if (hasImageFile && baseMime === 'text/html' && isImageOnlyHtmlWrapper(entry.text)) {
+        changed = true;
+        continue;
+      }
+      if (maskActive && baseMime === 'text/plain') {
         const res = maskSensitiveText(entry.text);
         if (res.count > 0 && res.text !== entry.text) {
           changed = true;
+          textSecretsMasked = true;
           nativeArrayPush.call(processed, { type: entry.type, text: res.text });
           continue;
         }
@@ -8679,16 +9518,41 @@
       nativeArrayPush.call(processed, entry);
     }
     if (!changed) {
-      return { strings, changed: false };
+      return { strings, changed: false, textSecretsMasked: false };
+    }
+    if (!textSecretsMasked) {
+      return { strings: processed, changed: true, textSecretsMasked: false };
     }
     const safeStrings = [];
     for (let i = 0; i < processed.length; i += 1) {
-      if (processed[i].type === 'text/html') {
+      const baseMime =
+        typeof processed[i].type === 'string'
+          ? processed[i].type.toLowerCase().split(';')[0].trim()
+          : '';
+      if (baseMime === 'text/html') {
         continue;
       }
       nativeArrayPush.call(safeStrings, processed[i]);
     }
-    return { strings: safeStrings, changed: true };
+    return { strings: safeStrings, changed: true, textSecretsMasked: true };
+  }
+
+  function cloneTransferWithReplacedFiles(sourceTransfer, newFiles, preSanitizedStrings) {
+    const dataTransfer = new NativeDataTransfer();
+    const filesList = nativeIsArray(newFiles) ? newFiles : [];
+    for (let i = 0; i < filesList.length; i += 1) {
+      if (filesList[i]) {
+        safeDtItemsAdd(dataTransfer, filesList[i]);
+      }
+    }
+    if (nativeIsArray(preSanitizedStrings)) {
+      populateStrings(dataTransfer, preSanitizedStrings);
+    } else if (sourceTransfer) {
+      const rawStrings = readDataTransferStrings(sourceTransfer, null, null);
+      const strRes = sanitizeClipboardStrings(rawStrings, filesList);
+      populateStrings(dataTransfer, strRes.strings);
+    }
+    return dataTransfer;
   }
 
   function overrideEventTransfer(event, propName, dataTransfer) {
@@ -8718,7 +9582,7 @@
     return summary;
   }
 
-  function handleTransferEvent(event, propName, eventName, preSnapshot) {
+  function handleTransferEvent(event, propName, eventName, preMeta) {
     if (!state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
@@ -8732,7 +9596,8 @@
       return;
     }
 
-    const { files, strings, stringsModified } = preSnapshot || snapshotDataTransfer(original);
+    const meta = preMeta || snapshotDataTransferMeta(original);
+    const files = meta.files;
     const dragTargetsSnapshot = eventName === 'drop' ? setToArray(enteredDragTargets) : [];
     if (eventName === 'drop') {
       setClear(enteredDragTargets);
@@ -8741,34 +9606,93 @@
       return;
     }
 
+    const hasImageFile = nativeArraySome.call(files, isImageFile);
+    const maskActive = Boolean(
+      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
+    );
     const action = batchNeedsAction(files);
+    const mightSanitizeStrings =
+      meta.stringTypes.length > 0 &&
+      ((hasImageFile && meta.hasWrapperOrUrlTypes) || (maskActive && meta.hasPlainText));
+
+    if (action === 'none' && !mightSanitizeStrings) {
+      return;
+    }
+
+    let strings = [];
+    let stringsModified = false;
+    let rawOriginalStrings = null;
+
+    if (action === 'none') {
+      const probeTypes = new NativeSet();
+      if (hasImageFile && meta.hasWrapperOrUrlTypes) {
+        setAdd(probeTypes, 'text/html');
+        setAdd(probeTypes, 'text/uri-list');
+        setAdd(probeTypes, 'text/x-moz-url');
+      }
+      if (maskActive && meta.hasPlainText) {
+        setAdd(probeTypes, 'text/plain');
+      }
+      const probeStrings = readDataTransferStrings(original, meta.stringTypes, probeTypes);
+      const probeRes = sanitizeClipboardStrings(probeStrings, files);
+      if (!probeRes.changed) {
+        return;
+      }
+      stringsModified = true;
+      strings = probeRes.strings;
+      if (meta.stringTypes.length > probeStrings.length) {
+        const remainingTypes = new NativeSet();
+        for (let i = 0; i < meta.stringTypes.length; i += 1) {
+          const base = meta.stringTypes[i].toLowerCase().split(';')[0].trim();
+          if (!setHas(probeTypes, base) && !(probeRes.textSecretsMasked && base === 'text/html')) {
+            setAdd(remainingTypes, base);
+          }
+        }
+        if (setSize(remainingTypes) > 0) {
+          const remainingStrings = readDataTransferStrings(original, meta.stringTypes, remainingTypes);
+          for (let i = 0; i < remainingStrings.length; i += 1) {
+            nativeArrayPush.call(strings, remainingStrings[i]);
+          }
+        }
+      }
+    } else if (meta.stringTypes.length > 0) {
+      // Read and sanitize synchronously before any await (browser DataTransfer clears after event dispatch).
+      const rawStrings = readDataTransferStrings(original, meta.stringTypes, null);
+      const strRes = sanitizeClipboardStrings(rawStrings, files);
+      strings = strRes.strings;
+      stringsModified = strRes.changed;
+      if (hasIsolatedBridge && strRes.changed) {
+        rawOriginalStrings = rawStrings;
+      }
+    }
+
     if (action === 'none' && !stringsModified) {
       return;
     }
     const safeFiles = state.debugLogs ? summarizeFilesSafe(files) : null;
 
     if (action === 'sync' || (action === 'none' && stringsModified)) {
-      const dataTransfer = new NativeDataTransfer();
+      const outFiles = [];
       const renamedNames = [];
       let didModify = Boolean(stringsModified);
 
       for (let i = 0; i < files.length; i += 1) {
         if (action === 'sync') {
           const res = createRenamedFileSync(files[i]);
-          safeDtItemsAdd(dataTransfer, res.file);
+          nativeArrayPush.call(outFiles, res.file);
           if (res.changed) {
             nativeArrayPush.call(renamedNames, res.file.name);
             didModify = true;
           }
         } else {
-          safeDtItemsAdd(dataTransfer, files[i]);
+          nativeArrayPush.call(outFiles, files[i]);
         }
       }
       if (!didModify) {
         return;
       }
 
-      populateStrings(dataTransfer, strings);
+      const dataTransfer = cloneTransferWithReplacedFiles(original, outFiles, strings);
       markSyntheticEvent(event);
       const overridden = overrideEventTransfer(event, propName, dataTransfer);
       logDiag('Files', `${eventName}:sync`, {
@@ -8778,12 +9702,12 @@
         overridden,
       });
       if (overridden && renamedNames.length > 0) {
-        showUploadToast(renamedNames, 0);
+        showUploadToast(renamedNames, 0, 0);
       }
       return;
     }
 
-    // Async path (metadata cleaner, Canvas redactor, or exotic flattening/resize): halt current event, process & re-dispatch.
+    // Async path (metadata cleaner, text file secret guard, Canvas redactor, or exotic flattening/resize): halt current event, process & re-dispatch.
     const rawTarget = getEventPathTarget(event);
     const initialTarget =
       rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
@@ -8800,7 +9724,14 @@
     });
 
     const asyncPromise = processFilesAsync(files);
-    const onProcessed = ({ canceled, dataTransfer, renamedNames, cleanedCount }) => {
+    const onProcessed = ({
+      canceled,
+      passthrough,
+      dataTransfer,
+      renamedNames,
+      cleanedCount,
+      totalFileSecretsMasked,
+    }) => {
       const pointTarget =
         eventName === 'drop'
           ? nativeElementFromPoint
@@ -8810,14 +9741,19 @@
               : null
           : null;
       if (canceled || !dataTransfer) {
+        rawOriginalStrings = null;
         logDiag('Files', `${eventName}:asyncCanceled`, { site: window.location.hostname });
         if (eventName === 'drop') {
           dismissPageDragOverlay(initialTarget, pointTarget, dragTargetsSnapshot);
         }
         return;
       }
-      populateStrings(dataTransfer, strings);
-      showUploadToast(renamedNames, cleanedCount);
+      const stringsToUse = passthrough && rawOriginalStrings ? rawOriginalStrings : strings;
+      rawOriginalStrings = null;
+      populateStrings(dataTransfer, stringsToUse);
+      if (!passthrough) {
+        showUploadToast(renamedNames, cleanedCount, totalFileSecretsMasked || 0);
+      }
       const dispatchTarget =
         initialTarget && (initialTarget === window || initialTarget.isConnected)
           ? initialTarget
@@ -8869,6 +9805,7 @@
         outFiles: safeDtFiles(dataTransfer).length,
         renamedCount: renamedNames.length,
         cleanedCount,
+        totalFileSecretsMasked: totalFileSecretsMasked || 0,
         defaultPrevented: !notCanceled,
       });
     };
@@ -8887,19 +9824,14 @@
     if (!clipboardData) {
       return;
     }
-    const snapshot = snapshotDataTransfer(clipboardData);
-    if (snapshot.files.length === 0) {
-      if (state.maskSecrets || state.maskPii || state.customWords) {
+    const meta = snapshotDataTransferMeta(clipboardData);
+    if (meta.files.length === 0) {
+      if (state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())) {
         handlePasteSecrets(event, clipboardData);
       }
       return;
     }
-    const strRes = sanitizeClipboardStrings(snapshot.strings);
-    handleTransferEvent(event, 'clipboardData', 'paste', {
-      files: snapshot.files,
-      strings: strRes.strings,
-      stringsModified: strRes.changed,
-    });
+    handleTransferEvent(event, 'clipboardData', 'paste', meta);
   }
 
   function isNodeEditableDirect(node) {
@@ -8919,8 +9851,28 @@
     return false;
   }
 
+  function showCopyTokensDetectedToast(restoredText) {
+    if (typeof restoredText !== 'string' || !restoredText) {
+      return;
+    }
+    showToastNotice(
+      i18n.tokensDetectedCopyTitle,
+      i18n.tokensDetectedCopySub,
+      6000,
+      {
+        label: i18n.tokensRestoreClipBtn,
+        onAction: async () => {
+          const ok = await copyRawTextToClipboard(restoredText);
+          if (ok && state.showToast) {
+            showToastNotice(i18n.tokensRestoredClipTitle, '', 2000);
+          }
+        },
+      }
+    );
+  }
+
   function handleCopyDeTokenize(event) {
-    if (!state.enabled || mapSize(sessionTokenToRaw) === 0 || !event) {
+    if (isInternalClipboardWrite || !state.enabled || mapSize(sessionTokenToRaw) === 0 || !event) {
       return;
     }
     const rawTarget = getEventPathTarget(event);
@@ -8936,20 +9888,7 @@
     if (restored.replaced <= 0 || restored.text === selectedText) {
       return;
     }
-    showToastNotice(
-      i18n.tokensDetectedCopyTitle,
-      i18n.tokensDetectedCopySub,
-      6000,
-      {
-        label: i18n.tokensRestoreClipBtn,
-        onAction: async () => {
-          const ok = await copyRawTextToClipboard(restored.text);
-          if (ok && state.showToast) {
-            showToastNotice(i18n.tokensRestoredClipTitle, '', 2000);
-          }
-        },
-      }
-    );
+    showCopyTokensDetectedToast(restored.text);
   }
 
   function handleDrop(event) {
@@ -9006,7 +9945,7 @@
       markSyntheticEvent(event);
       try {
         setInputFiles(input, safeDtFiles(dataTransfer));
-        showUploadToast(renamedNames, 0);
+        showUploadToast(renamedNames, 0, 0);
         logDiag('Files', 'fileInput:sync', {
           site: window.location.hostname,
           files: safeFiles,
@@ -9028,7 +9967,14 @@
     });
 
     const asyncInputPromise = processFilesAsync(files);
-    const onInputProcessed = ({ canceled, dataTransfer, renamedNames, cleanedCount }) => {
+    const onInputProcessed = ({
+      canceled,
+      passthrough,
+      dataTransfer,
+      renamedNames,
+      cleanedCount,
+      totalFileSecretsMasked,
+    }) => {
       wsDelete(pendingAsyncInputs, input);
       if (canceled || !dataTransfer) {
         logDiag('Files', 'fileInput:asyncCanceled', { site: window.location.hostname });
@@ -9043,18 +9989,28 @@
         }
         return;
       }
+      if (passthrough) {
+        const syntheticInput = new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
+        markSyntheticEvent(syntheticInput);
+        dispatchEventSafe(input, syntheticInput);
+        const syntheticChange = new NativeEvent('change', { bubbles: true, cancelable: false, composed: false });
+        markSyntheticEvent(syntheticChange);
+        dispatchEventSafe(input, syntheticChange);
+        return;
+      }
       try {
         setInputFiles(input, safeDtFiles(dataTransfer));
       } catch {
         logDiag('Files', 'fileInput:asyncSetRejected', { site: window.location.hostname });
         return;
       }
-      showUploadToast(renamedNames, cleanedCount);
+      showUploadToast(renamedNames, cleanedCount, totalFileSecretsMasked || 0);
       logDiag('Files', 'fileInput:asyncDispatched', {
         site: window.location.hostname,
         outFiles: safeDtFiles(dataTransfer).length,
         renamedCount: renamedNames.length,
         cleanedCount,
+        totalFileSecretsMasked: totalFileSecretsMasked || 0,
       });
       const syntheticInput = new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
       markSyntheticEvent(syntheticInput);
@@ -9197,8 +10153,209 @@
     }
   }
 
+  function closePortSafe(port) {
+    if (!port) {
+      return;
+    }
+    try {
+      setPortOnMessageSafe(port, null);
+      if (nativePortClose) {
+        nativePortClose.call(port);
+      } else if (typeof port.close === 'function') {
+        port.close();
+      }
+    } catch {
+      // Ignore already-closed port errors cleanly.
+    }
+  }
+
+  function restoreWrappedDescriptor(target, propName, expectedWrapped, origDesc) {
+    if (!target || !expectedWrapped || typeof nativeGetOwnPropDesc !== 'function') {
+      return;
+    }
+    try {
+      const curDesc = nativeGetOwnPropDesc(target, propName);
+      if (!curDesc || curDesc.value !== expectedWrapped || !curDesc.configurable) {
+        return;
+      }
+      if (origDesc) {
+        defineProperty(target, propName, origDesc);
+      }
+    } catch {
+      // Ignore non-configurable or restricted restoration failures cleanly.
+    }
+  }
+
+  function teardownMainWorld() {
+    if (isInstanceTornDown) {
+      return;
+    }
+    isInstanceTornDown = true;
+    state.enabled = false;
+    clearEphemeralSecretDraft('teardown');
+    clearOneTimeRawBypass('teardown');
+    clearSessionTokenVault();
+    removeActiveToast();
+    setClear(enteredDragTargets);
+
+    for (let i = 0; i < pendingPings.length; i += 1) {
+      const entry = pendingPings[i];
+      if (entry) {
+        if (entry.timer !== null) {
+          nativeClearTimeout(entry.timer);
+          entry.timer = null;
+        }
+        if (typeof entry.resolve === 'function') {
+          entry.resolve(false);
+        }
+      }
+    }
+    pendingPings.length = 0;
+
+    nativeRemoveEventListener.call(window, 'click', handleWindowClickForShadowInput, true);
+    nativeRemoveEventListener.call(window, 'dragenter', handleDragEnter, true);
+    nativeRemoveEventListener.call(window, 'dragleave', handleDragLeave, true);
+    nativeRemoveEventListener.call(window, 'dragend', handleDragEnd, true);
+    nativeRemoveEventListener.call(window, 'paste', handlePaste, true);
+    nativeRemoveEventListener.call(window, 'copy', handleCopyDeTokenize, true);
+    nativeRemoveEventListener.call(window, 'drop', handleDrop, true);
+    nativeRemoveEventListener.call(window, 'input', handleFileInputChange, true);
+    nativeRemoveEventListener.call(window, 'change', handleFileInputChange, true);
+    nativeRemoveEventListener.call(window, 'message', handleBridgeMessage, true);
+    nativeRemoveEventListener.call(window, 'blur', handleWindowBlur, true);
+    nativeRemoveEventListener.call(window, 'pagehide', clearEphemeralSecretDraft, true);
+    nativeRemoveEventListener.call(window, 'focus', handleProactiveLivenessCheck, true);
+    nativeRemoveEventListener.call(window, 'pointerdown', handleProactiveLivenessCheck, true);
+    nativeRemoveEventListener.call(window, 'keydown', handleProactiveLivenessCheck, true);
+    nativeRemoveEventListener.call(window, 'visibilitychange', handleProactiveLivenessCheck, true);
+
+    const hookedInputs = setToArray(hookedFileInputsList);
+    for (let i = 0; i < hookedInputs.length; i += 1) {
+      const inp = hookedInputs[i];
+      if (inp) {
+        nativeRemoveEventListener.call(inp, 'input', handleFileInputChange, true);
+        nativeRemoveEventListener.call(inp, 'change', handleFileInputChange, true);
+      }
+    }
+    setClear(hookedFileInputsList);
+
+    if (typeof Clipboard === 'function' && Clipboard.prototype) {
+      restoreWrappedDescriptor(
+        Clipboard.prototype,
+        'writeText',
+        clipboardProtoWrappedFn,
+        origClipboardProtoWriteTextDesc
+      );
+    }
+    try {
+      const clipObj = typeof navigator === 'object' && navigator ? navigator.clipboard : null;
+      if (clipObj) {
+        restoreWrappedDescriptor(
+          clipObj,
+          'writeText',
+          navClipboardWrappedFn,
+          origNavigatorClipboardWriteTextDesc
+        );
+      }
+    } catch {
+      // Ignore restricted navigator.clipboard cleanup.
+    }
+    if (NativeHTMLInputElement && NativeHTMLInputElement.prototype) {
+      restoreWrappedDescriptor(
+        NativeHTMLInputElement.prototype,
+        'click',
+        inputClickWrappedFn,
+        origInputClickDesc
+      );
+      restoreWrappedDescriptor(
+        NativeHTMLInputElement.prototype,
+        'showPicker',
+        inputShowPickerWrappedFn,
+        origInputShowPickerDesc
+      );
+    }
+
+    if (bridgePort) {
+      closePortSafe(bridgePort);
+      bridgePort = null;
+    }
+  }
+
+  function checkBridgeAlive(timeoutMs = 45) {
+    if (isInstanceTornDown) {
+      return Promise.resolve(false);
+    }
+    if (!hasIsolatedBridge) {
+      return Promise.resolve(true);
+    }
+    if (!bridgePort || !sessionBridgeToken) {
+      teardownMainWorld();
+      return Promise.resolve(false);
+    }
+    return new Promise((resolve) => {
+      pingCounter += 1;
+      const pingId = pingCounter;
+      let settled = false;
+      const entry = {
+        id: pingId,
+        timer: null,
+        resolve(alive) {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          if (entry.timer !== null) {
+            nativeClearTimeout(entry.timer);
+            entry.timer = null;
+          }
+          const idx = pendingPings.indexOf(entry);
+          if (idx >= 0) {
+            nativeArraySplice.call(pendingPings, idx, 1);
+          }
+          if (!alive) {
+            teardownMainWorld();
+          }
+          resolve(Boolean(alive));
+        },
+      };
+      entry.timer = nativeSetTimeout(() => {
+        entry.resolve(false);
+      }, timeoutMs);
+      nativeArrayPush.call(pendingPings, entry);
+      try {
+        postPortMessageSafe(bridgePort, {
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId: pingId,
+          ping: true,
+        });
+      } catch {
+        entry.resolve(false);
+      }
+    });
+  }
+
+  function triggerProactiveBridgeCheck() {
+    if (isInstanceTornDown || !hasIsolatedBridge) {
+      return;
+    }
+    const now = nativeDateNow ? nativeDateNow() : Date.now();
+    if (now - lastProactivePingAt < 250) {
+      return;
+    }
+    lastProactivePingAt = now;
+    checkBridgeAlive(45);
+  }
+
+  function handleProactiveLivenessCheck(event) {
+    if (event && event.type === 'visibilitychange' && document.visibilityState !== 'visible') {
+      return;
+    }
+    triggerProactiveBridgeCheck();
+  }
+
   function processBridgeData(data, replyPort) {
-    if (!data || data.__clipzero !== TO_MAIN || !data.payload) {
+    if (isInstanceTornDown || !data || data.__clipzero !== TO_MAIN || !data.payload) {
       return false;
     }
     const msgToken = data.token;
@@ -9212,11 +10369,45 @@
     }
 
     const { requestId, payload } = data;
+    if (payload.type === 'clipzero:pong' && payload.alive === true) {
+      for (let i = pendingPings.length - 1; i >= 0; i -= 1) {
+        if (typeof pendingPings[i]?.resolve === 'function') {
+          pendingPings[i].resolve(true);
+        }
+      }
+      return true;
+    }
+
     if (payload.type === 'clipzero:i18n' && payload.strings && typeof payload.strings === 'object') {
+      if (payload.bridgeMode === 'isolated') {
+        hasIsolatedBridge = true;
+      }
+      if (!injectedAtDocumentStart) {
+        return true;
+      }
       i18n = nativeObjAssign
         ? nativeObjAssign({}, i18n, payload.strings)
         : { ...i18n, ...payload.strings };
       flushStorageResetNotice();
+      return true;
+    }
+
+    if (!injectedAtDocumentStart) {
+      if (requestId) {
+        const reloadReply = {
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId,
+          ok: false,
+          needsReload: true,
+          state: null,
+        };
+        if (replyPort) {
+          postPortMessageSafe(replyPort, reloadReply);
+        } else if (bridgePort === null && targetOrigin && targetOrigin !== 'null') {
+          nativePostMessage(reloadReply, targetOrigin);
+        }
+      }
       return true;
     }
 
@@ -9232,7 +10423,13 @@
       payload.type === 'clipzero:set-custom-words' &&
       typeof payload.customWords === 'string'
     ) {
-      state.customWords = sanitizeCustomWords(payload.customWords);
+      const nextWords = sanitizeCustomWords(payload.customWords);
+      state.customWords = nextWords;
+      if (typeof payload.saveSite === 'boolean') {
+        state.saveSite = payload.saveSite;
+      } else if (nextWords.length > 0 && !state.saveSite) {
+        state.saveSite = true;
+      }
       commitStateChange('custom-words-cleared');
     }
 
@@ -9254,7 +10451,7 @@
   }
 
   function handleBridgeMessage(event) {
-    if (!event || !event.isTrusted) {
+    if (isInstanceTornDown || !event || !event.isTrusted) {
       return;
     }
     const src = getEvProp(msgSourceDesc, event, 'source');
@@ -9270,6 +10467,14 @@
     if (bridgePort !== null) {
       if (sessionBridgeToken !== null && data.token === sessionBridgeToken) {
         safeStopImmediatePropagation(event);
+        return;
+      }
+      if (data.payload.type === 'clipzero:i18n') {
+        if (hasIsolatedBridge) {
+          checkBridgeAlive(25);
+        } else {
+          teardownMainWorld();
+        }
       }
       return;
     }
@@ -9304,6 +10509,7 @@
 
   function attachFileInputListeners(input) {
     if (
+      isInstanceTornDown ||
       !NativeHTMLInputElement ||
       !(input instanceof NativeHTMLInputElement) ||
       getInputType(input) !== 'file' ||
@@ -9312,6 +10518,13 @@
       return;
     }
     wsAdd(hookedFileInputs, input);
+    if (setSize(hookedFileInputsList) >= 200) {
+      const oldest = setOldestValue(hookedFileInputsList);
+      if (oldest !== undefined) {
+        setDelete(hookedFileInputsList, oldest);
+      }
+    }
+    setAdd(hookedFileInputsList, input);
     nativeAddEventListener.call(input, 'input', handleFileInputChange, true);
     nativeAddEventListener.call(input, 'change', handleFileInputChange, true);
   }
@@ -9321,13 +10534,23 @@
       return;
     }
     try {
+      const origDesc =
+        typeof nativeGetOwnPropDesc === 'function' ? nativeGetOwnPropDesc(proto, methodName) : null;
+      const wrapped = function clipZeroFileTrigger() {
+        attachFileInputListeners(this);
+        return nativeMethod.apply(this, arguments);
+      };
+      if (methodName === 'click') {
+        origInputClickDesc = origDesc;
+        inputClickWrappedFn = wrapped;
+      } else if (methodName === 'showPicker') {
+        origInputShowPickerDesc = origDesc;
+        inputShowPickerWrappedFn = wrapped;
+      }
       defineProperty(proto, methodName, {
         configurable: true,
         writable: true,
-        value: function clipZeroFileTrigger() {
-          attachFileInputListeners(this);
-          return nativeMethod.apply(this, arguments);
-        },
+        value: wrapped,
       });
     } catch {
       // Ignore non-configurable prototype properties cleanly.
@@ -9339,21 +10562,103 @@
     attachFileInputListeners(target);
   }
 
-  if (NativeHTMLInputElement && NativeHTMLInputElement.prototype) {
-    hookFileInputTrigger(NativeHTMLInputElement.prototype, 'click', nativeInputClick);
-    hookFileInputTrigger(NativeHTMLInputElement.prototype, 'showPicker', nativeInputShowPicker);
+  function createWriteTextWrapper(nativeWriteText) {
+    const wrapped = function writeText(text) {
+      const result = nativeWriteText.apply(this, arguments);
+      if (
+        !isInstanceTornDown &&
+        !isInternalClipboardWrite &&
+        state.enabled &&
+        typeof text === 'string' &&
+        text.length > 0 &&
+        text.length <= MAX_SECRET_SCAN_CHARS &&
+        mapSize(sessionTokenToRaw) > 0
+      ) {
+        try {
+          const restored = deTokenizeText(text);
+          if (restored.replaced > 0 && restored.text !== text) {
+            showCopyTokensDetectedToast(restored.text);
+          }
+        } catch {
+          // Never fail page clipboard writes on scan/toast error.
+        }
+      }
+      return result;
+    };
+    wsAdd(wrappedWriteTextFns, wrapped);
+    return wrapped;
   }
 
-  nativeAddEventListener.call(window, 'click', handleWindowClickForShadowInput, true);
-  nativeAddEventListener.call(window, 'dragenter', handleDragEnter, true);
-  nativeAddEventListener.call(window, 'dragleave', handleDragLeave, true);
-  nativeAddEventListener.call(window, 'dragend', handleDragEnd, true);
-  nativeAddEventListener.call(window, 'paste', handlePaste, true);
-  nativeAddEventListener.call(window, 'copy', handleCopyDeTokenize, true);
-  nativeAddEventListener.call(window, 'drop', handleDrop, true);
-  nativeAddEventListener.call(window, 'input', handleFileInputChange, true);
-  nativeAddEventListener.call(window, 'change', handleFileInputChange, true);
-  nativeAddEventListener.call(window, 'message', handleBridgeMessage, true);
-  nativeAddEventListener.call(window, 'blur', handleWindowBlur, true);
-  nativeAddEventListener.call(window, 'pagehide', clearEphemeralSecretDraft, true);
+  function wrapClipboardWriteTextTarget(target, targetKind) {
+    if (!target || typeof nativeGetOwnPropDesc !== 'function') {
+      return;
+    }
+    try {
+      const desc = nativeGetOwnPropDesc(target, 'writeText');
+      if (!desc || typeof desc.value !== 'function' || wsHas(wrappedWriteTextFns, desc.value)) {
+        return;
+      }
+      if (desc.configurable === false && desc.writable === false) {
+        return;
+      }
+      const wrapped = createWriteTextWrapper(desc.value);
+      if (targetKind === 'proto') {
+        origClipboardProtoWriteTextDesc = desc;
+        clipboardProtoWrappedFn = wrapped;
+      } else if (targetKind === 'instance') {
+        origNavigatorClipboardWriteTextDesc = desc;
+        navClipboardWrappedFn = wrapped;
+      }
+      defineProperty(target, 'writeText', {
+        configurable: Boolean(desc.configurable),
+        writable: Boolean(desc.writable),
+        enumerable: Boolean(desc.enumerable),
+        value: wrapped,
+      });
+    } catch {
+      // Ignore non-configurable or restricted descriptors cleanly.
+    }
+  }
+
+  function hookClipboardWriteText() {
+    if (typeof Clipboard === 'function' && Clipboard.prototype) {
+      wrapClipboardWriteTextTarget(Clipboard.prototype, 'proto');
+    }
+    try {
+      const clipObj = typeof navigator === 'object' && navigator ? navigator.clipboard : null;
+      if (clipObj && nativeHasOwn(clipObj, 'writeText')) {
+        wrapClipboardWriteTextTarget(clipObj, 'instance');
+      }
+    } catch {
+      // Ignore restricted navigator.clipboard access in sandboxed contexts.
+    }
+  }
+
+  if (injectedAtDocumentStart) {
+    if (NativeHTMLInputElement && NativeHTMLInputElement.prototype) {
+      hookFileInputTrigger(NativeHTMLInputElement.prototype, 'click', nativeInputClick);
+      hookFileInputTrigger(NativeHTMLInputElement.prototype, 'showPicker', nativeInputShowPicker);
+    }
+    hookClipboardWriteText();
+
+    nativeAddEventListener.call(window, 'click', handleWindowClickForShadowInput, true);
+    nativeAddEventListener.call(window, 'dragenter', handleDragEnter, true);
+    nativeAddEventListener.call(window, 'dragleave', handleDragLeave, true);
+    nativeAddEventListener.call(window, 'dragend', handleDragEnd, true);
+    nativeAddEventListener.call(window, 'paste', handlePaste, true);
+    nativeAddEventListener.call(window, 'copy', handleCopyDeTokenize, true);
+    nativeAddEventListener.call(window, 'drop', handleDrop, true);
+    nativeAddEventListener.call(window, 'input', handleFileInputChange, true);
+    nativeAddEventListener.call(window, 'change', handleFileInputChange, true);
+    nativeAddEventListener.call(window, 'message', handleBridgeMessage, true);
+    nativeAddEventListener.call(window, 'blur', handleWindowBlur, true);
+    nativeAddEventListener.call(window, 'pagehide', clearEphemeralSecretDraft, true);
+    nativeAddEventListener.call(window, 'focus', handleProactiveLivenessCheck, true);
+    nativeAddEventListener.call(window, 'pointerdown', handleProactiveLivenessCheck, true);
+    nativeAddEventListener.call(window, 'keydown', handleProactiveLivenessCheck, true);
+    nativeAddEventListener.call(window, 'visibilitychange', handleProactiveLivenessCheck, true);
+  } else {
+    nativeAddEventListener.call(window, 'message', handleBridgeMessage, true);
+    nativeAddEventListener.call(window, 'pagehide', teardownMainWorld, true);
+  }
 })();

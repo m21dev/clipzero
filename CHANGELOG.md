@@ -2,6 +2,21 @@
 
 All notable releases of **ClipZero** are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.2] — 2026-11-18
+
+### Added
+- **Irreversible Pixelate tool (`P`) & reassigned Pen (`D`):** Added a quantized mosaic brush backed by an opaque `#09090b` matte base and `<= 64×64` offscreen canvas buffer zeroed in `finally` (`renderPixelatedBox`), keeping `O` for Outline and assigning `D` to Pen.
+- **Live output dimensions pill (`origW×origH → outW×outH`):** Real-time Canvas modal indicator showing exact input-to-output dimensions across active crops and `2048 px` resize caps.
+- **Custom hidden words enhancements:** Added `0/50` active word counter, one-click **Clear** action (`optCustomWordsClear`), and auto-remembering current site settings (`state.saveSite = true`) when saving non-empty custom words.
+- **Text-file secret guard & programmatic copy restore:** Masks API keys, PII, and custom words inside uploaded `.txt`, `.env`, `.json`, `.md`, and `.log` files locally across paste, drag-and-drop, and `<input type="file">` with a `Secrets masked` upload toast tag (`toastUploadSecretsTag`), and wraps `Clipboard.prototype.writeText` safely to offer **Restore originals** on copy buttons.
+- **Lifecycle safety on install & removal:** Added `isExtensionContextAlive` liveness ping/pong plus `teardownMainWorld()` automatic cleanup (clearing session vaults and restoring wrapped DOM prototypes/listeners when removed or disabled), alongside strict `injectedAtDocumentStart` checks on already-open tabs.
+
+### Changed
+- **R2 RAM & UI refinements:** Shared lazily cached `XMLSerializer` in SVG cleaning, skipped DOM node descriptions when debug logs are disabled, skipped conditional `specialChars` counts, capped animated GIF frame probing to `256 KB`, fixed Canvas modal footer button heights (`28 px`) and eliminated horizontal stage scrolling (`155` locale keys × 6).
+
+### Security & Fixes
+- Fixed `isImageOnlyHtmlWrapper` parsing inside HTML clipboard wrappers with `<noscript>` tags, extended cold-start `bridge.js` handshake cleanup (`scheduleUnconfirmedCleanup(700)`), and prevented un-reloaded open tabs from reporting active injection state (`needsReload: true`).
+
 ## [1.3.1] — 2026-11-17
 
 ### Added

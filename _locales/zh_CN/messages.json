@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProjectTitan, 张三"
   },
+  "optCustomWordsClear": {
+    "message": "清空"
+  },
   "tokensDetectedCopyTitle": {
     "message": "已复制脱敏占位符"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "已保护敏感信息"
   },
+  "toastUploadSecretsTag": {
+    "message": "敏感信息已脱敏"
+  },
   "toastSecretsMaskedSub": {
     "message": "项密钥凭据已在粘贴前脱敏"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "遮盖"
+  },
+  "redactModePixel": {
+    "message": "像素化"
   },
   "redactModeOutline": {
     "message": "框选"

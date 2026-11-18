@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProjetoTitan, João Silva"
   },
+  "optCustomWordsClear": {
+    "message": "Limpar"
+  },
   "tokensDetectedCopyTitle": {
     "message": "Tokens mascarados copiados"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "Segredos protegidos"
   },
+  "toastUploadSecretsTag": {
+    "message": "Segredos ocultados"
+  },
   "toastSecretsMaskedSub": {
     "message": "itens sensíveis ocultados antes de colar"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "Cobrir"
+  },
+  "redactModePixel": {
+    "message": "Pixelar"
   },
   "redactModeOutline": {
     "message": "Contornar"

@@ -363,7 +363,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .tab-btn,
   .switch,
-  .thumb {
+  .thumb,
+  .mini-link-btn {
     transition: none;
   }
 }
@@ -446,10 +447,65 @@ body {
   padding: 6px 14px 8px;
 }
 
+.custom-words-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .custom-words-label {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
+}
+
+.custom-words-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.mini-link-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--divider);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.mini-link-btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.mini-link-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.mini-link-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mini-link-btn[hidden] {
+  display: none;
 }
 
 .custom-words-input {

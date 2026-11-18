@@ -4,8 +4,9 @@
 
 ```mermaid
 flowchart LR
-    V130["v1.3.0<br/>Low-RAM Pipeline & Tools"] --> V131["v1.3.1 (Current)<br/>Mobile Touch, Crop & Hardening"]
-    V131 --> V140["v1.4.0<br/>Office Docs & Web Workers"]
+    V130["v1.3.0<br/>Low-RAM Pipeline & Tools"] --> V131["v1.3.1<br/>Mobile Touch, Crop & Hardening"]
+    V131 --> V132["v1.3.2 (Current)<br/>Pixelate, Custom Words UX & Lifecycle"]
+    V132 --> V140["v1.4.0<br/>Office Docs & Web Workers"]
     V140 --> V200["v2.0.0<br/>On-Demand Sites & Local OCR"]
 ```
 
@@ -13,7 +14,12 @@ flowchart LR
 
 ## Shipped
 
-### `v1.3.1` — Mobile & Editor Polish *(Current)*
+### `v1.3.2` — Pixelate, Custom Words UX & Lifecycle Hardening *(Current)*
+- **Irreversible Pixelate (`P`) & live dimensions pill:** Quantized mosaic tool (`#09090b` base + zeroed `<= 64×64` buffer), `D` shortcut for Pen, real-time `origW×origH → outW×outH` output dimensions badge, `28 px` modal footer buttons, and overflow-free stage.
+- **Custom hidden words & upload toast tags:** Added `0/50` counter, **Clear** button, auto-remember current site on save, and `Secrets masked` upload toast tag for text/code uploads.
+- **Lifecycle safety & R2 RAM optimization:** Automatic `MAIN`-world teardown when the extension is removed/disabled (`teardownMainWorld`), `injectedAtDocumentStart` verification for already-open tabs, shared `XMLSerializer`, `256 KB` animated GIF probing, `<noscript>` HTML wrapper fix, and `scheduleUnconfirmedCleanup(700)`.
+
+### `v1.3.1` — Mobile & Editor Polish
 - **Active `pointerId` touch lock:** Ignores accidental secondary fingers and palm touches during drawing/cropping, with `lostpointercapture` cleanup.
 - **Stroke widths:** Thin, Medium, and Thick selector for **Outline** and **Pen** tools.
 - **Non-destructive Crop (`C`):** Interactive margin cropping aligned pixel-for-pixel with redaction marks, plus arrow clamping inside active crops.

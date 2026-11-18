@@ -195,6 +195,9 @@
   "optCustomWordsPlaceholder": {
     "message": "AcmeCorp, ProyectoTitan, Juan Perez"
   },
+  "optCustomWordsClear": {
+    "message": "Limpiar"
+  },
   "tokensDetectedCopyTitle": {
     "message": "Tokens ocultos copiados"
   },
@@ -363,6 +366,9 @@
   "toastSecretsMaskedTitle": {
     "message": "Claves protegidas"
   },
+  "toastUploadSecretsTag": {
+    "message": "Secretos ocultados"
+  },
   "toastSecretsMaskedSub": {
     "message": "datos sensibles ocultados antes de pegar"
   },
@@ -449,6 +455,9 @@
   },
   "redactModeCover": {
     "message": "Tapar"
+  },
+  "redactModePixel": {
+    "message": "Pixelar"
   },
   "redactModeOutline": {
     "message": "Encerrar"

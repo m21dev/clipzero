@@ -27,6 +27,8 @@ const noticeActionBtnEl = document.getElementById('notice-action-btn');
 const shortcutsBtnEl = document.getElementById('shortcuts-btn');
 const footerHintEl = document.getElementById('footer-hint');
 const customWordsInputEl = document.getElementById('custom-words-input');
+const customWordsCountEl = document.getElementById('custom-words-count');
+const customWordsClearBtnEl = document.getElementById('custom-words-clear');
 const toggleRows = Array.from(document.querySelectorAll('.toggle-row[data-command]'));
 const shortcutBadges = Array.from(document.querySelectorAll('[data-shortcut-for]'));
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn[data-tab]'));
@@ -40,6 +42,8 @@ let lastSyncedCustomWords = '';
 let isSyncingCustomWords = false;
 let queuedCustomWords = null;
 let customWordsDebounceTimer = null;
+let probeTimer = null;
+let detachTimer = null;
 
 /**
  * Looks up a localized message via Firefox's i18n API.
@@ -76,6 +80,46 @@ function applyTranslations() {
     if (translated) {
       el.setAttribute('placeholder', translated);
     }
+  }
+}
+
+/**
+ * Counts unique normalized custom words matching content.js sanitizeCustomWords().
+ * @param {string} raw
+ * @returns {number}
+ */
+function countCustomWords(raw) {
+  if (typeof raw !== 'string' || !raw) {
+    return 0;
+  }
+  const parts = raw.slice(0, 500).split(/[,;\r\n]+/);
+  const seen = new Set();
+  for (let i = 0; i < parts.length && seen.size < 50; i += 1) {
+    const term = parts[i].trim().replace(/\s+/g, ' ');
+    if (term.length < 2) {
+      continue;
+    }
+    const key = term.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+    }
+  }
+  return seen.size;
+}
+
+/**
+ * Updates the custom words counter badge and clear button visibility.
+ */
+function updateCustomWordsMeta() {
+  const raw = customWordsInputEl && !customWordsInputEl.disabled ? customWordsInputEl.value : '';
+  const count = countCustomWords(raw);
+  if (customWordsCountEl) {
+    customWordsCountEl.textContent = `${count}/50`;
+  }
+  if (customWordsClearBtnEl) {
+    const isDisabled = !customWordsInputEl || customWordsInputEl.disabled;
+    customWordsClearBtnEl.disabled = isDisabled;
+    customWordsClearBtnEl.hidden = isDisabled || raw.length === 0;
   }
 }
 
@@ -147,9 +191,14 @@ function renderSupportedState(state, hostPrefix) {
     const words = typeof state.customWords === 'string' ? state.customWords : '';
     lastSyncedCustomWords = words;
     customWordsInputEl.disabled = false;
-    if (document.activeElement !== customWordsInputEl) {
+    if (
+      document.activeElement !== customWordsInputEl &&
+      queuedCustomWords === null &&
+      customWordsDebounceTimer === null
+    ) {
       customWordsInputEl.value = words;
     }
+    updateCustomWordsMeta();
   }
 }
 
@@ -186,11 +235,17 @@ function disablePerTabControls() {
     rowEl.disabled = true;
     rowEl.setAttribute('aria-checked', 'false');
   }
+  if (customWordsDebounceTimer !== null) {
+    clearTimeout(customWordsDebounceTimer);
+    customWordsDebounceTimer = null;
+  }
+  queuedCustomWords = null;
   if (customWordsInputEl) {
     customWordsInputEl.disabled = true;
     customWordsInputEl.value = '';
     lastSyncedCustomWords = '';
   }
+  updateCustomWordsMeta();
 }
 
 /**
@@ -472,7 +527,10 @@ async function initPopup() {
   }
 
   const probeTimeoutMs = matched ? 550 : 350;
-  let probeTimer = null;
+  if (probeTimer !== null) {
+    clearTimeout(probeTimer);
+    probeTimer = null;
+  }
   const outcome = await Promise.race([
     msgPromise.then((response) => ({ kind: 'msg', response })),
     new Promise((resolve) => {
@@ -481,6 +539,7 @@ async function initPopup() {
   ]);
   if (probeTimer !== null) {
     clearTimeout(probeTimer);
+    probeTimer = null;
   }
 
   if (outcome.kind === 'msg' && applyLateLiveReply(outcome.response)) {
@@ -537,7 +596,7 @@ for (const rowEl of toggleRows) {
   });
 }
 
-async function sendCustomWordsUpdate() {
+async function sendCustomWordsUpdate(forcedWords) {
   if (!customWordsInputEl || !isValidTabId(activeTabId)) {
     return;
   }
@@ -545,7 +604,7 @@ async function sendCustomWordsUpdate() {
     clearTimeout(customWordsDebounceTimer);
     customWordsDebounceTimer = null;
   }
-  const nextWords = customWordsInputEl.value;
+  const nextWords = typeof forcedWords === 'string' ? forcedWords : customWordsInputEl.value;
   if (isSyncingCustomWords) {
     queuedCustomWords = nextWords;
     return;
@@ -572,7 +631,7 @@ async function sendCustomWordsUpdate() {
       const pending = queuedCustomWords;
       queuedCustomWords = null;
       if (pending !== lastSyncedCustomWords) {
-        sendCustomWordsUpdate();
+        sendCustomWordsUpdate(pending);
       }
     }
   }
@@ -619,14 +678,21 @@ if (noticeActionBtnEl) {
       // Firefox Bug 1798454: Firefox renders the permission bubble behind the open popup.
       // Close the popup shortly after arming background reload so Allow/Deny is unobstructed.
       let settled = false;
-      const detachTimer = setTimeout(() => {
+      if (detachTimer !== null) {
+        clearTimeout(detachTimer);
+      }
+      detachTimer = setTimeout(() => {
+        detachTimer = null;
         if (!settled) {
           window.close();
         }
       }, 60);
       Promise.allSettled([armPromise, reqPromise]).then(async ([, reqRes]) => {
         settled = true;
-        clearTimeout(detachTimer);
+        if (detachTimer !== null) {
+          clearTimeout(detachTimer);
+          detachTimer = null;
+        }
         noticeActionBtnEl.disabled = false;
         const granted = reqRes?.status === 'fulfilled' && Boolean(reqRes.value);
         if (granted) {
@@ -660,10 +726,11 @@ if (noticeActionBtnEl) {
 
 if (customWordsInputEl) {
   customWordsInputEl.addEventListener('input', () => {
+    updateCustomWordsMeta();
     if (customWordsDebounceTimer !== null) {
       clearTimeout(customWordsDebounceTimer);
     }
-    customWordsDebounceTimer = setTimeout(sendCustomWordsUpdate, 220);
+    customWordsDebounceTimer = setTimeout(() => sendCustomWordsUpdate(), 220);
   });
   customWordsInputEl.addEventListener('change', sendCustomWordsUpdate);
   customWordsInputEl.addEventListener('blur', sendCustomWordsUpdate);
@@ -673,6 +740,19 @@ if (customWordsInputEl) {
       sendCustomWordsUpdate();
       customWordsInputEl.blur();
     }
+  });
+}
+
+if (customWordsClearBtnEl && customWordsInputEl) {
+  customWordsClearBtnEl.addEventListener('click', () => {
+    if (customWordsDebounceTimer !== null) {
+      clearTimeout(customWordsDebounceTimer);
+      customWordsDebounceTimer = null;
+    }
+    customWordsInputEl.value = '';
+    updateCustomWordsMeta();
+    sendCustomWordsUpdate('');
+    customWordsInputEl.focus();
   });
 }
 
@@ -718,6 +798,23 @@ shortcutsBtnEl.addEventListener('click', async () => {
   footerHintEl.textContent =
     msg('popupShortcutsFallback') || 'Open about:addons → ClipZero → Manage Extension Shortcuts';
   footerHintEl.hidden = false;
+});
+
+window.addEventListener('pagehide', () => {
+  if (customWordsDebounceTimer !== null) {
+    clearTimeout(customWordsDebounceTimer);
+    customWordsDebounceTimer = null;
+  }
+  if (probeTimer !== null) {
+    clearTimeout(probeTimer);
+    probeTimer = null;
+  }
+  if (detachTimer !== null) {
+    clearTimeout(detachTimer);
+    detachTimer = null;
+  }
+  queuedCustomWords = null;
+  pendingNoticeAction = null;
 });
 
 initPopup();

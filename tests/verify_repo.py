@@ -86,7 +86,7 @@ def check_locales():
                     assert f"${ph_name.upper()}$" in msg or f"${ph_name}$" in msg, (
                         f"Missing placeholder token ${ph_name}$ in {lang}:{key}"
                     )
-    assert len(base_keys) == 152, f"Expected 152 locale keys, got {len(base_keys)}"
+    assert len(base_keys) == 155, f"Expected 155 locale keys, got {len(base_keys)}"
 
 
 def check_security_static(manifest_version):
@@ -117,7 +117,7 @@ def check_security_static(manifest_version):
     assert adv_pos < sponsor_pos < close_adv_pos, "Sponsor link must remain inside #panel-advanced"
 
     content_js = read_text("content.js")
-    assert "pixelate" not in content_js.lower(), "Obsolete pixelate mode must not be present"
+    assert "renderPixelatedBox" in content_js and "redactModePixel" in content_js, "Pixelate mode missing in v1.3.2"
     assert "isInstanceSuperseded" not in content_js, "Legacy supersede state must not be present"
     assert "REDACT_WEIGHTS" in content_js and ":host{all:initial" in content_js, (
         "Closed shadow CSS reset or stroke weight table missing"
@@ -142,7 +142,7 @@ def main():
     js_checked = check_js_syntax()
     print(
         f"OK: ClipZero v{manifest['version']} verified "
-        f"(55 hosts, 0 API perms, 6 locales x 152 keys, 0 sinks, node_syntax={js_checked})."
+        f"(55 hosts, 0 API perms, 6 locales x 155 keys, 0 sinks, node_syntax={js_checked})."
     )
 
 
