@@ -5,6 +5,17 @@
 
 'use strict';
 
+if (
+  typeof globalThis.clipzeroFindMatchedSite !== 'function' &&
+  typeof importScripts === 'function'
+) {
+  try {
+    importScripts('site_match.js');
+  } catch {
+    // Ignore if already loaded in non-worker environment.
+  }
+}
+
 const ext = globalThis.browser || globalThis.chrome;
 let armedReload = null;
 

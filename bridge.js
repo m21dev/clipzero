@@ -261,6 +261,16 @@
           }
         } else {
           try {
+            fromPort.postMessage({
+              __clipzero: TO_MAIN,
+              token: bridgeToken,
+              requestId: 0,
+              payload: { type: 'clipzero:pong', alive: false },
+            });
+          } catch {
+            // Ignore closed port errors cleanly.
+          }
+          try {
             fromPort.onmessage = null;
             fromPort.close();
           } catch {

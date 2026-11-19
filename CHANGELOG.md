@@ -2,6 +2,15 @@
 
 All notable releases of **ClipZero** are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.3.3] — 2026-11-19
+
+### Fixed
+- **SPA chat switching no longer triggers false reload prompts:** Removed `pointerdown` and `keydown` from proactive liveness triggers, waited 2 macrotask hops before starting `checkBridgeAlive` timeouts so synchronous SPA UI re-renders never cause false positives, required 2 consecutive post-unfreeze proactive timeouts before disconnecting, and bound `hasIsolatedBridge` strictly when `MessagePort` connects.
+- **Instant explicit invalidation signal:** `bridge.js` now sends `{ type: 'clipzero:pong', alive: false }` before closing the port when `isExtensionContextAlive()` detects extension removal or disabling, enabling immediate deterministic teardown in `content.js`.
+
+### Added
+- **Unified Firefox & Chromium MV3 build pipeline:** Updated `scripts/package.py` and `tests/verify_repo.py` to build and validate both `dist/firefox/` (`clipzero-firefox-1.3.3.zip`) and `dist/chromium/` (`clipzero-chromium-1.3.3.zip`, `service_worker`, `minimum_chrome_version: "111"`, 4 default `suggested_key` shortcuts) from shared source, alongside Chromium compatibility updates in `background.js` (`importScripts('site_match.js')`) and `popup.js` (`isChromiumRuntime()`, `chrome://extensions/shortcuts`).
+
 ## [1.3.2] — 2026-11-18
 
 ### Added

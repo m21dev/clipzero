@@ -63,6 +63,27 @@ def check_manifest():
     for directive in ("default-src 'none'", "script-src 'self'", "object-src 'none'"):
         assert directive in csp, f"Missing CSP directive: {directive}"
 
+    scripts_dir = os.path.join(ROOT, "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from package import CHROMIUM_DEFAULT_COMMANDS, build_chromium_manifest
+
+    cr = build_chromium_manifest(manifest)
+    assert cr.get("background") == {"service_worker": "background.js"}, (
+        f"Invalid Chromium background: {cr.get('background')!r}"
+    )
+    assert cr.get("minimum_chrome_version") == "111", "Missing Chromium minimum_chrome_version"
+    assert "browser_specific_settings" not in cr, "Chromium manifest must omit browser_specific_settings"
+    cr_cmds = cr.get("commands", {})
+    assert len(cr_cmds) == 7, f"Expected 7 Chromium commands, got {len(cr_cmds)}"
+    cr_default_cmds = {k for k, v in cr_cmds.items() if "suggested_key" in v}
+    assert cr_default_cmds == set(CHROMIUM_DEFAULT_COMMANDS) and len(cr_default_cmds) == 4, (
+        f"Expected 4 Chromium default commands {sorted(CHROMIUM_DEFAULT_COMMANDS)}, got {sorted(cr_default_cmds)}"
+    )
+
+    bg_js = read_text("background.js")
+    assert "importScripts('site_match.js')" in bg_js, "background.js must import site_match.js for Chromium worker"
+
     return manifest
 
 

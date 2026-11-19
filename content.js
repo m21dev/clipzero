@@ -782,6 +782,8 @@
   let isInstanceTornDown = false;
   let pingCounter = 0;
   let lastProactivePingAt = 0;
+  let consecutivePingFailures = 0;
+  let proactiveCheckInFlight = false;
   const pendingPings = [];
   let origClipboardProtoWriteTextDesc = null;
   let origNavigatorClipboardWriteTextDesc = null;
@@ -8953,7 +8955,7 @@
       };
     };
 
-    if (isInstanceTornDown || (hasIsolatedBridge && !(await checkBridgeAlive(45)))) {
+    if (isInstanceTornDown || (hasIsolatedBridge && !(await checkBridgeAlive(220)))) {
       return buildPassthroughRes();
     }
 
@@ -10198,15 +10200,19 @@
     removeActiveToast();
     setClear(enteredDragTargets);
 
-    for (let i = 0; i < pendingPings.length; i += 1) {
+    for (let i = pendingPings.length - 1; i >= 0; i -= 1) {
       const entry = pendingPings[i];
       if (entry) {
+        if (entry.hopTimer !== null) {
+          nativeClearTimeout(entry.hopTimer);
+          entry.hopTimer = null;
+        }
         if (entry.timer !== null) {
           nativeClearTimeout(entry.timer);
           entry.timer = null;
         }
         if (typeof entry.resolve === 'function') {
-          entry.resolve(false);
+          entry.resolve(false, true);
         }
       }
     }
@@ -10225,8 +10231,6 @@
     nativeRemoveEventListener.call(window, 'blur', handleWindowBlur, true);
     nativeRemoveEventListener.call(window, 'pagehide', clearEphemeralSecretDraft, true);
     nativeRemoveEventListener.call(window, 'focus', handleProactiveLivenessCheck, true);
-    nativeRemoveEventListener.call(window, 'pointerdown', handleProactiveLivenessCheck, true);
-    nativeRemoveEventListener.call(window, 'keydown', handleProactiveLivenessCheck, true);
     nativeRemoveEventListener.call(window, 'visibilitychange', handleProactiveLivenessCheck, true);
 
     const hookedInputs = setToArray(hookedFileInputsList);
@@ -10281,15 +10285,18 @@
     }
   }
 
-  function checkBridgeAlive(timeoutMs = 45) {
+  function checkBridgeAlive(timeoutMs = 220, options = null) {
     if (isInstanceTornDown) {
       return Promise.resolve(false);
     }
     if (!hasIsolatedBridge) {
       return Promise.resolve(true);
     }
+    const teardownOnTimeout = !options || options.teardownOnTimeout !== false;
     if (!bridgePort || !sessionBridgeToken) {
-      teardownMainWorld();
+      if (teardownOnTimeout) {
+        teardownMainWorld();
+      }
       return Promise.resolve(false);
     }
     return new Promise((resolve) => {
@@ -10298,12 +10305,17 @@
       let settled = false;
       const entry = {
         id: pingId,
+        hopTimer: null,
         timer: null,
-        resolve(alive) {
+        resolve(alive, explicitDead) {
           if (settled) {
             return;
           }
           settled = true;
+          if (entry.hopTimer !== null) {
+            nativeClearTimeout(entry.hopTimer);
+            entry.hopTimer = null;
+          }
           if (entry.timer !== null) {
             nativeClearTimeout(entry.timer);
             entry.timer = null;
@@ -10312,16 +10324,33 @@
           if (idx >= 0) {
             nativeArraySplice.call(pendingPings, idx, 1);
           }
-          if (!alive) {
+          if (alive) {
+            consecutivePingFailures = 0;
+          } else if (explicitDead || teardownOnTimeout) {
             teardownMainWorld();
           }
           resolve(Boolean(alive));
         },
       };
-      entry.timer = nativeSetTimeout(() => {
-        entry.resolve(false);
-      }, timeoutMs);
       nativeArrayPush.call(pendingPings, entry);
+      // Wait 2 macrotask hops so synchronous SPA chat-switch work completes and lets MessageChannel
+      // deliver pong before starting the post-unfreeze deadline timer.
+      entry.hopTimer = nativeSetTimeout(() => {
+        entry.hopTimer = null;
+        if (settled) {
+          return;
+        }
+        entry.hopTimer = nativeSetTimeout(() => {
+          entry.hopTimer = null;
+          if (settled) {
+            return;
+          }
+          entry.timer = nativeSetTimeout(() => {
+            entry.timer = null;
+            entry.resolve(false, false);
+          }, timeoutMs);
+        }, 0);
+      }, 0);
       try {
         postPortMessageSafe(bridgePort, {
           __clipzero: TO_ISOLATED,
@@ -10330,21 +10359,47 @@
           ping: true,
         });
       } catch {
-        entry.resolve(false);
+        entry.resolve(false, true);
       }
     });
   }
 
   function triggerProactiveBridgeCheck() {
-    if (isInstanceTornDown || !hasIsolatedBridge) {
+    if (isInstanceTornDown || !hasIsolatedBridge || proactiveCheckInFlight) {
       return;
     }
     const now = nativeDateNow ? nativeDateNow() : Date.now();
-    if (now - lastProactivePingAt < 250) {
+    if (now - lastProactivePingAt < 1000) {
       return;
     }
     lastProactivePingAt = now;
-    checkBridgeAlive(45);
+    proactiveCheckInFlight = true;
+    const p1 = checkBridgeAlive(300, { teardownOnTimeout: false });
+    const onFirstDone = (alive) => {
+      if (alive || isInstanceTornDown) {
+        proactiveCheckInFlight = false;
+        return;
+      }
+      consecutivePingFailures += 1;
+      const p2 = checkBridgeAlive(300, { teardownOnTimeout: true });
+      const onSecondDone = () => {
+        proactiveCheckInFlight = false;
+      };
+      if (nativePromiseThen) {
+        nativePromiseThen.call(p2, onSecondDone, onSecondDone);
+      } else {
+        p2.then(onSecondDone, onSecondDone);
+      }
+    };
+    if (nativePromiseThen) {
+      nativePromiseThen.call(p1, onFirstDone, () => {
+        proactiveCheckInFlight = false;
+      });
+    } else {
+      p1.then(onFirstDone, () => {
+        proactiveCheckInFlight = false;
+      });
+    }
   }
 
   function handleProactiveLivenessCheck(event) {
@@ -10369,19 +10424,20 @@
     }
 
     const { requestId, payload } = data;
-    if (payload.type === 'clipzero:pong' && payload.alive === true) {
+    if (payload.type === 'clipzero:pong') {
+      const isAlive = payload.alive === true;
       for (let i = pendingPings.length - 1; i >= 0; i -= 1) {
         if (typeof pendingPings[i]?.resolve === 'function') {
-          pendingPings[i].resolve(true);
+          pendingPings[i].resolve(isAlive, !isAlive);
         }
+      }
+      if (!isAlive) {
+        teardownMainWorld();
       }
       return true;
     }
 
     if (payload.type === 'clipzero:i18n' && payload.strings && typeof payload.strings === 'object') {
-      if (payload.bridgeMode === 'isolated') {
-        hasIsolatedBridge = true;
-      }
       if (!injectedAtDocumentStart) {
         return true;
       }
@@ -10471,7 +10527,7 @@
       }
       if (data.payload.type === 'clipzero:i18n') {
         if (hasIsolatedBridge) {
-          checkBridgeAlive(25);
+          checkBridgeAlive(220);
         } else {
           teardownMainWorld();
         }
@@ -10490,6 +10546,9 @@
       (!NativeMessagePort || ports[0] instanceof NativeMessagePort)
     ) {
       bridgePort = ports[0];
+      if (data.payload && data.payload.bridgeMode === 'isolated') {
+        hasIsolatedBridge = true;
+      }
       setPortOnMessageSafe(bridgePort, (portEv) => {
         const pData = portEv ? getEvProp(msgDataDesc, portEv, 'data') : null;
         processBridgeData(pData, bridgePort);
@@ -10654,8 +10713,6 @@
     nativeAddEventListener.call(window, 'blur', handleWindowBlur, true);
     nativeAddEventListener.call(window, 'pagehide', clearEphemeralSecretDraft, true);
     nativeAddEventListener.call(window, 'focus', handleProactiveLivenessCheck, true);
-    nativeAddEventListener.call(window, 'pointerdown', handleProactiveLivenessCheck, true);
-    nativeAddEventListener.call(window, 'keydown', handleProactiveLivenessCheck, true);
     nativeAddEventListener.call(window, 'visibilitychange', handleProactiveLivenessCheck, true);
   } else {
     nativeAddEventListener.call(window, 'message', handleBridgeMessage, true);

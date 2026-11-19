@@ -8,7 +8,7 @@ labels: bug
 > **Important privacy reminder:** Never paste real API keys, tokens, passwords, private chats, or unredacted personal screenshots here.
 
 **Environment**
-- ClipZero version: (e.g. `1.3.2`)
+- ClipZero version: (e.g. `1.3.3`)
 - Firefox version & OS: (e.g. Firefox `140` Windows / Firefox Android `142`)
 - Website URL (origin): (e.g. `https://web.whatsapp.com`)
 

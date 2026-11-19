@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner.png" width="880" alt="ClipZero v1.3.2 overview">
+<img src="assets/banner.png" width="880" alt="ClipZero v1.3.3 overview">
 
 <br><br>
 
@@ -15,11 +15,11 @@
 
 <br>
 
-ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab** before websites read them—with **zero API permissions**, **zero network calls**, and **unminified source code**.
+ClipZero intercepts file uploads and clipboard pastes **inside your Firefox or Chromium tab** before websites read them—with **zero API permissions**, **zero network calls**, and **unminified source code**.
 
 - **Anonymize filenames:** Renames pasted, dropped, and picked files (`clip_XXXXXX.png` / `doc_XXXXXX.*`) and flattens `.bmp`, `.ico`, `.tiff`, and `.heic` rasters to `.png`.
 - **Clean metadata losslessly:** Strips JPEG EXIF/GPS/APP0, PNG and WebP chunks (`iDOT`, `C2PA`, text), GIF comments/XMP, static AVIF markers, active SVG vectors, and PDF `/Info` + XMP fields in-place.
-- **Redact & crop before upload (`v1.3.2`):** Irreversible **Cover** fills, **Pixelate (`P`)** quantized mosaic, **Outline (`O`)** boxes, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` pill, mobile **Scroll (`H`)**, and single-touch `pointerId` lock.
+- **Redact & crop before upload (`v1.3.3`):** Irreversible **Cover** fills, **Pixelate (`P`)** quantized mosaic, **Outline (`O`)** boxes, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` pill, mobile **Scroll (`H`)**, and single-touch `pointerId` lock.
 - **Mask secrets & PII on paste & file upload:** Replaces API keys, tokens, JWTs, Luhn cards, IBANs, URL credentials, optional contacts/IPs, and **Custom hidden words** (`0/50` counter + `Clear` + auto-remember site) with consistent session tokens (`[REDACTED_*_N]`).
 
 ---
@@ -54,22 +54,27 @@ ClipZero intercepts file uploads and clipboard pastes **inside your Firefox tab*
 
 ---
 
-## Install
+## Install & Developer Builds
 
-- **Firefox Desktop (`140+`) & Android (`142+`):** Install the signed release from **[addons.mozilla.org/firefox/addon/clipzero](https://addons.mozilla.org/firefox/addon/clipzero/)**.
-- **Unpacked source (development):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json).
+### Firefox (`140+` Desktop & `142+` Android)
+- **Signed release (recommended):** Install from **[addons.mozilla.org/firefox/addon/clipzero](https://addons.mozilla.org/firefox/addon/clipzero/)**.
+- **Developer / Unpacked source:** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json) (or build `dist/firefox/` with `python scripts/package.py`).
+
+### Chromium (`111+` Chrome, Edge, Brave — GitHub Developer Preview)
+- **From GitHub Releases / Source:** Download `clipzero-chromium-1.3.3.zip` and extract it (or run `python scripts/package.py` to generate `dist/chromium/`).
+- Open `chrome://extensions` (or `edge://extensions`) → enable **Developer mode** → click **Load unpacked** → select the extracted folder (or `dist/chromium/`).
+- *Note:* Due to Chromium's 4-shortcut `manifest.json` limit, the 4 primary shortcuts (`Alt+Shift+P`, `Alt+Shift+E`, `Alt+Shift+B`, `Alt+Shift+K`) are bound automatically and the remaining 3 can be assigned in `chrome://extensions/shortcuts`.
 
 ---
 
 ## Reference
 
 <details>
-<summary>What's new in v1.3.2</summary>
+<summary>What's new in v1.3.3</summary>
 
-- **Irreversible Pixelate (`P`) + reassigned Pen (`D`):** Added a quantized mosaic redactor backed by a solid matte base (`<= 64×64` zeroed buffer) alongside `Cover`, `Outline` (`O`), and `Pen` (`D`).
-- **Live output dimensions pill (`origW×origH → outW×outH`):** Live Canvas readout reflecting active crops and `2048 px` resize caps, with `28 px` footer controls and overflow-safe stage layout.
-- **Custom hidden words UX & text-file tags:** Added `0/50` word counter, **Clear** button, automatic per-site persistence when saving custom words, and `Secrets masked` upload toast tag for text/code files.
-- **Extension lifecycle safety & R2 RAM optimizations:** Added automatic `MAIN`-world self-teardown when the extension is removed/disabled (`teardownMainWorld`), `injectedAtDocumentStart` verification on already-open tabs, shared `XMLSerializer`, `256 KB` animated GIF probe, `<noscript>` HTML wrapper fix, `scheduleUnconfirmedCleanup(700)`, and `155` locale keys × 6.
+- **Fixed SPA chat-switch disconnects:** Removed `pointerdown`/`keydown` proactive liveness pings, added 2 macrotask-hop freeze-proof `checkBridgeAlive` timing with 2-check proactive confirmation, and added explicit `{ type: 'clipzero:pong', alive: false }` responses from `bridge.js` on uninstall/disable.
+- **Single-repo Firefox + Chromium MV3 builds:** Added dual packaging in `scripts/package.py` (`dist/firefox` + `dist/chromium`), `importScripts('site_match.js')` service-worker support in `background.js`, and Chromium shortcut/permission popup support in `popup.js`.
+- **Includes all `v1.3.2` additions:** `Pixelate` (`P`), reassigned `Pen` (`D`), live output dimensions (`origW×origH → outW×outH`), `.env`/text file secret masking (`Secrets masked` toast tag), Custom hidden words `0/50` counter + `Clear` + auto-remember site, and `155` locale keys × 6.
 
 </details>
 
@@ -123,8 +128,8 @@ Inside the Canvas modal: `N` (add box), `P` (Pixelate), `O` (Outline), `D` (Pen)
 3. **`site_match.js` &amp; `background.js`:** Detects open tabs missing injection (`!`) after install/update, manages permission-reload arming/disarming, and forwards shortcuts with `0` API permissions.
 
 ```bash
-python tests/verify_repo.py   # Manifest, locales (155 keys x6), static sinks & JS syntax
-python scripts/package.py     # Builds clean runtime ZIP inside dist/
+python tests/verify_repo.py   # Manifest (Firefox + Chromium), locales (155 keys x6), sinks & syntax
+python scripts/package.py     # Builds dist/firefox, dist/chromium, and release ZIPs
 ```
 
 </details>

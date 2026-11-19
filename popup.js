@@ -641,6 +641,21 @@ function isValidTabId(tabId) {
   return typeof tabId === 'number' && Number.isInteger(tabId) && tabId >= 0;
 }
 
+function isChromiumRuntime() {
+  try {
+    const mf = ext?.runtime?.getManifest?.();
+    if (mf?.browser_specific_settings?.gecko) {
+      return false;
+    }
+    if (typeof globalThis.browser?.runtime?.getBrowserInfo === 'function') {
+      return false;
+    }
+    return Boolean(mf && !mf.browser_specific_settings);
+  } catch {
+    return false;
+  }
+}
+
 if (noticeActionBtnEl) {
   noticeActionBtnEl.addEventListener('click', () => {
     if (!pendingNoticeAction) {
@@ -680,13 +695,16 @@ if (noticeActionBtnEl) {
       let settled = false;
       if (detachTimer !== null) {
         clearTimeout(detachTimer);
-      }
-      detachTimer = setTimeout(() => {
         detachTimer = null;
-        if (!settled) {
-          window.close();
-        }
-      }, 60);
+      }
+      if (!isChromiumRuntime()) {
+        detachTimer = setTimeout(() => {
+          detachTimer = null;
+          if (!settled) {
+            window.close();
+          }
+        }, 60);
+      }
       Promise.allSettled([armPromise, reqPromise]).then(async ([, reqRes]) => {
         settled = true;
         if (detachTimer !== null) {
@@ -792,11 +810,22 @@ shortcutsBtnEl.addEventListener('click', async () => {
       window.close();
       return;
     } catch {
-      // Fall through to manual navigation hint (e.g., Firefox for Android).
+      // Fall through to browser-specific handling below.
     }
   }
-  footerHintEl.textContent =
-    msg('popupShortcutsFallback') || 'Open about:addons → ClipZero → Manage Extension Shortcuts';
+  const chromium = isChromiumRuntime();
+  if (chromium && ext?.tabs?.create) {
+    try {
+      await ext.tabs.create({ url: 'chrome://extensions/shortcuts' });
+      window.close();
+      return;
+    } catch {
+      // Fall through to manual navigation hint.
+    }
+  }
+  footerHintEl.textContent = chromium
+    ? 'chrome://extensions/shortcuts'
+    : msg('popupShortcutsFallback') || 'Open about:addons → ClipZero → Manage Extension Shortcuts';
   footerHintEl.hidden = false;
 });
 

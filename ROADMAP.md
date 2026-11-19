@@ -5,8 +5,9 @@
 ```mermaid
 flowchart LR
     V130["v1.3.0<br/>Low-RAM Pipeline & Tools"] --> V131["v1.3.1<br/>Mobile Touch, Crop & Hardening"]
-    V131 --> V132["v1.3.2 (Current)<br/>Pixelate, Custom Words UX & Lifecycle"]
-    V132 --> V140["v1.4.0<br/>Office Docs & Web Workers"]
+    V131 --> V132["v1.3.2<br/>Pixelate, File Guard & Lifecycle"]
+    V132 --> V133["v1.3.3 (Current)<br/>SPA Stability & Chromium Build"]
+    V133 --> V140["v1.4.0<br/>Office Docs & Web Workers"]
     V140 --> V200["v2.0.0<br/>On-Demand Sites & Local OCR"]
 ```
 
@@ -14,7 +15,11 @@ flowchart LR
 
 ## Shipped
 
-### `v1.3.2` — Pixelate, Custom Words UX & Lifecycle Hardening *(Current)*
+### `v1.3.3` — SPA Stability & Chromium MV3 Build *(Current)*
+- **SPA chat-switch stability:** Freeze-proof 2-hop `checkBridgeAlive` timing without `pointerdown`/`keydown` triggers, explicit `{ alive: false }` bridge pong on uninstall/disable, and `hasIsolatedBridge` bound strictly on `MessagePort`.
+- **Dual Firefox + Chromium MV3 builds:** Shared codebase now outputs `dist/firefox/` and `dist/chromium/` (`service_worker`, `minimum_chrome_version: "111"`, 4 default shortcuts) via `scripts/package.py`.
+
+### `v1.3.2` — Pixelate, Custom Words UX & Lifecycle Hardening
 - **Irreversible Pixelate (`P`) & live dimensions pill:** Quantized mosaic tool (`#09090b` base + zeroed `<= 64×64` buffer), `D` shortcut for Pen, real-time `origW×origH → outW×outH` output dimensions badge, `28 px` modal footer buttons, and overflow-free stage.
 - **Custom hidden words & upload toast tags:** Added `0/50` counter, **Clear** button, auto-remember current site on save, and `Secrets masked` upload toast tag for text/code uploads.
 - **Lifecycle safety & R2 RAM optimization:** Automatic `MAIN`-world teardown when the extension is removed/disabled (`teardownMainWorld`), `injectedAtDocumentStart` verification for already-open tabs, shared `XMLSerializer`, `256 KB` animated GIF probing, `<noscript>` HTML wrapper fix, and `scheduleUnconfirmedCleanup(700)`.
