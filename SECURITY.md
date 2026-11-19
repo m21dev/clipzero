@@ -10,7 +10,7 @@ ClipZero is built around strict local-only isolation:
 - **Isolated `MAIN ↔ ISOLATED` Bridge & Self-Teardown:** Commands and i18n payloads cross a private `MessageChannel` authenticated by a random per-tab token. `content.js` verifies `injectedAtDocumentStart` (`document.readyState === 'loading'`) on already-open tabs so un-reloaded tabs stay inert (`needsReload: true`), and verifies extension liveness (`isExtensionContextAlive` ping/pong) to call `teardownMainWorld()` immediately if the extension is disabled or uninstalled.
 - **Fail-Closed Redaction & Buffer Zeroing:** Secret/PII scanning fails closed on both clipboard pastes (including `<noscript>` HTML wrapper sanitization and wrapped `Clipboard.prototype.writeText` restore prompts) and text/code file uploads. Canvas redactions flatten pixels destructively, and `Pixelate` offscreen buffers (`<= 64×64`) plus export canvases are zeroed (`width = 0; height = 0`) in `finally`.
 - **Strict Extension CSP:** `extension_pages` enforces `default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';`.
-- **Unminified Source:** All extension scripts shipped in official AMO packages match this repository directly without bundlers or minifiers.
+- **Unminified Source:** All extension scripts shipped in official AMO packages match this repository's release tags directly without bundlers or minifiers.
 
 ---
 

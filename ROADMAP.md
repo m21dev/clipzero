@@ -7,7 +7,7 @@ flowchart LR
     V130["v1.3.0<br/>Low-RAM Pipeline & Tools"] --> V131["v1.3.1<br/>Mobile Touch, Crop & Hardening"]
     V131 --> V132["v1.3.2<br/>Pixelate, File Guard & Lifecycle"]
     V132 --> V133["v1.3.3 (Current)<br/>SPA Stability & Chromium Build"]
-    V133 --> V140["v1.4.0<br/>Office Docs & Web Workers"]
+    V133 --> V140["v1.4.0<br/>UI Refresh, Office Docs & Workers"]
     V140 --> V200["v2.0.0<br/>On-Demand Sites & Local OCR"]
 ```
 
@@ -45,7 +45,8 @@ flowchart LR
 
 ## Planned
 
-### `v1.4.0` — Office Documents, Web Workers & Portable Rules
+### `v1.4.0` — UI Refresh, Office Documents & Web Workers
+- **UI & icon refresh *(landed on `main`)*:** Redesigned Light/Dark Firefox Acorn floating notice (`showToastNotice`) and high-contrast Firefox-blue toolbar icons (`16`–`128 px`).
 - **Local Office metadata scrubber (`.docx`, `.xlsx`, `.pptx`):** Strip `docProps/core.xml`, `app.xml`, authors, and revision metadata in memory while preserving ZIP structure.
 - **Web Worker offloading:** Move heavy PDF (`<= 50 MB`), Office XML/ZIP, and large SVG parsing to workers with `Transferable` buffers.
 - **Portable rules & token inspector:** Local JSON config export/import, custom regex rules, and a popup token inspector for the active session.

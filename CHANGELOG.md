@@ -2,6 +2,15 @@
 
 All notable releases of **ClipZero** are documented here following [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+> Planned for **v1.4.0** on Firefox Add-ons (AMO); already available on `main` for developer builds.
+
+### Changed
+- **Native Firefox Acorn floating notice (`showToastNotice`):** Redesigned the on-screen toast using `getModalPalette()` for automatic Light (`#ffffff` / `#d7d7db`) and Dark (`#2b2a33` / `#42414d`) theme parity with the rest of ClipZero, adding a Firefox-green active dot (`#12bc00` / `#30e60b`), balanced two-column layout, and solid Firefox-blue action button (`#0060df` / `#0a84ff`) with hover and `:focus-visible` states.
+- **High-contrast geometric extension icon (`16`–`128 px`):** Replaced the dark-slate toolbar icon with a two-color Firefox Blue (`#0060df`) and white clipboard/redaction emblem (`assets/logo.svg`, `icons/icon-{16,32,48,96,128}.png`) and added explicit `16` and `32` entries to `manifest.json` for crisp rendering on light and dark toolbars.
+- **GitHub documentation & `@2x` Retina previews:** Rebuilt `README.md` with a native GitHub hero, structured Markdown format/shortcut tables, and tight `@2x` Retina screenshots (`01-canvas-editor.png`, `02-secret-guard.png`, `03-popup-controls.png`).
+
 ## [1.3.3] — 2026-11-19
 
 ### Fixed

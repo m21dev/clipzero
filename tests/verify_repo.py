@@ -63,6 +63,11 @@ def check_manifest():
     for directive in ("default-src 'none'", "script-src 'self'", "object-src 'none'"):
         assert directive in csp, f"Missing CSP directive: {directive}"
 
+    icons = manifest.get("icons", {})
+    assert set(icons.keys()) >= {"16", "32", "48", "96", "128"}, f"Missing required icon sizes: {sorted(icons.keys())}"
+    for rel_icon in list(icons.values()) + list(manifest.get("action", {}).get("default_icon", {}).values()):
+        assert os.path.isfile(os.path.join(ROOT, rel_icon)), f"Missing icon file: {rel_icon}"
+
     scripts_dir = os.path.join(ROOT, "scripts")
     if scripts_dir not in sys.path:
         sys.path.insert(0, scripts_dir)

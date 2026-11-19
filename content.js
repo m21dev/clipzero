@@ -1355,11 +1355,13 @@
       host.style.border = '0';
       host.style.background = 'transparent';
 
+      const palette = getModalPalette();
+      const accentHover = palette.isDark ? '#2896ff' : '#0250bb';
       const shadow = createClosedShadowRoot(host);
       const resetStyle = safeCreateElement('style');
       setSafeText(
         resetStyle,
-        ':host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} *,*::before,*::after{box-sizing:border-box;}'
+        `:host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} *,*::before,*::after{box-sizing:border-box;} button.cz-toast-btn:hover{background:${accentHover}!important;} button.cz-toast-btn:focus-visible{outline:2px solid ${palette.accent};outline-offset:2px;}`
       );
       appendChildSafe(shadow, resetStyle);
       const hasAction = Boolean(actionSpec && actionSpec.label && typeof actionSpec.onAction === 'function');
@@ -1368,17 +1370,21 @@
 
       const card = safeCreateElement('div');
       card.style.display = 'flex';
-      card.style.flexDirection = 'column';
-      card.style.gap = '3px';
-      card.style.maxWidth = '380px';
-      card.style.padding = '8px 12px';
-      card.style.borderRadius = '8px';
-      card.style.background = 'rgba(28, 27, 34, 0.96)';
-      card.style.border = '1px solid rgba(255, 255, 255, 0.14)';
-      card.style.boxShadow = '0 6px 18px rgba(0, 0, 0, 0.28)';
-      card.style.color = '#fbfbfe';
+      card.style.flexDirection = 'row';
+      card.style.alignItems = 'center';
+      card.style.justifyContent = 'space-between';
+      card.style.gap = '14px';
+      card.style.maxWidth = '400px';
+      card.style.padding = '10px 14px';
+      card.style.borderRadius = '10px';
+      card.style.background = palette.isDark ? '#2b2a33' : '#ffffff';
+      card.style.border = `1px solid ${palette.border}`;
+      card.style.boxShadow = palette.isDark
+        ? '0 8px 24px rgba(0, 0, 0, 0.45)'
+        : '0 6px 20px rgba(21, 20, 26, 0.12), 0 1px 3px rgba(21, 20, 26, 0.06)';
+      card.style.color = palette.text;
       card.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
-      card.style.fontSize = '12px';
+      card.style.fontSize = '12.5px';
       card.style.lineHeight = '1.35';
       card.style.pointerEvents = hasAction ? 'auto' : 'none';
       const reducedMotion = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
@@ -1386,46 +1392,63 @@
       card.style.transform = reducedMotion ? 'translateY(0)' : 'translateY(6px)';
       card.style.transition = reducedMotion ? 'none' : 'opacity 140ms ease, transform 140ms ease';
 
-      const headerRow = safeCreateElement('div');
-      headerRow.style.display = 'flex';
-      headerRow.style.alignItems = 'center';
-      headerRow.style.justifyContent = 'space-between';
-      headerRow.style.gap = '10px';
+      const textCol = safeCreateElement('div');
+      textCol.style.display = 'flex';
+      textCol.style.flexDirection = 'column';
+      textCol.style.gap = '2px';
+      textCol.style.flex = '1';
+      textCol.style.minWidth = '0';
 
-      const leftGroup = safeCreateElement('div');
-      leftGroup.style.display = 'flex';
-      leftGroup.style.alignItems = 'center';
-      leftGroup.style.gap = '7px';
+      const titleRow = safeCreateElement('div');
+      titleRow.style.display = 'flex';
+      titleRow.style.alignItems = 'center';
+      titleRow.style.gap = '7px';
 
       const dot = safeCreateElement('span');
-      dot.style.width = '6px';
-      dot.style.height = '6px';
+      dot.style.width = '7px';
+      dot.style.height = '7px';
       dot.style.borderRadius = '50%';
       dot.style.flexShrink = '0';
-      dot.style.background = state.enabled ? '#0a84ff' : '#8f8f9d';
+      dot.style.background = state.enabled ? (palette.isDark ? '#30e60b' : '#12bc00') : '#8f8f9d';
 
       const title = safeCreateElement('span');
       title.style.fontWeight = '600';
+      title.style.color = palette.text;
       title.style.wordBreak = 'break-word';
       setSafeText(title, titleText);
 
-      appendChildSafe(leftGroup, dot);
-      appendChildSafe(leftGroup, title);
-      appendChildSafe(headerRow, leftGroup);
+      appendChildSafe(titleRow, dot);
+      appendChildSafe(titleRow, title);
+      appendChildSafe(textCol, titleRow);
+
+      if (subtitleText) {
+        const sub = safeCreateElement('div');
+        sub.style.color = palette.muted;
+        sub.style.fontSize = '11.5px';
+        sub.style.lineHeight = '1.35';
+        sub.style.paddingLeft = '14px';
+        setSafeText(sub, subtitleText);
+        appendChildSafe(textCol, sub);
+      }
+
+      appendChildSafe(card, textCol);
 
       if (hasAction) {
         const actionBtn = safeCreateElement('button');
         actionBtn.type = 'button';
+        actionBtn.className = 'cz-toast-btn';
         setSafeText(actionBtn, actionSpec.label);
         actionBtn.style.appearance = 'none';
-        actionBtn.style.border = '1px solid rgba(10, 132, 255, 0.55)';
-        actionBtn.style.background = 'rgba(10, 132, 255, 0.22)';
-        actionBtn.style.color = '#80c2ff';
-        actionBtn.style.borderRadius = '5px';
-        actionBtn.style.padding = '3px 9px';
+        actionBtn.style.border = '1px solid transparent';
+        actionBtn.style.background = palette.accent;
+        actionBtn.style.color = palette.accentText;
+        actionBtn.style.borderRadius = '6px';
+        actionBtn.style.padding = '5px 12px';
         actionBtn.style.font = 'inherit';
-        actionBtn.style.fontSize = '11px';
+        actionBtn.style.fontSize = '12px';
         actionBtn.style.fontWeight = '600';
+        actionBtn.style.lineHeight = '1.2';
+        actionBtn.style.whiteSpace = 'nowrap';
         actionBtn.style.cursor = 'pointer';
         actionBtn.style.flexShrink = '0';
         nativeAddEventListener.call(
@@ -1438,18 +1461,7 @@
           },
           ac ? { signal: ac.signal } : false
         );
-        appendChildSafe(headerRow, actionBtn);
-      }
-
-      appendChildSafe(card, headerRow);
-
-      if (subtitleText) {
-        const sub = safeCreateElement('div');
-        sub.style.color = '#b1b1bd';
-        sub.style.fontSize = '11px';
-        sub.style.paddingLeft = '13px';
-        setSafeText(sub, subtitleText);
-        appendChildSafe(card, sub);
+        appendChildSafe(card, actionBtn);
       }
 
       appendChildSafe(shadow, card);
