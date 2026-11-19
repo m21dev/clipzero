@@ -85,15 +85,17 @@ All sanitization happens in volatile tab memory; your original files on disk are
 
 ### Global Extension Shortcuts
 
-| Windows / Linux | macOS | Action | Default on Chromium |
-| :--- | :--- | :--- | :--- |
-| `Alt+Shift+P` | `MacCtrl+Shift+P` | Pause / resume protection on active tab | Yes |
-| `Alt+Shift+S` | `MacCtrl+Shift+S` | Toggle *Rename all files* (`strictMode`) | Configure manually |
-| `Alt+Shift+E` | `MacCtrl+Shift+E` | Toggle lossless metadata stripping | Yes |
-| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas Redactor | Yes |
-| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret &amp; API Key Guard | Yes |
-| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen upload notice | Configure manually |
-| `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for current domain | Configure manually |
+| Windows / Linux | macOS | Action | Firefox | Chromium |
+| :--- | :--- | :--- | :--- | :--- |
+| `Alt+Shift+P` | `MacCtrl+Shift+P` | Pause / resume protection on active tab | Default | Default |
+| `Alt+Shift+S` | `MacCtrl+Shift+S` | Toggle *Rename all files* (`strictMode`) | Default | Manual |
+| `Alt+Shift+E` | `MacCtrl+Shift+E` | Toggle lossless metadata stripping | Default | Default |
+| `Alt+Shift+B` | `MacCtrl+Shift+B` | Toggle pre-upload Canvas Redactor | Default | Default |
+| `Alt+Shift+K` | `MacCtrl+Shift+K` | Toggle Secret &amp; API Key Guard | Default | Default |
+| `Alt+Shift+T` | `MacCtrl+Shift+T` | Show / hide on-screen upload notice | Default | Manual |
+| `Alt+Shift+G` | `MacCtrl+Shift+G` | Remember / forget settings for current domain | Default | Manual |
+
+All 7 shortcuts are pre-bound by default in **Firefox** (`about:addons` → Manage Extension Shortcuts). **Chromium** limits extensions to 4 default bindings; the other 3 can be assigned manually at `chrome://extensions/shortcuts`.
 
 ### Canvas Redactor Shortcuts
 
