@@ -5,6 +5,7 @@
 ClipZero is built around strict local-only isolation:
 
 - **Zero API Permissions:** `manifest.json` declares no WebExtension API `"permissions"` and explicitly sets `"data_collection_permissions": { "required": ["none"] }`.
+- **Extension-Isolated Site Storage:** Optional per-site preferences and `customWords` stay in extension-origin `IndexedDB` (`background.js`), keyed strictly by browser-verified `sender.url` origins without `window.localStorage` writes so host pages can neither read `customWords` nor spoof saved state.
 - **Zero Network Calls:** ClipZero makes no `fetch()`, `XMLHttpRequest`, or `WebSocket` connections, and contains no telemetry or analytics.
 - **Zero HTML Injection Sinks:** UI elements are constructed solely via safe DOM APIs inside closed Shadow DOM (`:host{all:initial...}`), with no `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`, or `eval`.
 - **Isolated `MAIN ↔ ISOLATED` Bridge & Self-Teardown:** Commands and i18n payloads cross a private `MessageChannel` authenticated by a random per-tab token. `content.js` verifies `injectedAtDocumentStart` (`document.readyState === 'loading'`) on already-open tabs so un-reloaded tabs stay inert (`needsReload: true`), and verifies extension liveness (`isExtensionContextAlive` ping/pong) to call `teardownMainWorld()` immediately if the extension is disabled or uninstalled.

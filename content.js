@@ -32,8 +32,11 @@
   const NativeXMLSerializer = window.XMLSerializer;
   const NativeURL = window.URL;
   const NativeWeakSet = window.WeakSet;
+  const NativeWeakMap = typeof window.WeakMap === 'function' ? window.WeakMap : null;
   const NativeMap = window.Map;
   const NativeSet = window.Set;
+  const NativePromise = typeof window.Promise === 'function' ? window.Promise : null;
+  const NativeDOMException = typeof window.DOMException === 'function' ? window.DOMException : null;
   const NativeUint8Array = window.Uint8Array;
   const NativeDataView = window.DataView;
   const NativeRegExp = window.RegExp;
@@ -70,6 +73,7 @@
   const nativeMathAbs = Math.abs;
   const nativeMathHypot = Math.hypot;
   const nativeMathLog2 = Math.log2;
+  const nativeMathRandom = Math.random;
   const nativeNumberIsFinite = Number.isFinite;
   const NativeAbortController = typeof window.AbortController === 'function' ? window.AbortController : null;
   const NativeMessagePort = typeof window.MessagePort === 'function' ? window.MessagePort : null;
@@ -148,6 +152,14 @@
     NativeDataTransfer && NativeDataTransfer.prototype
       ? Object.getOwnPropertyDescriptor(NativeDataTransfer.prototype, 'types')
       : null;
+  const dtDropEffectDesc =
+    NativeDataTransfer && NativeDataTransfer.prototype
+      ? Object.getOwnPropertyDescriptor(NativeDataTransfer.prototype, 'dropEffect')
+      : null;
+  const dtEffectAllowedDesc =
+    NativeDataTransfer && NativeDataTransfer.prototype
+      ? Object.getOwnPropertyDescriptor(NativeDataTransfer.prototype, 'effectAllowed')
+      : null;
   const dtGetData =
     NativeDataTransfer && NativeDataTransfer.prototype && typeof NativeDataTransfer.prototype.getData === 'function'
       ? NativeDataTransfer.prototype.getData
@@ -172,6 +184,20 @@
     typeof DataTransferItem === 'function' && DataTransferItem.prototype && typeof DataTransferItem.prototype.getAsFile === 'function'
       ? DataTransferItem.prototype.getAsFile
       : null;
+  const dtiWebkitGetAsEntry =
+    typeof DataTransferItem === 'function' &&
+    DataTransferItem.prototype &&
+    typeof DataTransferItem.prototype.webkitGetAsEntry === 'function'
+      ? DataTransferItem.prototype.webkitGetAsEntry
+      : null;
+  const dtiGetAsFileSystemHandle =
+    typeof DataTransferItem === 'function' &&
+    DataTransferItem.prototype &&
+    typeof DataTransferItem.prototype.getAsFileSystemHandle === 'function'
+      ? DataTransferItem.prototype.getAsFileSystemHandle
+      : null;
+  const nativeShowOpenFilePicker =
+    typeof window.showOpenFilePicker === 'function' ? window.showOpenFilePicker : null;
   const nativeAttachShadow =
     typeof Element === 'function' && Element.prototype && typeof Element.prototype.attachShadow === 'function'
       ? Element.prototype.attachShadow
@@ -183,10 +209,6 @@
   const nativeStorageGetItem =
     typeof Storage === 'function' && Storage.prototype && typeof Storage.prototype.getItem === 'function'
       ? Storage.prototype.getItem
-      : null;
-  const nativeStorageSetItem =
-    typeof Storage === 'function' && Storage.prototype && typeof Storage.prototype.setItem === 'function'
-      ? Storage.prototype.setItem
       : null;
   const nativeStorageRemoveItem =
     typeof Storage === 'function' && Storage.prototype && typeof Storage.prototype.removeItem === 'function'
@@ -339,6 +361,18 @@
     typeof Promise === 'function' && Promise.prototype && typeof Promise.prototype.then === 'function'
       ? Promise.prototype.then
       : null;
+  const nativePromiseResolve =
+    NativePromise && typeof NativePromise.resolve === 'function'
+      ? NativePromise.resolve.bind(NativePromise)
+      : (val) => Promise.resolve(val);
+  const nativeWeakMapGet =
+    NativeWeakMap && NativeWeakMap.prototype && typeof NativeWeakMap.prototype.get === 'function'
+      ? NativeWeakMap.prototype.get
+      : null;
+  const nativeWeakMapSet =
+    NativeWeakMap && NativeWeakMap.prototype && typeof NativeWeakMap.prototype.set === 'function'
+      ? NativeWeakMap.prototype.set
+      : null;
   const nativeWeakSetHas =
     NativeWeakSet && NativeWeakSet.prototype && typeof NativeWeakSet.prototype.has === 'function'
       ? NativeWeakSet.prototype.has
@@ -457,6 +491,38 @@
     typeof MouseEvent === 'function' && MouseEvent.prototype
       ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'clientY')
       : null;
+  const nativeScreenXDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'screenX')
+      : null;
+  const nativeScreenYDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'screenY')
+      : null;
+  const nativeCtrlKeyDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'ctrlKey')
+      : null;
+  const nativeShiftKeyDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'shiftKey')
+      : null;
+  const nativeAltKeyDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'altKey')
+      : null;
+  const nativeMetaKeyDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'metaKey')
+      : null;
+  const nativeMouseButtonsDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'buttons')
+      : null;
+  const nativeRelatedTargetDesc =
+    typeof MouseEvent === 'function' && MouseEvent.prototype
+      ? Object.getOwnPropertyDescriptor(MouseEvent.prototype, 'relatedTarget')
+      : null;
   const nativeDetailDesc =
     typeof UIEvent === 'function' && UIEvent.prototype
       ? Object.getOwnPropertyDescriptor(UIEvent.prototype, 'detail')
@@ -518,6 +584,14 @@
   }
   function wsDelete(ws, item) {
     return nativeWeakSetDelete ? nativeWeakSetDelete.call(ws, item) : ws.delete(item);
+  }
+  function wmGet(wm, key) {
+    if (!wm) return undefined;
+    return nativeWeakMapGet ? nativeWeakMapGet.call(wm, key) : wm.get(key);
+  }
+  function wmSet(wm, key, val) {
+    if (!wm) return wm;
+    return nativeWeakMapSet ? nativeWeakMapSet.call(wm, key, val) : wm.set(key, val);
   }
   function mapGet(m, key) {
     return nativeMapGet ? nativeMapGet.call(m, key) : m.get(key);
@@ -635,11 +709,57 @@
     return dtSetData ? dtSetData.call(dt, mime, val) : dt.setData(mime, val);
   }
   function safeDtItemsAdd(dt, file) {
+    if (file) {
+      wsAdd(syntheticTransferFiles, file);
+    }
     const list = dtItemsDesc && typeof dtItemsDesc.get === 'function' ? dtItemsDesc.get.call(dt) : dt.items;
     return dtItemsAdd ? dtItemsAdd.call(list, file) : list.add(file);
   }
   function safeDtFiles(dt) {
     return dtFilesDesc && typeof dtFilesDesc.get === 'function' ? dtFilesDesc.get.call(dt) : dt.files;
+  }
+  function readTransferEffect(dt, propName) {
+    if (!dt) return null;
+    try {
+      const desc = propName === 'dropEffect' ? dtDropEffectDesc : dtEffectAllowedDesc;
+      const val = desc && typeof desc.get === 'function' ? desc.get.call(dt) : dt[propName];
+      if (typeof val === 'string' && val && val !== 'none' && val !== 'uninitialized') {
+        return val;
+      }
+    } catch {
+      // Ignore restricted DataTransfer property access cleanly.
+    }
+    return null;
+  }
+  function applyTransferEffects(dt, dropEffect, effectAllowed) {
+    if (!dt) return;
+    const applyOne = (propName, targetVal) => {
+      if (!targetVal) return;
+      const desc = propName === 'dropEffect' ? dtDropEffectDesc : dtEffectAllowedDesc;
+      try {
+        if (desc && typeof desc.set === 'function') {
+          desc.set.call(dt, targetVal);
+        } else {
+          dt[propName] = targetVal;
+        }
+      } catch {
+        // Fallback below handles read-only synthetic DataTransfer fields.
+      }
+      try {
+        const cur = desc && typeof desc.get === 'function' ? desc.get.call(dt) : dt[propName];
+        if (cur !== targetVal) {
+          defineProperty(dt, propName, {
+            value: targetVal,
+            writable: true,
+            configurable: true,
+          });
+        }
+      } catch {
+        // Ignore non-configurable DataTransfer fields cleanly.
+      }
+    };
+    applyOne('effectAllowed', effectAllowed || 'all');
+    applyOne('dropEffect', dropEffect || 'copy');
   }
   function appendChildSafe(parent, child) {
     return nativeAppendChild ? nativeAppendChild.call(parent, child) : parent.appendChild(child);
@@ -789,10 +909,16 @@
   let origNavigatorClipboardWriteTextDesc = null;
   let origInputClickDesc = null;
   let origInputShowPickerDesc = null;
+  let origDtiWebkitEntryDesc = null;
+  let origDtiFshDesc = null;
+  let origShowOpenFilePickerDesc = null;
   let clipboardProtoWrappedFn = null;
   let navClipboardWrappedFn = null;
   let inputClickWrappedFn = null;
   let inputShowPickerWrappedFn = null;
+  let dtiWebkitEntryWrappedFn = null;
+  let dtiFshWrappedFn = null;
+  let showOpenFilePickerWrappedFn = null;
   const hookedFileInputsList = new NativeSet();
   const targetOrigin = window.location.origin;
 
@@ -815,6 +941,7 @@
     'image/webp': 'webp',
     'image/gif': 'gif',
     'image/avif': 'avif',
+    'image/jxl': 'jxl',
     'image/bmp': 'bmp',
     'image/tiff': 'tiff',
     'image/svg+xml': 'svg',
@@ -892,8 +1019,12 @@
   });
   const processedEvents = new NativeWeakSet();
   const processedFiles = new NativeWeakSet();
+  const syntheticTransferFiles = new NativeWeakSet();
   const pendingAsyncInputs = new NativeWeakSet();
   const hookedFileInputs = new NativeWeakSet();
+  const wrappedDtiEntryFns = new NativeWeakSet();
+  const wrappedShowOpenPickerFns = new NativeWeakSet();
+  const syntheticHandleToOrig = NativeWeakMap ? new NativeWeakMap() : null;
   const usedNames = new NativeSet();
   let sequence = 0;
 
@@ -1067,19 +1198,13 @@
   let storageResetNoticePending = false;
   let storageResetFallbackTimer = null;
   let storageResetDomListenerBound = false;
+  let pendingLegacyMigrationPrefs = null;
+  let userModifiedStateThisSession = false;
 
   function storageGet(key) {
     return nativeStorageGetItem
       ? nativeStorageGetItem.call(nativeStorage, key)
       : nativeStorage.getItem(key);
-  }
-
-  function storageSet(key, val) {
-    if (nativeStorageSetItem) {
-      nativeStorageSetItem.call(nativeStorage, key, val);
-    } else {
-      nativeStorage.setItem(key, val);
-    }
   }
 
   function storageRemove(key) {
@@ -1183,20 +1308,17 @@
     }
     try {
       purgeLegacyStorageKeys();
-      if (!state.saveSite) {
-        storageRemove(STORAGE_KEY);
-        return;
-      }
-      storageSet(
-        STORAGE_KEY,
-        nativeJsonStringify({ _v: STORAGE_SCHEMA_VERSION, ...pickPersistedState() })
-      );
+      storageRemove(STORAGE_KEY);
     } catch {
-      // Fail safely if storage quota is exceeded or blocked.
+      // Fail safely if storage removal is blocked.
     }
   }
 
-  function loadStoredState() {
+  /**
+   * One-time migration from legacy page localStorage to extension-isolated IndexedDB.
+   * Immediately purges STORAGE_KEY from page localStorage so site scripts never observe customWords.
+   */
+  function migrateLegacyLocalStorageState() {
     if (!nativeStorage) {
       return;
     }
@@ -1204,6 +1326,9 @@
     try {
       purgeLegacyStorageKeys();
       raw = storageGet(STORAGE_KEY);
+      if (raw !== null) {
+        storageRemove(STORAGE_KEY);
+      }
     } catch {
       // Ignore restricted storage access without flagging corruption.
       return;
@@ -1259,33 +1384,13 @@
         return;
       }
 
-      const keys = nativeObjKeys ? nativeObjKeys(parsed) : Object.keys(parsed);
-      let hasUnknownKeys = false;
-      for (let i = 0; i < keys.length; i += 1) {
-        const k = keys[i];
-        if (k !== '_v' && k !== 'customWords' && !setHas(PERSISTED_KEY_SET, k)) {
-          hasUnknownKeys = true;
-          break;
-        }
-      }
-
-      const hasCustomWords = nativeHasOwn(parsed, 'customWords');
       if (nativeObjAssign) {
         nativeObjAssign(state, nextValues);
       } else {
         Object.assign(state, nextValues);
       }
       state.saveSite = true;
-
-      if (
-        !hasVersion ||
-        parsed._v !== STORAGE_SCHEMA_VERSION ||
-        validCount < PERSISTED_KEYS.length ||
-        !hasCustomWords ||
-        hasUnknownKeys
-      ) {
-        syncStoredState();
-      }
+      pendingLegacyMigrationPrefs = pickPersistedState();
     } catch {
       markStorageResetCorrupt();
     }
@@ -1299,7 +1404,7 @@
   }
 
   if (injectedAtDocumentStart) {
-    loadStoredState();
+    migrateLegacyLocalStorageState();
   }
 
   function formatShortcutHint() {
@@ -1361,7 +1466,13 @@
       const resetStyle = safeCreateElement('style');
       setSafeText(
         resetStyle,
-        `:host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} *,*::before,*::after{box-sizing:border-box;} button.cz-toast-btn:hover{background:${accentHover}!important;} button.cz-toast-btn:focus-visible{outline:2px solid ${palette.accent};outline-offset:2px;}`
+        `:host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} ` +
+          `*,*::before,*::after{box-sizing:border-box;} ` +
+          `button.cz-toast-btn{transition:background-color 120ms ease,transform 80ms ease;} ` +
+          `button.cz-toast-btn:hover{background:${accentHover}!important;} ` +
+          `button.cz-toast-btn:active{transform:scale(0.97);} ` +
+          `button.cz-toast-btn:focus-visible{outline:2px solid ${palette.accent};outline-offset:2px;} ` +
+          `@media (prefers-reduced-motion:reduce){button.cz-toast-btn{transition:none;transform:none;}}`
       );
       appendChildSafe(shadow, resetStyle);
       const hasAction = Boolean(actionSpec && actionSpec.label && typeof actionSpec.onAction === 'function');
@@ -1375,13 +1486,13 @@
       card.style.justifyContent = 'space-between';
       card.style.gap = '14px';
       card.style.maxWidth = '400px';
-      card.style.padding = '10px 14px';
-      card.style.borderRadius = '10px';
+      card.style.padding = '11px 14px 11px 15px';
+      card.style.borderRadius = '13px';
       card.style.background = palette.isDark ? '#2b2a33' : '#ffffff';
       card.style.border = `1px solid ${palette.border}`;
       card.style.boxShadow = palette.isDark
-        ? '0 8px 24px rgba(0, 0, 0, 0.45)'
-        : '0 6px 20px rgba(21, 20, 26, 0.12), 0 1px 3px rgba(21, 20, 26, 0.06)';
+        ? '0 10px 28px rgba(0, 0, 0, 0.50), 0 1px 3px rgba(0, 0, 0, 0.28)'
+        : '0 10px 28px rgba(21, 20, 26, 0.13), 0 2px 6px rgba(21, 20, 26, 0.06)';
       card.style.color = palette.text;
       card.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
       card.style.fontSize = '12.5px';
@@ -1410,6 +1521,11 @@
       dot.style.borderRadius = '50%';
       dot.style.flexShrink = '0';
       dot.style.background = state.enabled ? (palette.isDark ? '#30e60b' : '#12bc00') : '#8f8f9d';
+      dot.style.boxShadow = state.enabled
+        ? palette.isDark
+          ? '0 0 0 2.5px rgba(48, 230, 11, 0.24)'
+          : '0 0 0 2.5px rgba(18, 188, 0, 0.20)'
+        : 'none';
 
       const title = safeCreateElement('span');
       title.style.fontWeight = '600';
@@ -1442,8 +1558,11 @@
         actionBtn.style.border = '1px solid transparent';
         actionBtn.style.background = palette.accent;
         actionBtn.style.color = palette.accentText;
-        actionBtn.style.borderRadius = '6px';
-        actionBtn.style.padding = '5px 12px';
+        actionBtn.style.borderRadius = '8px';
+        actionBtn.style.padding = '6px 13px';
+        actionBtn.style.boxShadow = palette.isDark
+          ? '0 1px 2px rgba(0, 0, 0, 0.28)'
+          : '0 1px 2px rgba(0, 96, 223, 0.24)';
         actionBtn.style.font = 'inherit';
         actionBtn.style.fontSize = '12px';
         actionBtn.style.fontWeight = '600';
@@ -1551,8 +1670,8 @@
     btn.style.display = 'inline-flex';
     btn.style.alignItems = 'center';
     btn.style.justifyContent = 'center';
-    btn.style.borderRadius = '7px';
-    btn.style.padding = '6px 12px';
+    btn.style.borderRadius = '9px';
+    btn.style.padding = '7px 13px';
     btn.style.font = 'inherit';
     btn.style.fontSize = '12px';
     btn.style.fontWeight = primary ? '600' : '500';
@@ -1563,6 +1682,11 @@
     btn.style.border = primary ? '1px solid transparent' : `1px solid ${palette.border}`;
     btn.style.background = primary ? palette.accent : palette.surface;
     btn.style.color = primary ? palette.accentText : palette.text;
+    if (primary) {
+      btn.style.boxShadow = palette.isDark
+        ? '0 1px 2px rgba(0, 0, 0, 0.30)'
+        : '0 1px 2px rgba(0, 96, 223, 0.24)';
+    }
     return btn;
   }
 
@@ -1581,9 +1705,11 @@
       resetStyle,
       `:host{all:initial;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;} ` +
         `*,*::before,*::after{box-sizing:border-box;} ` +
-        `.cz-btn,.cz-select{transition:background-color .12s ease,border-color .12s ease,opacity .12s ease,filter .12s ease;} ` +
+        `.cz-btn,.cz-select{transition:background-color .12s ease,border-color .12s ease,opacity .12s ease,filter .12s ease,transform .08s ease;} ` +
         `.cz-btn:hover:not(:disabled),.cz-select:hover:not(:disabled){filter:${hoverFilter};} ` +
-        `.cz-btn:focus-visible,.cz-select:focus-visible{outline:2px solid ${palette.accent};outline-offset:1px;}`
+        `.cz-btn:active:not(:disabled){transform:scale(0.98);} ` +
+        `.cz-btn:focus-visible,.cz-select:focus-visible{outline:2px solid ${palette.accent};outline-offset:1px;} ` +
+        `@media (prefers-reduced-motion:reduce){.cz-btn,.cz-select{transition:none!important;transform:none!important;}}`
     );
     appendChildSafe(shadow, resetStyle);
 
@@ -1596,23 +1722,26 @@
     scrim.style.alignItems = 'center';
     scrim.style.justifyContent = 'center';
     scrim.style.padding = '16px';
-    scrim.style.background = 'rgba(12, 12, 16, 0.78)';
+    scrim.style.background = palette.isDark ? 'rgba(10, 10, 15, 0.72)' : 'rgba(15, 16, 22, 0.54)';
+    scrim.style.backdropFilter = 'blur(4px)';
     scrim.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
     scrim.style.fontSize = '13px';
 
     const modal = safeCreateElement('div');
     modal.style.display = 'flex';
     modal.style.flexDirection = 'column';
-    modal.style.gap = '10px';
+    modal.style.gap = '12px';
     modal.style.minWidth = 'min(92vw, 360px)';
     modal.style.maxWidth = maxWidthCss || 'min(92vw, 940px)';
     modal.style.maxHeight = '92vh';
-    modal.style.padding = '14px 16px';
-    modal.style.borderRadius = '12px';
+    modal.style.padding = '16px 18px';
+    modal.style.borderRadius = '16px';
     modal.style.background = palette.bg;
     modal.style.color = palette.text;
     modal.style.border = `1px solid ${palette.border}`;
-    modal.style.boxShadow = '0 18px 48px rgba(0, 0, 0, 0.44)';
+    modal.style.boxShadow = palette.isDark
+      ? '0 22px 54px rgba(0, 0, 0, 0.54), 0 2px 8px rgba(0, 0, 0, 0.28)'
+      : '0 20px 50px rgba(21, 20, 26, 0.22), 0 2px 8px rgba(21, 20, 26, 0.08)';
 
     const header = safeCreateElement('div');
     header.style.display = 'flex';
@@ -1629,7 +1758,8 @@
 
     const titleEl = safeCreateElement('span');
     titleEl.style.fontWeight = '600';
-    titleEl.style.fontSize = '14px';
+    titleEl.style.fontSize = '14.5px';
+    titleEl.style.letterSpacing = '-0.01em';
     titleEl.style.fontVariantNumeric = 'tabular-nums';
     appendChildSafe(titleGroup, titleEl);
     appendChildSafe(header, titleGroup);
@@ -1683,7 +1813,7 @@
   // Generate an unlinkable 6-char hex token without leaking local clock or timezone.
   function randomToken() {
     if (getRandomValues) {
-      const bytes = new Uint8Array(3);
+      const bytes = new NativeUint8Array(3);
       getRandomValues(bytes);
       let hex = '';
       for (let i = 0; i < bytes.length; i += 1) {
@@ -1691,7 +1821,7 @@
       }
       return hex;
     }
-    return Math.floor(Math.random() * 0x1000000)
+    return nativeMathFloor(nativeMathRandom() * 0x1000000)
       .toString(16)
       .padStart(6, '0');
   }
@@ -1703,7 +1833,7 @@
     if (typeof file.type === 'string' && file.type.toLowerCase().startsWith('image/')) {
       return true;
     }
-    return /\.(?:png|jpe?g|webp|gif|avif|bmp|tiff?|svg|ico|heic|heif)$/i.test(file.name || '');
+    return /\.(?:png|jpe?g|webp|gif|avif|jxl|bmp|tiff?|svg|ico|heic|heif)$/i.test(file.name || '');
   }
 
   function detectExifFormat(file) {
@@ -1794,6 +1924,7 @@
     }
     const mime = (file.type || '').toLowerCase().split(';')[0].trim();
     if (
+      mime === 'image/jxl' ||
       mime === 'image/bmp' ||
       mime === 'image/x-ms-bmp' ||
       mime === 'image/x-icon' ||
@@ -1804,7 +1935,7 @@
     ) {
       return true;
     }
-    return /\.(?:bmp|tiff?|ico|heic|heif)$/i.test(file.name || '');
+    return /\.(?:jxl|bmp|tiff?|ico|heic|heif)$/i.test(file.name || '');
   }
 
   function replaceFileExtension(filename, newExt) {
@@ -1930,7 +2061,7 @@
     for (let i = 0; i < chunks.length; i += 1) {
       total += chunks[i].byteLength;
     }
-    const out = new Uint8Array(total);
+    const out = new NativeUint8Array(total);
     let offset = 0;
     for (let i = 0; i < chunks.length; i += 1) {
       out.set(chunks[i], offset);
@@ -1954,7 +2085,7 @@
       return 1;
     }
 
-    const view = new DataView(bytes.buffer, bytes.byteOffset + tiffStart, tiffLen);
+    const view = new NativeDataView(bytes.buffer, bytes.byteOffset + tiffStart, tiffLen);
     if (view.getUint16(2, littleEndian) !== 42) {
       return 1;
     }
@@ -1962,7 +2093,7 @@
     if (ifd0Offset < 8 || ifd0Offset + 2 > tiffLen) {
       return 1;
     }
-    const count = Math.min(view.getUint16(ifd0Offset, littleEndian), 256);
+    const count = nativeMathMin(view.getUint16(ifd0Offset, littleEndian), 256);
     for (let i = 0; i < count; i += 1) {
       const entryOffset = ifd0Offset + 2 + i * 12;
       if (entryOffset + 12 > tiffLen) {
@@ -2010,7 +2141,7 @@
 
   function cleanJfifApp0Segment(bytes, m) {
     // Clean 18-byte JFIF APP0 segment with zero embedded RGB thumbnail bytes.
-    const clean = new Uint8Array(18);
+    const clean = new NativeUint8Array(18);
     clean[0] = 0xff;
     clean[1] = 0xe0;
     clean[2] = 0x00;
@@ -2044,11 +2175,12 @@
     return true;
   }
 
-  const ORIENTATION_APP1_CACHE = new Map();
+  const ORIENTATION_APP1_CACHE = new NativeMap();
   for (let ori = 2; ori <= 8; ori += 1) {
-    ORIENTATION_APP1_CACHE.set(
+    mapSet(
+      ORIENTATION_APP1_CACHE,
       ori,
-      new Uint8Array([
+      new NativeUint8Array([
         0xff, 0xe1, 0x00, 0x22,
         0x45, 0x78, 0x69, 0x66, 0x00, 0x00,
         0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08,
@@ -2060,12 +2192,12 @@
   }
 
   function buildMinimalOrientationApp1(orientation) {
-    const cached = ORIENTATION_APP1_CACHE.get(orientation);
+    const cached = mapGet(ORIENTATION_APP1_CACHE, orientation);
     if (cached) {
       return cached;
     }
     // 36-byte EXIF APP1 header carrying solely IFD0 Tag 0x0112 (Orientation), zero personal data.
-    return new Uint8Array([
+    return new NativeUint8Array([
       0xff, 0xe1, 0x00, 0x22,
       0x45, 0x78, 0x69, 0x66, 0x00, 0x00,
       0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08,
@@ -2081,7 +2213,7 @@
       return null;
     }
 
-    const view = new DataView(bytes.buffer, bytes.byteOffset, len);
+    const view = new NativeDataView(bytes.buffer, bytes.byteOffset, len);
     const kept = [];
     let app0Segment = null;
     let orientation = 1;
@@ -2263,7 +2395,7 @@
       return null;
     }
 
-    const view = new DataView(bytes.buffer, bytes.byteOffset, len);
+    const view = new NativeDataView(bytes.buffer, bytes.byteOffset, len);
     const chunks = [bytes.subarray(0, 8)];
     let stripped = false;
     let offset = 8;
@@ -2318,7 +2450,7 @@
       return null;
     }
 
-    const view = new DataView(bytes.buffer, bytes.byteOffset, len);
+    const view = new NativeDataView(bytes.buffer, bytes.byteOffset, len);
     const riffDeclared = 8 + view.getUint32(4, true);
     const maxOffset = riffDeclared >= 12 && riffDeclared <= len ? riffDeclared : len;
     const chunks = [bytes.subarray(0, 12)];
@@ -2494,7 +2626,7 @@
     if (bytes.byteLength < 16 || !asciiBytesEquals(bytes, 4, 'ftyp')) {
       return false;
     }
-    const ftypSize = Math.min(bytes.byteLength, 128);
+    const ftypSize = nativeMathMin(bytes.byteLength, 128);
     if (asciiBytesEquals(bytes, 8, brand)) {
       return true;
     }
@@ -2507,7 +2639,7 @@
   }
 
   function bytesContainsAscii(bytes, ascii, maxScan) {
-    const limit = Math.min(bytes.byteLength, maxScan || bytes.byteLength);
+    const limit = nativeMathMin(bytes.byteLength, maxScan || bytes.byteLength);
     const first = ascii.charCodeAt(0);
     const n = ascii.length;
     for (let i = 0; i <= limit - n; i += 1) {
@@ -3225,7 +3357,7 @@
       }
     }
     if (isExplicitInfo && indirectTargets) {
-      const refMatch = /^(\d{1,8})\s+(\d{1,5})\s+R\b/.exec(text.slice(p, Math.min(limit, p + 32)));
+      const refMatch = /^(\d{1,8})\s+(\d{1,5})\s+R\b/.exec(text.slice(p, nativeMathMin(limit, p + 32)));
       if (refMatch) {
         const idKey = `${refMatch[1]}:${refMatch[2]}`;
         if (!setHas(indirectTargets.set, idKey)) {
@@ -3286,7 +3418,7 @@
       }
       if (bestIdx < 0) break;
       let endIdx = -1;
-      const limitEnd = Math.min(text.length, bestIdx + 512 * 1024);
+      const limitEnd = nativeMathMin(text.length, bestIdx + 512 * 1024);
       if (anchorKind === 0) {
         const close = text.indexOf('</x:xmpmeta>', bestIdx);
         endIdx = close >= 0 && close < limitEnd ? close + 12 : limitEnd;
@@ -3333,7 +3465,7 @@
       if (closeRel < 0) {
         continue;
       }
-      const absContentEnd = Math.min(spanEnd, spanStart + closeRel, absContentStart + 16384);
+      const absContentEnd = nativeMathMin(spanEnd, spanStart + closeRel, absContentStart + 16384);
       let inXmlTag = false;
       let i = absContentStart;
       while (i < absContentEnd) {
@@ -3465,7 +3597,7 @@
       return null;
     }
     let hasHeader = false;
-    const headerScanLimit = Math.min(1024, bytes.byteLength - 5);
+    const headerScanLimit = nativeMathMin(1024, bytes.byteLength - 5);
     for (let i = 0; i <= headerScanLimit; i += 1) {
       if (
         bytes[i] === 0x25 &&
@@ -3598,7 +3730,7 @@
         }
         p += 1;
       }
-      const dictEnd = dictDepth === 0 ? p : Math.min(text.length, dictStart + 65536);
+      const dictEnd = dictDepth === 0 ? p : nativeMathMin(text.length, dictStart + 65536);
       const explicitId = mapHas(objIdAtDict, dictStart);
       if (scrubPdfDictRegion(out, text, dictStart, dictEnd, explicitId, { set: indirectTargets, list: indirectTargetsList })) {
         modified = true;
@@ -3681,7 +3813,7 @@
     ) {
       return 'gif';
     }
-    const headScan = Math.min(bytes.byteLength, 1024);
+    const headScan = nativeMathMin(bytes.byteLength, 1024);
     for (let i = 0; i <= headScan - 5; i += 1) {
       if (asciiBytesEquals(bytes, i, '%PDF-')) {
         return 'pdf';
@@ -3891,7 +4023,7 @@
       label: 'Card Number',
       re: /(?<![A-Za-z0-9._-])(?:4\d|5[1-5]\d|2(?:2[2-9]\d|[3-6]\d{2}|7(?:[01]\d|20))|3[47]\d|6(?:011|5\d|4[4-9]\d)|3(?:0[0-5]|[68]\d)|35(?:2[89]|[3-8]\d))(?:[ -]?\d){10,17}(?![A-Za-z0-9._-])/g,
       replace: (full, offset, str) => {
-        const before = str.slice(Math.max(0, offset - 8), offset);
+        const before = str.slice(nativeMathMax(0, offset - 8), offset);
         if (/\b[A-Z]{2}\d{2}[\s-]+$/.test(before)) {
           return full;
         }
@@ -4045,7 +4177,7 @@
       label: 'Email Address',
       re: /(?<![A-Za-z0-9._%+\-\[\]])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+(?![A-Za-z0-9_-])/g,
       replace: (full, offset, str) => {
-        const before = str.slice(Math.max(0, offset - 32), offset);
+        const before = str.slice(nativeMathMax(0, offset - 32), offset);
         if (
           /\[REDACTED_CREDENTIALS\]$/i.test(before) ||
           /[a-z][a-z0-9+.-]{1,12}:\/\/[^\s@/]+:$/.test(before)
@@ -4068,7 +4200,7 @@
       label: 'IP Address',
       re: /(?<![0-9A-Za-z.])(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?![0-9]|\.[0-9])/g,
       replace: (full, offset, str) => {
-        const before = str.slice(Math.max(0, offset - 12), offset).toLowerCase();
+        const before = str.slice(nativeMathMax(0, offset - 12), offset).toLowerCase();
         if (/(?:^|[\s(/\[])(?:v|ver\.?|version)\s*$/.test(before)) {
           return full;
         }
@@ -4119,7 +4251,7 @@
     if (label === 'Bearer Token') {
       const sp = val.search(/\s+/);
       if (sp > 0) {
-        return `${val.slice(0, Math.min(val.length, sp + 8))}••••••••`;
+        return `${val.slice(0, nativeMathMin(val.length, sp + 8))}••••••••`;
       }
       return 'Bearer ••••••••';
     }
@@ -4150,7 +4282,7 @@
       }
       const col = val.indexOf(':');
       if (col >= 0) {
-        return `${val.slice(0, Math.max(2, col + 1))}••••`;
+        return `${val.slice(0, nativeMathMax(2, col + 1))}••••`;
       }
     }
     if (label === 'Phone Number') {
@@ -4237,7 +4369,7 @@
   }
 
   function buildTextFromSegments(segments) {
-    if (!Array.isArray(segments) || segments.length === 0) {
+    if (!nativeIsArray(segments) || segments.length === 0) {
       return '';
     }
     let out = '';
@@ -4326,7 +4458,7 @@
     if (mapHas(sessionTokenToRaw, token)) {
       const prev = mapGet(sessionTokenToRaw, token);
       if (typeof prev === 'string') {
-        sessionVaultChars = Math.max(0, sessionVaultChars - prev.length);
+        sessionVaultChars = nativeMathMax(0, sessionVaultChars - prev.length);
       }
       mapDelete(sessionTokenToRaw, token);
     }
@@ -4341,7 +4473,7 @@
       }
       const oldVal = mapGet(sessionTokenToRaw, oldest);
       if (typeof oldVal === 'string') {
-        sessionVaultChars = Math.max(0, sessionVaultChars - oldVal.length);
+        sessionVaultChars = nativeMathMax(0, sessionVaultChars - oldVal.length);
       }
       mapDelete(sessionTokenToRaw, oldest);
     }
@@ -4350,7 +4482,7 @@
   }
 
   function assignConsistentSessionTokens(segments) {
-    if (!Array.isArray(segments) || segments.length === 0) {
+    if (!nativeIsArray(segments) || segments.length === 0) {
       return;
     }
     const entries = [];
@@ -4514,15 +4646,13 @@
       const encodedBytes = nativeTextEncode
         ? nativeTextEncode.call(sharedTextEncoder, res.text)
         : sharedTextEncoder.encode(res.text);
+      rawText = '';
       return {
         bytes: encodedBytes,
         maskedCount: res.count,
-        findings: res.findings,
-        rawText,
-        maskedText: res.text,
       };
     } catch {
-      return null;
+      return { scanFailed: true };
     } finally {
       bytes = null;
       buf = null;
@@ -4621,7 +4751,7 @@
           : draft.findings
             ? draft.findings.length
             : 0,
-      segments: Array.isArray(draft.segments) ? draft.segments : [],
+      segments: nativeIsArray(draft.segments) ? draft.segments : [],
       targetEditable: draft.targetEditable,
       expiryTimer: nativeSetTimeout(() => {
         if (ephemeralSecretDraft === entry) {
@@ -4801,7 +4931,7 @@
     const expectedPresent = Boolean(compactExpected && compactText.includes(compactExpected));
     const childSummary = [];
     if (container.children) {
-      const limit = Math.min(container.children.length, 24);
+      const limit = nativeMathMin(container.children.length, 24);
       for (let i = 0; i < limit; i += 1) {
         const ch = container.children[i];
         childSummary.push(`${ch.tagName}(${(ch.textContent || '').length})`);
@@ -4853,9 +4983,9 @@
     });
 
     const anchor = lines.length > 0 ? normalizeNeedleCompact(lines[0], false) : '';
-    const anchorOffset = anchor ? Math.max(0, compactText.lastIndexOf(anchor)) : 0;
+    const anchorOffset = anchor ? nativeMathMax(0, compactText.lastIndexOf(anchor)) : 0;
     let firstDiff = null;
-    const maxCheck = Math.min(compactNeedle.length, compactText.length - anchorOffset);
+    const maxCheck = nativeMathMin(compactNeedle.length, compactText.length - anchorOffset);
     for (let i = 0; i < maxCheck; i += 1) {
       const domIdx = anchorOffset + i;
       if (compactNeedle[i] !== compactText[domIdx]) {
@@ -4872,7 +5002,7 @@
 
     const childSummary = [];
     if (container.children) {
-      const maxChildren = Math.min(container.children.length, 20);
+      const maxChildren = nativeMathMin(container.children.length, 20);
       for (let i = 0; i < maxChildren; i += 1) {
         const chEl = container.children[i];
         childSummary.push(`${chEl.tagName}(${(chEl.textContent || '').length})`);
@@ -4983,7 +5113,7 @@
     // Ensure insertion always lands inside a <p> child of .ql-editor rather than bare #text/<br>.
     if (!currentP || currentP === editable || currentP.parentElement !== editable) {
       const targetP = document.createElement('p');
-      const offset = Math.min(range.startOffset, editable.childNodes.length);
+      const offset = nativeMathMin(range.startOffset, editable.childNodes.length);
       editable.insertBefore(targetP, editable.childNodes[offset] || null);
       currentP = targetP;
       range.setStart(currentP, 0);
@@ -5125,6 +5255,61 @@
     return dispatchEventSafe(target, synthetic);
   }
 
+  function insertTextIntoEditableFallback(editable, text, inputType) {
+    if (!editable) {
+      return false;
+    }
+    try {
+      if (document.activeElement !== editable && typeof editable.focus === 'function') {
+        editable.focus({ preventScroll: true });
+      }
+    } catch {
+      try {
+        if (document.activeElement !== editable && typeof editable.focus === 'function') {
+          editable.focus();
+        }
+      } catch {
+        // Ignore focus errors cleanly.
+      }
+    }
+
+    const isTextField =
+      (NativeHTMLTextAreaElement && editable instanceof NativeHTMLTextAreaElement) ||
+      (NativeHTMLInputElement && editable instanceof NativeHTMLInputElement);
+
+    let inserted = false;
+    // Prefer line-preserving fragment/textarea fallback when multiline text targets contentEditable.
+    if (isTextField || !/\r?\n/.test(text)) {
+      try {
+        if (typeof document.execCommand === 'function') {
+          inserted = document.execCommand('insertText', false, text);
+        }
+      } catch {
+        inserted = false;
+      }
+    }
+
+    if (!inserted) {
+      if (isTextField) {
+        const start = typeof editable.selectionStart === 'number' ? editable.selectionStart : editable.value.length;
+        const end = typeof editable.selectionEnd === 'number' ? editable.selectionEnd : editable.value.length;
+        const nextVal = `${editable.value.slice(0, start)}${text}${editable.value.slice(end)}`;
+        setTextControlValueAndCaret(editable, nextVal, start + text.length);
+      } else if (editable.isContentEditable) {
+        insertTextWithLineBreaksIntoContentEditable(editable, text);
+      }
+      dispatchSyntheticInputEvent(editable, inputType || 'insertFromPaste', text);
+    }
+
+    logDiag('Secrets', '2b:insertMaskedText:fallbackUsed', {
+      insertedViaExecCommand: inserted,
+      isTextField,
+      inputType: inputType || 'insertFromPaste',
+      editable: describeDomNode(editable),
+    });
+    return true;
+  }
+
   function insertMaskedText(event, maskedText) {
     const rawTarget = getEventPathTarget(event);
     const editable = findEditableTarget(rawTarget);
@@ -5152,52 +5337,7 @@
       }
     }
 
-    if (!editable) {
-      return false;
-    }
-
-    try {
-      if (document.activeElement !== editable && typeof editable.focus === 'function') {
-        editable.focus();
-      }
-    } catch {
-      // Ignore focus errors cleanly.
-    }
-
-    const isTextField =
-      (NativeHTMLTextAreaElement && editable instanceof NativeHTMLTextAreaElement) ||
-      (NativeHTMLInputElement && editable instanceof NativeHTMLInputElement);
-
-    let inserted = false;
-    // Prefer line-preserving fragment/textarea fallback when multiline text targets contentEditable.
-    if (isTextField || !/\r?\n/.test(maskedText)) {
-      try {
-        if (typeof document.execCommand === 'function') {
-          inserted = document.execCommand('insertText', false, maskedText);
-        }
-      } catch {
-        inserted = false;
-      }
-    }
-
-    if (!inserted) {
-      if (isTextField) {
-        const start = typeof editable.selectionStart === 'number' ? editable.selectionStart : editable.value.length;
-        const end = typeof editable.selectionEnd === 'number' ? editable.selectionEnd : editable.value.length;
-        const nextVal = `${editable.value.slice(0, start)}${maskedText}${editable.value.slice(end)}`;
-        setTextControlValueAndCaret(editable, nextVal, start + maskedText.length);
-      } else if (editable.isContentEditable) {
-        insertTextWithLineBreaksIntoContentEditable(editable, maskedText);
-      }
-      dispatchSyntheticInputEvent(editable, 'insertFromPaste', maskedText);
-    }
-
-    logDiag('Secrets', '2b:insertMaskedText:fallbackUsed', {
-      insertedViaExecCommand: inserted,
-      isTextField,
-      editable: describeDomNode(editable),
-    });
-    return true;
+    return insertTextIntoEditableFallback(editable, maskedText, 'insertFromPaste');
   }
 
   function findRangeWithMode(editable, needle, collapseWhitespace) {
@@ -5258,7 +5398,7 @@
       let node;
       while ((node = walker.nextNode())) {
         if (node === targetContainer) {
-          return count + Math.min(targetOffset, node.nodeValue ? node.nodeValue.length : 0);
+          return count + nativeMathMin(targetOffset, node.nodeValue ? node.nodeValue.length : 0);
         }
         const cmp = preRange.comparePoint(node, 0);
         if (cmp > 0) {
@@ -5293,7 +5433,7 @@
       const len = node.nodeValue ? node.nodeValue.length : 0;
       lastText = node;
       if (targetOffset <= seen + len) {
-        r.setStart(node, Math.max(0, targetOffset - seen));
+        r.setStart(node, nativeMathMax(0, targetOffset - seen));
         r.collapse(true);
         return r;
       }
@@ -5841,7 +5981,7 @@
     setSafeText(countPill, String(draft.findings.length));
     countPill.style.fontSize = '11px';
     countPill.style.fontWeight = '600';
-    countPill.style.padding = '1px 7px';
+    countPill.style.padding = '2px 8px';
     countPill.style.borderRadius = '999px';
     countPill.style.background = palette.surface;
     countPill.style.border = `1px solid ${palette.border}`;
@@ -5857,8 +5997,8 @@
     const listEl = safeCreateElement('div');
     listEl.style.display = 'flex';
     listEl.style.flexDirection = 'column';
-    listEl.style.gap = '8px';
-    listEl.style.maxHeight = '46vh';
+    listEl.style.gap = '9px';
+    listEl.style.maxHeight = '52vh';
     listEl.style.overflow = 'auto';
     listEl.style.padding = '2px';
 
@@ -5903,9 +6043,9 @@
       const row = safeCreateElement('div');
       row.style.display = 'flex';
       row.style.flexDirection = 'column';
-      row.style.gap = '5px';
-      row.style.padding = '8px 10px';
-      row.style.borderRadius = '7px';
+      row.style.gap = '7px';
+      row.style.padding = '10px 12px';
+      row.style.borderRadius = '12px';
       row.style.background = palette.surface;
       row.style.border = `1px solid ${palette.border}`;
 
@@ -5964,7 +6104,9 @@
       eyeBtn.style.display = 'inline-flex';
       eyeBtn.style.alignItems = 'center';
       eyeBtn.style.gap = '5px';
-      eyeBtn.style.padding = '3px 8px';
+      eyeBtn.style.borderRadius = '999px';
+      eyeBtn.style.padding = '4px 10px';
+      eyeBtn.style.background = palette.bg;
       eyeBtn.style.fontSize = '11px';
       setAttrSafe(eyeBtn, 'aria-pressed', 'false');
 
@@ -5976,8 +6118,8 @@
       valueEl.style.whiteSpace = 'pre-wrap';
       valueEl.style.maxHeight = '90px';
       valueEl.style.overflow = 'auto';
-      valueEl.style.padding = '5px 7px';
-      valueEl.style.borderRadius = '5px';
+      valueEl.style.padding = '7px 10px';
+      valueEl.style.borderRadius = '8px';
       valueEl.style.background = palette.bg;
       valueEl.style.border = `1px solid ${palette.border}`;
 
@@ -6010,8 +6152,8 @@
 
     const warnEl = safeCreateElement('div');
     warnEl.style.display = 'none';
-    warnEl.style.padding = '7px 10px';
-    warnEl.style.borderRadius = '6px';
+    warnEl.style.padding = '8px 11px';
+    warnEl.style.borderRadius = '9px';
     warnEl.style.fontSize = '12px';
     warnEl.style.background = palette.warnBg;
     warnEl.style.border = `1px solid ${palette.warnBorder}`;
@@ -6029,7 +6171,7 @@
       if (ac) {
         abortSafe(ac);
       } else {
-        window.removeEventListener('keydown', onReviewKeyDown, true);
+        nativeRemoveEventListener.call(window, 'keydown', onReviewKeyDown, true);
       }
       removeNodeSafe(host);
       if (wipeDraft) {
@@ -6106,8 +6248,9 @@
     footer.style.display = 'flex';
     footer.style.alignItems = 'center';
     footer.style.justifyContent = 'flex-end';
-    footer.style.gap = '6px';
+    footer.style.gap = '8px';
     footer.style.flexWrap = 'wrap';
+    footer.style.paddingTop = '2px';
     appendChildSafe(footer, keepBtn);
     appendChildSafe(footer, copyBtn);
     appendChildSafe(footer, pasteBtn);
@@ -6121,6 +6264,21 @@
     appendChildSafe(shadow, scrim);
     appendChildSafe(mountTarget, host);
     keepBtn.focus();
+  }
+
+  function recordMaskedEditableSecrets(rawText, maskedRes, targetEditable) {
+    const draftEntry = setEphemeralSecretDraft(
+      {
+        rawText,
+        maskedText: maskedRes.text,
+        findings: maskedRes.findings,
+        totalFindings: maskedRes.totalFindings,
+        segments: maskedRes.segments,
+        targetEditable,
+      },
+      30000
+    );
+    showSecretsToast(maskedRes.count, draftEntry);
   }
 
   function handlePasteSecrets(event, clipboardData) {
@@ -6148,7 +6306,7 @@
       haltEvent(event);
       return;
     }
-    const { text: maskedText, count, findings, totalFindings, segments } = maskedRes;
+    const { text: maskedText, count, findings } = maskedRes;
     if (count === 0 || maskedText === rawText) {
       return;
     }
@@ -6184,18 +6342,7 @@
         });
       }, 80);
     }
-    const draftEntry = setEphemeralSecretDraft(
-      {
-        rawText,
-        maskedText,
-        findings,
-        totalFindings,
-        segments,
-        targetEditable,
-      },
-      30000
-    );
-    showSecretsToast(count, draftEntry);
+    recordMaskedEditableSecrets(rawText, maskedRes, targetEditable);
   }
 
   // --- Irreversible Canvas Redactor & Image Optimizer ---
@@ -6361,13 +6508,13 @@
       releaseImageSource(fullLoaded);
       return null;
     }
-    const maxSide = Math.max(fullLoaded.width, fullLoaded.height);
+    const maxSide = nativeMathMax(fullLoaded.width, fullLoaded.height);
     if (maxSide <= MAX_PREVIEW_EDGE) {
       return fullLoaded;
     }
     const scale = MAX_PREVIEW_EDGE / maxSide;
-    const previewW = Math.max(1, Math.round(fullLoaded.width * scale));
-    const previewH = Math.max(1, Math.round(fullLoaded.height * scale));
+    const previewW = nativeMathMax(1, nativeMathRound(fullLoaded.width * scale));
+    const previewH = nativeMathMax(1, nativeMathRound(fullLoaded.height * scale));
     let previewCanvas = null;
     try {
       previewCanvas = safeCreateElement('canvas');
@@ -7039,7 +7186,7 @@
       const ctxStrokeRect = (c, x, y, w, h) =>
         nativeCtxStrokeRect ? nativeCtxStrokeRect.call(c, x, y, w, h) : c.strokeRect(x, y, w, h);
 
-      header.style.paddingBottom = '8px';
+      header.style.paddingBottom = '10px';
       header.style.borderBottom = `1px solid ${palette.border}`;
 
       const dimEl = safeCreateElement('span');
@@ -7048,8 +7195,8 @@
       dimEl.style.color = palette.muted;
       dimEl.style.background = palette.surface;
       dimEl.style.border = `1px solid ${palette.border}`;
-      dimEl.style.borderRadius = '6px';
-      dimEl.style.padding = '2px 7px';
+      dimEl.style.borderRadius = '999px';
+      dimEl.style.padding = '3px 10px';
       appendChildSafe(titleGroup, dimEl);
 
       const skippedTagEl = safeCreateElement('span');
@@ -7074,26 +7221,27 @@
       navStepper.style.display = 'inline-flex';
       navStepper.style.alignItems = 'center';
       navStepper.style.gap = '2px';
-      navStepper.style.padding = '2px';
-      navStepper.style.borderRadius = '8px';
+      navStepper.style.padding = '3px';
+      navStepper.style.borderRadius = '11px';
       navStepper.style.background = palette.surface;
       navStepper.style.border = `1px solid ${palette.border}`;
 
       const prevBtn = createModalButton(palette, `‹ ${i18n.redactBtnPrev}`, false);
       const nextBtn = createModalButton(palette, `${i18n.redactBtnNext} ›`, false);
       const skipBtn = createModalButton(palette, i18n.redactBtnSkip, false);
-      prevBtn.style.height = '26px';
+      prevBtn.style.height = '28px';
       prevBtn.style.padding = '0 9px';
       prevBtn.style.border = 'none';
       prevBtn.style.background = 'transparent';
-      prevBtn.style.borderRadius = '6px';
-      nextBtn.style.height = '26px';
+      prevBtn.style.borderRadius = '8px';
+      nextBtn.style.height = '28px';
       nextBtn.style.padding = '0 9px';
       nextBtn.style.border = 'none';
       nextBtn.style.background = 'transparent';
-      nextBtn.style.borderRadius = '6px';
-      skipBtn.style.height = '30px';
-      skipBtn.style.padding = '0 10px';
+      nextBtn.style.borderRadius = '8px';
+      skipBtn.style.height = '32px';
+      skipBtn.style.padding = '0 12px';
+      skipBtn.style.borderRadius = '9px';
 
       const pillBar = safeCreateElement('div');
       pillBar.style.display = 'inline-flex';
@@ -7103,13 +7251,13 @@
       function createDotsButton() {
         const dots = createModalButton(palette, '…', false);
         dots.style.display = 'none';
-        dots.style.height = '26px';
+        dots.style.height = '28px';
         dots.style.minWidth = '24px';
         dots.style.padding = '0 5px';
         dots.style.border = 'none';
         dots.style.background = 'transparent';
         dots.style.color = palette.muted;
-        dots.style.borderRadius = '6px';
+        dots.style.borderRadius = '8px';
         return dots;
       }
 
@@ -7124,10 +7272,10 @@
         appendChildSafe(navStepper, prevBtn);
         for (let i = 0; i < slides.length; i += 1) {
           const pill = createModalButton(palette, String(i + 1), false);
-          pill.style.height = '26px';
-          pill.style.minWidth = '26px';
+          pill.style.height = '28px';
+          pill.style.minWidth = '28px';
           pill.style.padding = '0 7px';
-          pill.style.borderRadius = '6px';
+          pill.style.borderRadius = '8px';
           pill.style.border = '1px solid transparent';
           pill.style.fontVariantNumeric = 'tabular-nums';
           nativeAddEventListener.call(pill, 'click', () => switchSlide(i));
@@ -7167,9 +7315,9 @@
           slideSelect.className = 'cz-select';
           setAttrSafe(slideSelect, 'aria-label', i18n.redactModalTitle);
           slideSelect.style.appearance = 'auto';
-          slideSelect.style.height = '30px';
-          slideSelect.style.padding = '0 8px';
-          slideSelect.style.borderRadius = '7px';
+          slideSelect.style.height = '32px';
+          slideSelect.style.padding = '0 10px';
+          slideSelect.style.borderRadius = '9px';
           slideSelect.style.border = `1px solid ${palette.border}`;
           slideSelect.style.background = palette.surface;
           slideSelect.style.color = palette.text;
@@ -7206,18 +7354,18 @@
       const modeGroup = safeCreateElement('div');
       modeGroup.style.display = 'inline-flex';
       modeGroup.style.alignItems = 'center';
-      modeGroup.style.gap = '2px';
-      modeGroup.style.padding = '2px';
-      modeGroup.style.borderRadius = '8px';
+      modeGroup.style.gap = '3px';
+      modeGroup.style.padding = '3px';
+      modeGroup.style.borderRadius = '11px';
       modeGroup.style.background = palette.surface;
       modeGroup.style.border = `1px solid ${palette.border}`;
 
       function makeModeButton(label, toolMode) {
         const btn = createModalButton(palette, '', false);
-        btn.style.height = '26px';
-        btn.style.padding = '0 8px';
-        btn.style.gap = '4px';
-        btn.style.borderRadius = '6px';
+        btn.style.height = '28px';
+        btn.style.padding = '0 10px';
+        btn.style.gap = '5px';
+        btn.style.borderRadius = '8px';
         btn.style.border = '1px solid transparent';
         appendChildSafe(btn, createRedactToolIconSvg(toolMode));
         const txt = safeCreateElement('span');
@@ -7264,11 +7412,12 @@
         setAttrSafe(swatch, 'aria-label', colorName);
         swatch.title = colorName;
         swatch.style.appearance = 'none';
-        swatch.style.width = '20px';
-        swatch.style.height = '20px';
+        swatch.style.width = '21px';
+        swatch.style.height = '21px';
         swatch.style.padding = '0';
         swatch.style.borderRadius = '999px';
         swatch.style.cursor = 'pointer';
+        swatch.style.transition = 'transform 120ms ease, box-shadow 120ms ease';
         swatch.style.background = spec.hex;
         swatch.style.border = `1px solid ${spec.hex === '#ffffff' ? '#a1a1aa' : palette.border}`;
         nativeAddEventListener.call(swatch, 'click', (e) => {
@@ -7282,9 +7431,9 @@
       const weightGroup = safeCreateElement('div');
       weightGroup.style.display = 'inline-flex';
       weightGroup.style.alignItems = 'center';
-      weightGroup.style.gap = '2px';
-      weightGroup.style.padding = '2px';
-      weightGroup.style.borderRadius = '8px';
+      weightGroup.style.gap = '3px';
+      weightGroup.style.padding = '3px';
+      weightGroup.style.borderRadius = '11px';
       weightGroup.style.background = palette.surface;
       weightGroup.style.border = `1px solid ${palette.border}`;
 
@@ -7295,10 +7444,10 @@
         const wLabel = i18n[spec.labelKey] || spec.id;
         setAttrSafe(wBtn, 'aria-label', wLabel);
         wBtn.title = wLabel;
-        wBtn.style.height = '24px';
-        wBtn.style.width = '24px';
+        wBtn.style.height = '26px';
+        wBtn.style.width = '26px';
         wBtn.style.padding = '0';
-        wBtn.style.borderRadius = '6px';
+        wBtn.style.borderRadius = '8px';
         wBtn.style.border = '1px solid transparent';
         appendChildSafe(wBtn, createWeightIconSvg(spec.dotPx));
         nativeAddEventListener.call(wBtn, 'click', (e) => {
@@ -7328,10 +7477,10 @@
       stage.style.justifyContent = 'center';
       stage.style.overflowX = 'hidden';
       stage.style.overflowY = 'auto';
-      stage.style.borderRadius = '10px';
+      stage.style.borderRadius = '12px';
       stage.style.background = '#0d0d11';
       stage.style.border = `1px solid ${palette.border}`;
-      stage.style.padding = '8px';
+      stage.style.padding = '10px';
 
       const canvas = safeCreateElement('canvas');
       canvas.tabIndex = 0;
@@ -7792,6 +7941,11 @@
         btn.style.color = active ? palette.accentText : palette.text;
         btn.style.borderColor = active ? palette.accent : 'transparent';
         btn.style.fontWeight = active ? '600' : '500';
+        btn.style.boxShadow = active
+          ? palette.isDark
+            ? '0 1px 2px rgba(0, 0, 0, 0.28)'
+            : '0 1px 2px rgba(0, 96, 223, 0.24)'
+          : 'none';
         setAttrSafe(btn, 'aria-pressed', active ? 'true' : 'false');
       }
 
@@ -8813,11 +8967,12 @@
       actions.style.display = 'flex';
       actions.style.alignItems = 'center';
       actions.style.flexWrap = 'wrap';
-      actions.style.gap = '6px';
+      actions.style.gap = '7px';
       const footerActionBtns = [addBoxBtn, undoBtn, clearBtn, cancelBtn, sendBtn];
       for (let i = 0; i < footerActionBtns.length; i += 1) {
-        footerActionBtns[i].style.height = '28px';
-        footerActionBtns[i].style.padding = '0 11px';
+        footerActionBtns[i].style.height = '31px';
+        footerActionBtns[i].style.padding = '0 13px';
+        footerActionBtns[i].style.borderRadius = '9px';
       }
       const actionDivider = makeBarDivider();
       actionDivider.style.margin = '0 1px';
@@ -9108,6 +9263,19 @@
         let cleanBytes = state.stripExif ? await stripFileMetadataBytes(file) : null;
         let textRes = !cleanBytes && isScannableTextFile(file) ? await sanitizeTextFileSecrets(file) : null;
 
+        if (textRes && textRes.scanFailed) {
+          logDiag('Files', 'textFileSecrets:failClosed', {
+            ext: resolveExtension(file, false) || 'none',
+          });
+          return {
+            canceled: true,
+            dataTransfer: null,
+            renamedNames: [],
+            cleanedCount: 0,
+            totalFileSecretsMasked: 0,
+          };
+        }
+
         if (textRes && textRes.bytes) {
           const outFile = new NativeFile([textRes.bytes], finalName, {
             type: file.type || 'text/plain',
@@ -9118,9 +9286,6 @@
             maskedCount: textRes.maskedCount,
           });
           textRes.bytes = null;
-          textRes.rawText = '';
-          textRes.maskedText = '';
-          textRes.findings = null;
           textRes = null;
           wsAdd(processedFiles, outFile);
           safeDtItemsAdd(dataTransfer, outFile);
@@ -9213,6 +9378,7 @@
     const seenTypes = new NativeSet();
     let hasPlainText = false;
     let hasWrapperOrUrlTypes = false;
+    let hasDirectory = false;
     const items =
       dtItemsDesc && typeof dtItemsDesc.get === 'function'
         ? dtItemsDesc.get.call(original)
@@ -9230,6 +9396,20 @@
             ? dtiTypeDesc.get.call(item)
             : item.type;
         if (kind === 'file') {
+          let entry = null;
+          try {
+            if (dtiWebkitGetAsEntry) {
+              entry = dtiWebkitGetAsEntry.call(item);
+            } else if (typeof item.webkitGetAsEntry === 'function') {
+              entry = item.webkitGetAsEntry();
+            }
+          } catch {
+            entry = null;
+          }
+          if (entry && entry.isDirectory) {
+            hasDirectory = true;
+            continue;
+          }
           const f = dtiGetAsFile ? dtiGetAsFile.call(item) : item.getAsFile();
           if (f) {
             nativeArrayPush.call(files, f);
@@ -9250,7 +9430,7 @@
         }
       }
     }
-    if (files.length === 0) {
+    if (files.length === 0 && !hasDirectory) {
       const origFiles = safeDtFiles(original);
       if (origFiles && origFiles.length > 0) {
         for (let i = 0; i < origFiles.length; i += 1) {
@@ -9276,7 +9456,7 @@
       }
     }
 
-    return { files, stringTypes, hasPlainText, hasWrapperOrUrlTypes };
+    return { files, stringTypes, hasPlainText, hasWrapperOrUrlTypes, hasDirectory };
   }
 
   function readDataTransferStrings(original, stringTypes, filterBaseMimeSet) {
@@ -9379,6 +9559,22 @@
         }
       }
     }
+    const items = dtItemsDesc && typeof dtItemsDesc.get === 'function' ? dtItemsDesc.get.call(dt) : dt.items;
+    if (items) {
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        if (!item) {
+          continue;
+        }
+        const kind =
+          dtiKindDesc && typeof dtiKindDesc.get === 'function'
+            ? dtiKindDesc.get.call(item)
+            : item.kind;
+        if (kind === 'file') {
+          return true;
+        }
+      }
+    }
     return false;
   }
 
@@ -9407,9 +9603,17 @@
     if (target) {
       setDelete(enteredDragTargets, target);
     }
+    const relTarget = getEvProp(nativeRelatedTargetDesc, event, 'relatedTarget');
     const cx = getEvProp(nativeClientXDesc, event, 'clientX');
     const cy = getEvProp(nativeClientYDesc, event, 'clientY');
-    if (!event.relatedTarget || (typeof cx === 'number' && cx <= 0 && cy <= 0)) {
+    const leftViewport =
+      (typeof cx === 'number' && cx <= 0 && cy <= 0) ||
+      (!relTarget &&
+        (target === window ||
+          target === document ||
+          target === document.documentElement ||
+          target === document.body));
+    if (leftViewport) {
       setClear(enteredDragTargets);
     }
   }
@@ -9521,7 +9725,12 @@
         continue;
       }
       if (maskActive && baseMime === 'text/plain') {
-        const res = maskSensitiveText(entry.text);
+        let res;
+        try {
+          res = maskSensitiveText(entry.text);
+        } catch {
+          return { strings: [], changed: false, textSecretsMasked: false, scanFailed: true };
+        }
         if (res.count > 0 && res.text !== entry.text) {
           changed = true;
           textSecretsMasked = true;
@@ -9551,6 +9760,60 @@
     return { strings: safeStrings, changed: true, textSecretsMasked: true };
   }
 
+  function createSyntheticFileEntry(file) {
+    return {
+      isFile: true,
+      isDirectory: false,
+      name: file.name,
+      fullPath: `/${file.name}`,
+      filesystem: { name: 'clipzero', root: null },
+      file(onSuccess, onError) {
+        try {
+          if (typeof onSuccess === 'function') {
+            onSuccess(file);
+          }
+        } catch (err) {
+          if (typeof onError === 'function') {
+            onError(err);
+          }
+        }
+      },
+      getMetadata(onSuccess) {
+        if (typeof onSuccess === 'function') {
+          const ts =
+            typeof file.lastModified === 'number'
+              ? file.lastModified
+              : nativeDateNow
+                ? nativeDateNow()
+                : Date.now();
+          onSuccess({
+            modificationTime: new Date(ts),
+            size: typeof file.size === 'number' ? file.size : 0,
+          });
+        }
+      },
+    };
+  }
+
+  function createSyntheticFileHandle(file) {
+    return {
+      kind: 'file',
+      name: file.name,
+      getFile() {
+        return nativePromiseResolve(file);
+      },
+      isSameEntry() {
+        return nativePromiseResolve(false);
+      },
+      queryPermission() {
+        return nativePromiseResolve('granted');
+      },
+      requestPermission() {
+        return nativePromiseResolve('granted');
+      },
+    };
+  }
+
   function cloneTransferWithReplacedFiles(sourceTransfer, newFiles, preSanitizedStrings) {
     const dataTransfer = new NativeDataTransfer();
     const filesList = nativeIsArray(newFiles) ? newFiles : [];
@@ -9566,6 +9829,11 @@
       const strRes = sanitizeClipboardStrings(rawStrings, filesList);
       populateStrings(dataTransfer, strRes.strings);
     }
+    applyTransferEffects(
+      dataTransfer,
+      readTransferEffect(sourceTransfer, 'dropEffect') || 'copy',
+      readTransferEffect(sourceTransfer, 'effectAllowed') || 'all'
+    );
     return dataTransfer;
   }
 
@@ -9596,8 +9864,243 @@
     return summary;
   }
 
+  function deepElementFromPoint(x, y) {
+    let el = nativeElementFromPoint
+      ? nativeElementFromPoint.call(document, x, y)
+      : typeof document.elementFromPoint === 'function'
+        ? document.elementFromPoint(x, y)
+        : null;
+    for (
+      let depth = 0;
+      el && el.shadowRoot && typeof el.shadowRoot.elementFromPoint === 'function' && depth < 16;
+      depth += 1
+    ) {
+      const inner = el.shadowRoot.elementFromPoint(x, y);
+      if (!inner || inner === el) {
+        break;
+      }
+      el = inner;
+    }
+    return el;
+  }
+
+  function isDropFileInput(el) {
+    return Boolean(
+      NativeHTMLInputElement &&
+        el instanceof NativeHTMLInputElement &&
+        getInputType(el) === 'file' &&
+        !el.disabled
+    );
+  }
+
+  function applyFilesToDropFileInput(input, filesList) {
+    if (!input || !filesList || filesList.length === 0) {
+      return false;
+    }
+    try {
+      const dt = new NativeDataTransfer();
+      const count = input.multiple ? filesList.length : 1;
+      for (let i = 0; i < count; i += 1) {
+        if (filesList[i]) {
+          safeDtItemsAdd(dt, filesList[i]);
+        }
+      }
+      setInputFiles(input, safeDtFiles(dt));
+      const syntheticInput = new NativeEvent('input', { bubbles: true, cancelable: false, composed: true });
+      markSyntheticEvent(syntheticInput);
+      dispatchEventSafe(input, syntheticInput);
+      const syntheticChange = new NativeEvent('change', { bubbles: true, cancelable: false, composed: false });
+      markSyntheticEvent(syntheticChange);
+      dispatchEventSafe(input, syntheticChange);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function captureDragInit(event) {
+    const rawX = getEvProp(nativeClientXDesc, event, 'clientX');
+    const rawY = getEvProp(nativeClientYDesc, event, 'clientY');
+    const rawSX = getEvProp(nativeScreenXDesc, event, 'screenX');
+    const rawSY = getEvProp(nativeScreenYDesc, event, 'screenY');
+    const rawBtn = getEvProp(nativeMouseBtnDesc, event, 'button');
+    const rawBtns = getEvProp(nativeMouseButtonsDesc, event, 'buttons');
+    return {
+      clientX: typeof rawX === 'number' && nativeNumberIsFinite(rawX) ? rawX : 0,
+      clientY: typeof rawY === 'number' && nativeNumberIsFinite(rawY) ? rawY : 0,
+      screenX: typeof rawSX === 'number' && nativeNumberIsFinite(rawSX) ? rawSX : 0,
+      screenY: typeof rawSY === 'number' && nativeNumberIsFinite(rawSY) ? rawSY : 0,
+      ctrlKey: Boolean(getEvProp(nativeCtrlKeyDesc, event, 'ctrlKey')),
+      shiftKey: Boolean(getEvProp(nativeShiftKeyDesc, event, 'shiftKey')),
+      altKey: Boolean(getEvProp(nativeAltKeyDesc, event, 'altKey')),
+      metaKey: Boolean(getEvProp(nativeMetaKeyDesc, event, 'metaKey')),
+      button: typeof rawBtn === 'number' ? rawBtn : 0,
+      buttons: typeof rawBtns === 'number' ? rawBtns : 0,
+    };
+  }
+
+  function createSyntheticDragEvent(type, dragInit, dataTransfer) {
+    if (typeof NativeDragEvent !== 'function') {
+      return new NativeEvent(type, { bubbles: true, cancelable: true, composed: true });
+    }
+    const init = dragInit || {
+      clientX: 0,
+      clientY: 0,
+      screenX: 0,
+      screenY: 0,
+      ctrlKey: false,
+      shiftKey: false,
+      altKey: false,
+      metaKey: false,
+      button: 0,
+      buttons: 0,
+    };
+    let ev;
+    try {
+      ev = new NativeDragEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        view: window,
+        clientX: init.clientX,
+        clientY: init.clientY,
+        screenX: init.screenX,
+        screenY: init.screenY,
+        ctrlKey: init.ctrlKey,
+        shiftKey: init.shiftKey,
+        altKey: init.altKey,
+        metaKey: init.metaKey,
+        button: init.button,
+        buttons: init.buttons,
+        dataTransfer,
+      });
+    } catch {
+      ev = new NativeDragEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        clientX: init.clientX,
+        clientY: init.clientY,
+        dataTransfer,
+      });
+    }
+    const synData = getDragDataTransfer(ev);
+    if (!synData || (dataTransfer && safeDtFiles(synData).length !== safeDtFiles(dataTransfer).length)) {
+      overrideEventTransfer(ev, 'dataTransfer', dataTransfer);
+    }
+    markSyntheticEvent(ev);
+    return ev;
+  }
+
+  function createSyntheticPasteTransferEvent(dataTransfer) {
+    if (typeof NativeClipboardEvent !== 'function') {
+      return new NativeEvent('paste', { bubbles: true, cancelable: true, composed: true });
+    }
+    const ev = new NativeClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+      clipboardData: dataTransfer,
+    });
+    const synData = getClipboardData(ev);
+    if (!synData || safeDtFiles(synData).length !== safeDtFiles(dataTransfer).length) {
+      overrideEventTransfer(ev, 'clipboardData', dataTransfer);
+    }
+    markSyntheticEvent(ev);
+    return ev;
+  }
+
+  function deliverDropToTarget(target, dragInit, dataTransfer, outFiles) {
+    if (!target) {
+      return false;
+    }
+    const overEv = createSyntheticDragEvent('dragover', dragInit, dataTransfer);
+    if (overEv) {
+      dispatchEventSafe(target, overEv);
+    }
+    const dropEv = createSyntheticDragEvent('drop', dragInit, dataTransfer);
+    if (!dropEv) {
+      return false;
+    }
+    const notCanceled = dispatchEventSafe(target, dropEv);
+    if (notCanceled && isDropFileInput(target) && outFiles && outFiles.length > 0) {
+      applyFilesToDropFileInput(target, outFiles);
+    }
+    return notCanceled;
+  }
+
+  function scheduleNextFrame(callback) {
+    let called = false;
+    const run = () => {
+      if (called) {
+        return;
+      }
+      called = true;
+      callback();
+    };
+    if (nativeRAF) {
+      nativeRAF(run);
+    }
+    nativeSetTimeout(run, 32);
+  }
+
+  function handleDropTextSecrets(event, dataTransfer) {
+    let rawText = '';
+    try {
+      rawText = safeDtGetData(dataTransfer, 'text/plain') || '';
+    } catch {
+      return;
+    }
+    if (!rawText) {
+      return;
+    }
+    const rawTarget = getEventPathTarget(event);
+    const editable = findEditableTarget(rawTarget);
+    if (!editable) {
+      return;
+    }
+    let maskedRes;
+    try {
+      maskedRes = maskSensitiveText(rawText);
+    } catch {
+      // Fail closed if page tampering disrupts scanning so raw secrets never drop through.
+      haltEvent(event);
+      return;
+    }
+    const { text: maskedText, count } = maskedRes;
+    if (count === 0 || maskedText === rawText) {
+      return;
+    }
+
+    const dragInit = captureDragInit(event);
+    const origDropEffect = readTransferEffect(dataTransfer, 'dropEffect') || 'copy';
+    const origEffectAllowed = readTransferEffect(dataTransfer, 'effectAllowed') || 'all';
+    haltEvent(event);
+
+    const rawElement =
+      rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+    const dispatchTarget =
+      (rawElement && rawElement.isConnected ? rawElement : null) ||
+      editable;
+
+    if (dispatchTarget && typeof NativeDragEvent === 'function') {
+      const cleanDt = new NativeDataTransfer();
+      safeDtSetData(cleanDt, 'text/plain', maskedText);
+      applyTransferEffects(cleanDt, origDropEffect, origEffectAllowed);
+      const synDrop = createSyntheticDragEvent('drop', dragInit, cleanDt);
+      const notCanceled = dispatchEventSafe(dispatchTarget, synDrop);
+      if (notCanceled === false) {
+        recordMaskedEditableSecrets(rawText, maskedRes, editable);
+        return;
+      }
+    }
+
+    insertTextIntoEditableFallback(editable, maskedText, 'insertFromDrop');
+    recordMaskedEditableSecrets(rawText, maskedRes, editable);
+  }
+
   function handleTransferEvent(event, propName, eventName, preMeta) {
-    if (!state.enabled || !event || isProcessedEvent(event)) {
+    if (isInstanceTornDown || !state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const original =
@@ -9616,9 +10119,28 @@
     if (eventName === 'drop') {
       setClear(enteredDragTargets);
     }
-    if (files.length === 0) {
+    if (eventName === 'drop' && meta.hasDirectory) {
+      if (state.debugLogs) {
+        logDiag('Files', 'drop:directoryPassthrough', { site: window.location.hostname });
+      }
       return;
     }
+    if (files.length === 0) {
+      if (
+        eventName === 'drop' &&
+        (state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim()))
+      ) {
+        handleDropTextSecrets(event, original);
+      }
+      return;
+    }
+
+    const rawTarget = getEventPathTarget(event);
+    const initialTarget =
+      rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+    const dragInit = eventName === 'drop' ? captureDragInit(event) : null;
+    const origDropEffect = eventName === 'drop' ? readTransferEffect(original, 'dropEffect') : null;
+    const origEffectAllowed = eventName === 'drop' ? readTransferEffect(original, 'effectAllowed') : null;
 
     const hasImageFile = nativeArraySome.call(files, isImageFile);
     const maskActive = Boolean(
@@ -9649,6 +10171,10 @@
       }
       const probeStrings = readDataTransferStrings(original, meta.stringTypes, probeTypes);
       const probeRes = sanitizeClipboardStrings(probeStrings, files);
+      if (probeRes.scanFailed) {
+        haltEvent(event);
+        return;
+      }
       if (!probeRes.changed) {
         return;
       }
@@ -9673,6 +10199,10 @@
       // Read and sanitize synchronously before any await (browser DataTransfer clears after event dispatch).
       const rawStrings = readDataTransferStrings(original, meta.stringTypes, null);
       const strRes = sanitizeClipboardStrings(rawStrings, files);
+      if (strRes.scanFailed) {
+        haltEvent(event);
+        return;
+      }
       strings = strRes.strings;
       stringsModified = strRes.changed;
       if (hasIsolatedBridge && strRes.changed) {
@@ -9707,28 +10237,57 @@
       }
 
       const dataTransfer = cloneTransferWithReplacedFiles(original, outFiles, strings);
+      if (eventName === 'drop' && isDropFileInput(initialTarget)) {
+        haltEvent(event);
+        const notCanceled = deliverDropToTarget(initialTarget, dragInit, dataTransfer, outFiles);
+        logDiag('Files', 'drop:syncFileInput', {
+          site: window.location.hostname,
+          files: safeFiles,
+          renamedCount: renamedNames.length,
+          defaultPrevented: !notCanceled,
+        });
+        if (renamedNames.length > 0) {
+          showUploadToast(renamedNames, 0, 0);
+        }
+        triggerProactiveBridgeCheck();
+        return;
+      }
+
       markSyntheticEvent(event);
       const overridden = overrideEventTransfer(event, propName, dataTransfer);
+      let syntheticDispatched = false;
+      if (!overridden) {
+        haltEvent(event);
+        const fallbackTarget =
+          (initialTarget && (initialTarget === window || initialTarget.isConnected) && initialTarget) ||
+          (document.activeElement && document.activeElement.isConnected && document.activeElement) ||
+          document.body;
+        if (fallbackTarget) {
+          if (eventName === 'drop') {
+            deliverDropToTarget(fallbackTarget, dragInit, dataTransfer, outFiles);
+            syntheticDispatched = true;
+          } else {
+            const synPaste = createSyntheticPasteTransferEvent(dataTransfer);
+            dispatchEventSafe(fallbackTarget, synPaste);
+            syntheticDispatched = true;
+          }
+        }
+      }
       logDiag('Files', `${eventName}:sync`, {
         site: window.location.hostname,
         files: safeFiles,
         renamedCount: renamedNames.length,
         overridden,
+        syntheticDispatched,
       });
-      if (overridden && renamedNames.length > 0) {
+      if ((overridden || syntheticDispatched) && renamedNames.length > 0) {
         showUploadToast(renamedNames, 0, 0);
       }
+      triggerProactiveBridgeCheck();
       return;
     }
 
     // Async path (metadata cleaner, text file secret guard, Canvas redactor, or exotic flattening/resize): halt current event, process & re-dispatch.
-    const rawTarget = getEventPathTarget(event);
-    const initialTarget =
-      rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
-    const rawX = getEvProp(nativeClientXDesc, event, 'clientX');
-    const rawY = getEvProp(nativeClientYDesc, event, 'clientY');
-    const clientX = typeof rawX === 'number' ? rawX : 0;
-    const clientY = typeof rawY === 'number' ? rawY : 0;
     haltEvent(event);
 
     logDiag('Files', `${eventName}:asyncStart`, {
@@ -9747,12 +10306,8 @@
       totalFileSecretsMasked,
     }) => {
       const pointTarget =
-        eventName === 'drop'
-          ? nativeElementFromPoint
-            ? nativeElementFromPoint.call(document, clientX, clientY)
-            : typeof document.elementFromPoint === 'function'
-              ? document.elementFromPoint(clientX, clientY)
-              : null
+        eventName === 'drop' && dragInit
+          ? deepElementFromPoint(dragInit.clientX, dragInit.clientY)
           : null;
       if (canceled || !dataTransfer) {
         rawOriginalStrings = null;
@@ -9765,73 +10320,115 @@
       const stringsToUse = passthrough && rawOriginalStrings ? rawOriginalStrings : strings;
       rawOriginalStrings = null;
       populateStrings(dataTransfer, stringsToUse);
+      if (eventName === 'drop') {
+        applyTransferEffects(dataTransfer, origDropEffect || 'copy', origEffectAllowed || 'all');
+      }
       if (!passthrough) {
         showUploadToast(renamedNames, cleanedCount, totalFileSecretsMasked || 0);
       }
+      const outFilesList = safeDtFiles(dataTransfer);
+
+      if (eventName === 'drop') {
+        const logDropDone = (finalTarget, notCanceled, reprimed) => {
+          logDiag('Files', 'drop:asyncDispatched', {
+            site: window.location.hostname,
+            targetTag: (finalTarget && finalTarget.tagName) || 'WINDOW',
+            outFiles: outFilesList ? outFilesList.length : 0,
+            renamedCount: renamedNames.length,
+            cleanedCount,
+            totalFileSecretsMasked: totalFileSecretsMasked || 0,
+            reprimed,
+            defaultPrevented: !notCanceled,
+          });
+        };
+
+        if (initialTarget && (initialTarget === window || initialTarget.isConnected)) {
+          const notCanceled = deliverDropToTarget(initialTarget, dragInit, dataTransfer, outFilesList);
+          logDropDone(initialTarget, notCanceled, false);
+          return;
+        }
+
+        const reprimeTarget =
+          (pointTarget && pointTarget.isConnected && pointTarget) ||
+          (document.activeElement && document.activeElement.isConnected && document.activeElement) ||
+          document.body ||
+          document.documentElement;
+        if (!reprimeTarget) {
+          logDiag('Files', 'drop:asyncNoTarget', { site: window.location.hostname });
+          return;
+        }
+        const enterEv = createSyntheticDragEvent('dragenter', dragInit, dataTransfer);
+        if (enterEv) {
+          dispatchEventSafe(reprimeTarget, enterEv);
+        }
+        const overEv = createSyntheticDragEvent('dragover', dragInit, dataTransfer);
+        if (overEv) {
+          dispatchEventSafe(reprimeTarget, overEv);
+        }
+        scheduleNextFrame(() => {
+          const afterTarget = dragInit
+            ? deepElementFromPoint(dragInit.clientX, dragInit.clientY)
+            : null;
+          const finalTarget =
+            (afterTarget && afterTarget.isConnected && afterTarget) ||
+            (reprimeTarget.isConnected ? reprimeTarget : document.body || document.documentElement);
+          if (!finalTarget) {
+            logDiag('Files', 'drop:asyncNoTarget', { site: window.location.hostname });
+            return;
+          }
+          const notCanceled = deliverDropToTarget(finalTarget, dragInit, dataTransfer, outFilesList);
+          logDropDone(finalTarget, notCanceled, true);
+        });
+        return;
+      }
+
       const dispatchTarget =
         initialTarget && (initialTarget === window || initialTarget.isConnected)
           ? initialTarget
-          : pointTarget && pointTarget.isConnected
-            ? pointTarget
-            : document.activeElement && document.activeElement.isConnected
-              ? document.activeElement
-              : document.body;
+          : document.activeElement && document.activeElement.isConnected
+            ? document.activeElement
+            : document.body;
       if (!dispatchTarget) {
         logDiag('Files', `${eventName}:asyncNoTarget`, { site: window.location.hostname });
         return;
       }
 
-      let synthetic;
-      if (eventName === 'paste' && typeof NativeClipboardEvent === 'function') {
-        synthetic = new NativeClipboardEvent('paste', {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          clipboardData: dataTransfer,
-        });
-      } else if (eventName === 'drop' && typeof NativeDragEvent === 'function') {
-        synthetic = new NativeDragEvent('drop', {
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          clientX,
-          clientY,
-          dataTransfer,
-        });
-      } else {
-        synthetic = new NativeEvent(eventName, { bubbles: true, cancelable: true, composed: true });
-      }
-
-      const synData =
-        propName === 'clipboardData'
-          ? getClipboardData(synthetic)
-          : propName === 'dataTransfer'
-            ? getDragDataTransfer(synthetic)
-            : synthetic[propName];
-      if (!synData || safeDtFiles(synData).length !== safeDtFiles(dataTransfer).length) {
-        overrideEventTransfer(synthetic, propName, dataTransfer);
-      }
-      markSyntheticEvent(synthetic);
+      const synthetic =
+        eventName === 'paste'
+          ? createSyntheticPasteTransferEvent(dataTransfer)
+          : (() => {
+              const ev = new NativeEvent(eventName, { bubbles: true, cancelable: true, composed: true });
+              overrideEventTransfer(ev, propName, dataTransfer);
+              markSyntheticEvent(ev);
+              return ev;
+            })();
       const notCanceled = dispatchEventSafe(dispatchTarget, synthetic);
       logDiag('Files', `${eventName}:asyncDispatched`, {
         site: window.location.hostname,
         targetTag: dispatchTarget.tagName || 'WINDOW',
-        outFiles: safeDtFiles(dataTransfer).length,
+        outFiles: outFilesList ? outFilesList.length : 0,
         renamedCount: renamedNames.length,
         cleanedCount,
         totalFileSecretsMasked: totalFileSecretsMasked || 0,
         defaultPrevented: !notCanceled,
       });
     };
+    const onRejected = () => {
+      rawOriginalStrings = null;
+      if (eventName === 'drop') {
+        const pt = dragInit ? deepElementFromPoint(dragInit.clientX, dragInit.clientY) : null;
+        dismissPageDragOverlay(initialTarget, pt, dragTargetsSnapshot);
+      }
+    };
     if (nativePromiseThen) {
-      nativePromiseThen.call(asyncPromise, onProcessed);
+      nativePromiseThen.call(asyncPromise, onProcessed, onRejected);
     } else {
-      asyncPromise.then(onProcessed);
+      asyncPromise.then(onProcessed, onRejected);
     }
   }
 
   function handlePaste(event) {
-    if (!state.enabled || !event || isProcessedEvent(event)) {
+    if (isInstanceTornDown || !state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const clipboardData = getClipboardData(event);
@@ -9843,6 +10440,7 @@
       if (state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())) {
         handlePasteSecrets(event, clipboardData);
       }
+      triggerProactiveBridgeCheck();
       return;
     }
     handleTransferEvent(event, 'clipboardData', 'paste', meta);
@@ -9886,7 +10484,13 @@
   }
 
   function handleCopyDeTokenize(event) {
-    if (isInternalClipboardWrite || !state.enabled || mapSize(sessionTokenToRaw) === 0 || !event) {
+    if (
+      isInstanceTornDown ||
+      isInternalClipboardWrite ||
+      !state.enabled ||
+      mapSize(sessionTokenToRaw) === 0 ||
+      !event
+    ) {
       return;
     }
     const rawTarget = getEventPathTarget(event);
@@ -9910,7 +10514,7 @@
   }
 
   function handleFileInputChange(event) {
-    if (!state.enabled || !event || isProcessedEvent(event)) {
+    if (isInstanceTornDown || !state.enabled || !event || isProcessedEvent(event)) {
       return;
     }
     const input = getEventPathTarget(event);
@@ -9968,6 +10572,7 @@
       } catch {
         logDiag('Files', 'fileInput:syncRejected', { site: window.location.hostname });
       }
+      triggerProactiveBridgeCheck();
       return;
     }
 
@@ -10150,6 +10755,8 @@
     if (!meta) {
       return;
     }
+    userModifiedStateThisSession = true;
+    pendingLegacyMigrationPrefs = null;
     state[meta.key] = !state[meta.key];
     commitStateChange('toggle-off');
     logDiag('Cmd', 'toggle', {
@@ -10206,6 +10813,7 @@
     }
     isInstanceTornDown = true;
     state.enabled = false;
+    pendingLegacyMigrationPrefs = null;
     clearEphemeralSecretDraft('teardown');
     clearOneTimeRawBypass('teardown');
     clearSessionTokenVault();
@@ -10290,6 +10898,26 @@
         origInputShowPickerDesc
       );
     }
+    if (typeof DataTransferItem === 'function' && DataTransferItem.prototype) {
+      restoreWrappedDescriptor(
+        DataTransferItem.prototype,
+        'webkitGetAsEntry',
+        dtiWebkitEntryWrappedFn,
+        origDtiWebkitEntryDesc
+      );
+      restoreWrappedDescriptor(
+        DataTransferItem.prototype,
+        'getAsFileSystemHandle',
+        dtiFshWrappedFn,
+        origDtiFshDesc
+      );
+    }
+    restoreWrappedDescriptor(
+      window,
+      'showOpenFilePicker',
+      showOpenFilePickerWrappedFn,
+      origShowOpenFilePickerDesc
+    );
 
     if (bridgePort) {
       closePortSafe(bridgePort);
@@ -10460,6 +11088,68 @@
       return true;
     }
 
+    if (payload.type === 'clipzero:apply-stored-prefs') {
+      if (!injectedAtDocumentStart) {
+        return true;
+      }
+      if (payload.corrupt === true) {
+        pendingLegacyMigrationPrefs = null;
+        if (!userModifiedStateThisSession) {
+          markStorageResetCorrupt();
+        }
+        return true;
+      }
+      if (userModifiedStateThisSession) {
+        pendingLegacyMigrationPrefs = null;
+        return true;
+      }
+      if (payload.prefs && typeof payload.prefs === 'object' && !nativeIsArray(payload.prefs)) {
+        const nextValues = {};
+        let validCount = 0;
+        for (let i = 0; i < PERSISTED_KEYS.length; i += 1) {
+          const key = PERSISTED_KEYS[i];
+          if (nativeHasOwn(payload.prefs, key) && typeof payload.prefs[key] === 'boolean') {
+            nextValues[key] = payload.prefs[key];
+            validCount += 1;
+          }
+        }
+        if (
+          nativeHasOwn(payload.prefs, 'customWords') &&
+          typeof payload.prefs.customWords === 'string'
+        ) {
+          nextValues.customWords = sanitizeCustomWords(payload.prefs.customWords);
+        }
+        if (validCount > 0) {
+          if (nativeObjAssign) {
+            nativeObjAssign(state, nextValues);
+          } else {
+            Object.assign(state, nextValues);
+          }
+          state.saveSite = true;
+          storageResetOccurred = false;
+          storageResetNoticePending = false;
+          clearStorageResetFallbackTimer();
+        }
+        pendingLegacyMigrationPrefs = null;
+        return true;
+      }
+      if (pendingLegacyMigrationPrefs) {
+        const migratePayload = {
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId: 0,
+          migratePrefs: pendingLegacyMigrationPrefs,
+        };
+        pendingLegacyMigrationPrefs = null;
+        if (replyPort) {
+          postPortMessageSafe(replyPort, migratePayload);
+        } else if (bridgePort) {
+          postPortMessageSafe(bridgePort, migratePayload);
+        }
+      }
+      return true;
+    }
+
     if (!injectedAtDocumentStart) {
       if (requestId) {
         const reloadReply = {
@@ -10491,6 +11181,8 @@
       payload.type === 'clipzero:set-custom-words' &&
       typeof payload.customWords === 'string'
     ) {
+      userModifiedStateThisSession = true;
+      pendingLegacyMigrationPrefs = null;
       const nextWords = sanitizeCustomWords(payload.customWords);
       state.customWords = nextWords;
       if (typeof payload.saveSite === 'boolean') {
@@ -10705,11 +11397,242 @@
     }
   }
 
+  function hookDataTransferItemApis() {
+    if (typeof DataTransferItem !== 'function' || !DataTransferItem.prototype || typeof nativeGetOwnPropDesc !== 'function') {
+      return;
+    }
+    const proto = DataTransferItem.prototype;
+    try {
+      const entryDesc = nativeGetOwnPropDesc(proto, 'webkitGetAsEntry');
+      if (
+        entryDesc &&
+        typeof entryDesc.value === 'function' &&
+        !wsHas(wrappedDtiEntryFns, entryDesc.value) &&
+        (entryDesc.configurable !== false || entryDesc.writable !== false)
+      ) {
+        const origEntryFn = dtiWebkitGetAsEntry || entryDesc.value;
+        const wrappedEntry = function webkitGetAsEntry() {
+          const nativeRes = origEntryFn.call(this);
+          if (nativeRes || isInstanceTornDown) {
+            return nativeRes;
+          }
+          try {
+            const f = dtiGetAsFile
+              ? dtiGetAsFile.call(this)
+              : typeof this.getAsFile === 'function'
+                ? this.getAsFile()
+                : null;
+            if (f && wsHas(syntheticTransferFiles, f)) {
+              return createSyntheticFileEntry(f);
+            }
+          } catch {
+            // Ignore getAsFile probe errors cleanly.
+          }
+          return nativeRes;
+        };
+        wsAdd(wrappedDtiEntryFns, wrappedEntry);
+        origDtiWebkitEntryDesc = entryDesc;
+        dtiWebkitEntryWrappedFn = wrappedEntry;
+        defineProperty(proto, 'webkitGetAsEntry', {
+          configurable: Boolean(entryDesc.configurable),
+          writable: Boolean(entryDesc.writable),
+          enumerable: Boolean(entryDesc.enumerable),
+          value: wrappedEntry,
+        });
+      }
+    } catch {
+      // Ignore non-configurable DataTransferItem descriptors cleanly.
+    }
+    try {
+      const fshDesc = nativeGetOwnPropDesc(proto, 'getAsFileSystemHandle');
+      if (
+        fshDesc &&
+        typeof fshDesc.value === 'function' &&
+        !wsHas(wrappedDtiEntryFns, fshDesc.value) &&
+        (fshDesc.configurable !== false || fshDesc.writable !== false)
+      ) {
+        const origFshFn = dtiGetAsFileSystemHandle || fshDesc.value;
+        const wrappedFsh = function getAsFileSystemHandle() {
+          let candidateFile = null;
+          if (!isInstanceTornDown) {
+            try {
+              const f = dtiGetAsFile
+                ? dtiGetAsFile.call(this)
+                : typeof this.getAsFile === 'function'
+                  ? this.getAsFile()
+                  : null;
+              if (f && wsHas(syntheticTransferFiles, f)) {
+                candidateFile = f;
+              }
+            } catch {
+              // Ignore getAsFile probe errors cleanly.
+            }
+          }
+          const nativePromise = origFshFn.call(this);
+          if (!candidateFile) {
+            return nativePromise;
+          }
+          const onResolve = (res) => res || createSyntheticFileHandle(candidateFile);
+          const onReject = () => createSyntheticFileHandle(candidateFile);
+          return nativePromiseThen
+            ? nativePromiseThen.call(nativePromise, onResolve, onReject)
+            : nativePromise.then(onResolve, onReject);
+        };
+        wsAdd(wrappedDtiEntryFns, wrappedFsh);
+        origDtiFshDesc = fshDesc;
+        dtiFshWrappedFn = wrappedFsh;
+        defineProperty(proto, 'getAsFileSystemHandle', {
+          configurable: Boolean(fshDesc.configurable),
+          writable: Boolean(fshDesc.writable),
+          enumerable: Boolean(fshDesc.enumerable),
+          value: wrappedFsh,
+        });
+      }
+    } catch {
+      // Ignore non-configurable DataTransferItem descriptors cleanly.
+    }
+  }
+
+  function createWrappedPickerFileHandle(file, origHandle) {
+    const wrapped = {
+      kind: 'file',
+      name: file.name,
+      getFile() {
+        return nativePromiseResolve(file);
+      },
+      isSameEntry(other) {
+        const rawOther = (syntheticHandleToOrig && wmGet(syntheticHandleToOrig, other)) || other;
+        try {
+          if (origHandle && typeof origHandle.isSameEntry === 'function') {
+            return origHandle.isSameEntry(rawOther);
+          }
+        } catch {
+          // Ignore mismatched entry comparisons safely.
+        }
+        return nativePromiseResolve(false);
+      },
+      queryPermission(descriptor) {
+        try {
+          if (origHandle && typeof origHandle.queryPermission === 'function') {
+            return origHandle.queryPermission(descriptor);
+          }
+        } catch {
+          // Ignore permission query failures safely.
+        }
+        return nativePromiseResolve('granted');
+      },
+      requestPermission(descriptor) {
+        try {
+          if (origHandle && typeof origHandle.requestPermission === 'function') {
+            return origHandle.requestPermission(descriptor);
+          }
+        } catch {
+          // Ignore permission request failures safely.
+        }
+        return nativePromiseResolve('granted');
+      },
+    };
+    if (syntheticHandleToOrig && origHandle) {
+      wmSet(syntheticHandleToOrig, wrapped, origHandle);
+    }
+    return wrapped;
+  }
+
+  function hookShowOpenFilePicker() {
+    if (!nativeShowOpenFilePicker || typeof nativeGetOwnPropDesc !== 'function') {
+      return;
+    }
+    try {
+      const desc = nativeGetOwnPropDesc(window, 'showOpenFilePicker');
+      if (
+        !desc ||
+        typeof desc.value !== 'function' ||
+        wsHas(wrappedShowOpenPickerFns, desc.value) ||
+        (desc.configurable === false && desc.writable === false)
+      ) {
+        return;
+      }
+      const origFn = nativeShowOpenFilePicker || desc.value;
+      const wrapped = async function showOpenFilePicker() {
+        const handles = await origFn.apply(this, arguments);
+        if (isInstanceTornDown || !state.enabled || !nativeIsArray(handles) || handles.length === 0) {
+          return handles;
+        }
+        triggerProactiveBridgeCheck();
+        const rawFiles = [];
+        for (let i = 0; i < handles.length; i += 1) {
+          const h = handles[i];
+          if (!h || typeof h.getFile !== 'function') {
+            return handles;
+          }
+          nativeArrayPush.call(rawFiles, await h.getFile());
+        }
+        const action = batchNeedsAction(rawFiles);
+        if (action === 'none') {
+          return handles;
+        }
+        if (action === 'sync') {
+          const outHandles = [];
+          const renamedNames = [];
+          for (let i = 0; i < rawFiles.length; i += 1) {
+            const res = createRenamedFileSync(rawFiles[i]);
+            if (res.changed) {
+              nativeArrayPush.call(renamedNames, res.file.name);
+              nativeArrayPush.call(outHandles, createWrappedPickerFileHandle(res.file, handles[i]));
+            } else {
+              nativeArrayPush.call(outHandles, handles[i]);
+            }
+          }
+          if (renamedNames.length > 0) {
+            showUploadToast(renamedNames, 0, 0);
+          }
+          return outHandles;
+        }
+        const processed = await processFilesAsync(rawFiles);
+        if (processed.canceled || !processed.dataTransfer) {
+          throw NativeDOMException
+            ? new NativeDOMException('The user aborted a request.', 'AbortError')
+            : new Error('AbortError');
+        }
+        if (processed.passthrough) {
+          return handles;
+        }
+        const outDtFiles = safeDtFiles(processed.dataTransfer);
+        const outHandles = [];
+        for (let i = 0; i < outDtFiles.length; i += 1) {
+          nativeArrayPush.call(
+            outHandles,
+            createWrappedPickerFileHandle(outDtFiles[i], handles[i] || handles[0])
+          );
+        }
+        showUploadToast(
+          processed.renamedNames,
+          processed.cleanedCount,
+          processed.totalFileSecretsMasked || 0
+        );
+        return outHandles;
+      };
+      wsAdd(wrappedShowOpenPickerFns, wrapped);
+      origShowOpenFilePickerDesc = desc;
+      showOpenFilePickerWrappedFn = wrapped;
+      defineProperty(window, 'showOpenFilePicker', {
+        configurable: Boolean(desc.configurable),
+        writable: Boolean(desc.writable),
+        enumerable: Boolean(desc.enumerable),
+        value: wrapped,
+      });
+    } catch {
+      // Ignore non-configurable or restricted window descriptors cleanly.
+    }
+  }
+
   if (injectedAtDocumentStart) {
     if (NativeHTMLInputElement && NativeHTMLInputElement.prototype) {
       hookFileInputTrigger(NativeHTMLInputElement.prototype, 'click', nativeInputClick);
       hookFileInputTrigger(NativeHTMLInputElement.prototype, 'showPicker', nativeInputShowPicker);
     }
+    hookDataTransferItemApis();
+    hookShowOpenFilePicker();
     hookClipboardWriteText();
 
     nativeAddEventListener.call(window, 'click', handleWindowClickForShadowInput, true);

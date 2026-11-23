@@ -6,8 +6,9 @@
 flowchart LR
     V130["v1.3.0<br/>Low-RAM Pipeline & Tools"] --> V131["v1.3.1<br/>Mobile Touch, Crop & Hardening"]
     V131 --> V132["v1.3.2<br/>Pixelate, File Guard & Lifecycle"]
-    V132 --> V133["v1.3.3 (Current)<br/>SPA Stability & Chromium Build"]
-    V133 --> V140["v1.4.0<br/>UI Refresh, Office Docs & Workers"]
+    V132 --> V133["v1.3.3<br/>SPA Stability & Chromium Build"]
+    V133 --> V134["v1.3.4 (Current)<br/>Security Hardening & UI Polish"]
+    V134 --> V140["v1.4.0<br/>Office Docs & Workers"]
     V140 --> V200["v2.0.0<br/>On-Demand Sites & Local OCR"]
 ```
 
@@ -15,7 +16,11 @@ flowchart LR
 
 ## Shipped
 
-### `v1.3.3` — SPA Stability & Chromium MV3 Build *(Current)*
+### `v1.3.4` — Security Hardening & Soft-Geometry UI Polish *(Current)*
+- **Extension-isolated `IndexedDB` storage & audit hardening:** Moved per-site preferences and `customWords` from host `window.localStorage` into extension-origin `IndexedDB` (`clipzero_prefs_db`) scoped to verified `sender.url` origins, added fail-closed text/mixed-paste scanning, complete `document_start` native captures, strict `bridge.js`/`background.js` validation, dead-port cleanup, and synchronous teardown guards.
+- **Sober soft-geometry Firefox Acorn UI & icon refresh:** Upgraded the toolbar icon (`16`–`128 px`), redesigned Light/Dark floating toast, unified dark-mode Firefox Blue (`#0a84ff`) buttons, and refined spacing, rounding, status pills, inset toggle rows, and modals across all 4 surfaces.
+
+### `v1.3.3` — SPA Stability & Chromium MV3 Build
 - **SPA chat-switch stability:** Freeze-proof 2-hop `checkBridgeAlive` timing without `pointerdown`/`keydown` triggers, explicit `{ alive: false }` bridge pong on uninstall/disable, and `hasIsolatedBridge` bound strictly on `MessagePort`.
 - **Dual Firefox + Chromium MV3 builds:** Shared codebase now outputs `dist/firefox/` and `dist/chromium/` (`service_worker`, `minimum_chrome_version: "111"`, 4 default shortcuts) via `scripts/package.py`.
 
@@ -45,8 +50,7 @@ flowchart LR
 
 ## Planned
 
-### `v1.4.0` — UI Refresh, Office Documents & Web Workers
-- **UI & icon refresh *(landed on `main`)*:** Redesigned Light/Dark Firefox Acorn floating notice (`showToastNotice`) and high-contrast Firefox-blue toolbar icons (`16`–`128 px`).
+### `v1.4.0` — Office Documents, Workers & Rule Portability
 - **Local Office metadata scrubber (`.docx`, `.xlsx`, `.pptx`):** Strip `docProps/core.xml`, `app.xml`, authors, and revision metadata in memory while preserving ZIP structure.
 - **Web Worker offloading:** Move heavy PDF (`<= 50 MB`), Office XML/ZIP, and large SVG parsing to workers with `Transferable` buffers.
 - **Portable rules & token inspector:** Local JSON config export/import, custom regex rules, and a popup token inspector for the active session.

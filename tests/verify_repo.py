@@ -148,6 +148,20 @@ def check_security_static(manifest_version):
     assert "REDACT_WEIGHTS" in content_js and ":host{all:initial" in content_js, (
         "Closed shadow CSS reset or stroke weight table missing"
     )
+    assert "storageSet" not in content_js and "nativeStorageSetItem" not in content_js, (
+        "content.js must never write site preferences to host localStorage"
+    )
+    assert not re.search(r"\bnew\s+(?:DataView|Uint8Array)\s*\(", content_js), (
+        "content.js must use NativeDataView / NativeUint8Array captures"
+    )
+    bridge_js = read_text("bridge.js")
+    assert "sender.id !== ext.runtime.id || sender.tab" in bridge_js, (
+        "bridge.js must enforce strict sender validation on runtime.onMessage"
+    )
+    bg_js = read_text("background.js")
+    assert "clipzero_prefs_db" in bg_js and "getVerifiedSenderOrigin" in bg_js, (
+        "background.js must isolate site prefs in IndexedDB per verified origin"
+    )
 
 
 def check_js_syntax():

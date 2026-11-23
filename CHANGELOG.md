@@ -4,12 +4,28 @@ All notable releases of **ClipZero** are documented here following [Keep a Chang
 
 ## [Unreleased]
 
-> Planned for **v1.4.0** on Firefox Add-ons (AMO); already available on `main` for developer builds.
+## [1.3.4] — 2026-11-23
+
+### Fixed & Cross-Browser Compatibility (Firefox `160`–`161+` & Chrome `157+`)
+- **Full drag-and-drop compatibility across modern SPA & browser dropzones:**
+  - Wrapped `DataTransferItem.prototype.webkitGetAsEntry` and `getAsFileSystemHandle` (reading candidate files synchronously before resolving handles) so synthetic sanitized drops work cleanly with libraries like `file-selector` / `react-dropzone` on both Chrome/Edge and Firefox.
+  - Preserved full `DragEvent` pointer coordinates (`clientX/Y`, `screenX/Y`), modifier keys, `dropEffect` (`copy`), and `effectAllowed` (`all`), and dispatched a synthetic `dragover` + `drop` pair directly to active targets.
+  - Added native `<input type="file">` dropzone support (`setInputFiles` + synthetic `input`/`change` when `drop` is not canceled) in both synchronous and asynchronous modes, preventing raw unrenamed files from reaching the input natively.
+  - Added disconnected overlay re-priming (`dragenter` + `dragover` + frame settle + `deepElementFromPoint()` Shadow DOM piercing) when SPA drop overlays unmount during async EXIF cleaning or Canvas redaction, plus rejection cleanup via `dismissPageDragOverlay()` and Shadow DOM-safe `handleDragLeave` `relatedTarget` checks.
+  - Added directory/folder drag passthrough (`webkitGetAsEntry().isDirectory`), text-drop secret masking for editable targets (`insertFromDrop`, fail-closed on scanner error), `hasDraggedFiles()` fallback across `dt.items` (covering Firefox `150+` removal of `application/x-moz-file`), synthetic fallback if non-configurable `event.dataTransfer` blocks sync override in future browsers, and `window.showOpenFilePicker` interception (`Chrome` / `Edge`) with clean teardown in `teardownMainWorld()`.
+- **Native JPEG XL (`.jxl` / `image/jxl`) handling:** Added `.jxl` detection and automatic local Canvas flattening to `.png` (stripping any embedded EXIF/XMP/C2PA boxes) for Firefox `158`–`161+` and Chrome `157+`.
+
+### Security & Hardening
+- **Extension-isolated site storage (`IndexedDB`):** Moved saved per-site preferences and `customWords` out of host-page `window.localStorage` into extension-origin `IndexedDB` (`background.js` `clipzero_prefs_db`, zero API permissions, strictly scoped to browser-verified `sender.url` origins), while automatically migrating and purging any legacy `clipzero_site_prefs_v1` entry from `localStorage`.
+- **Fail-closed text-file and mixed-paste scanning:** `sanitizeTextFileSecrets()` and `sanitizeClipboardStrings()` now halt/cancel uploads and mixed pastes immediately if scanning throws under page tampering, matching `handlePasteSecrets()`.
+- **Full `MAIN`-world native constructor capture:** Replaced all remaining uncaptured `new DataView`, `new Uint8Array`, `new Map`, `Array.isArray`, `Math.*`, and `window.removeEventListener` calls with `document_start` native references.
+- **Strict `bridge.js` & dead-port checks:** Enforced `sender.id === ext.runtime.id && !sender.tab` in `bridge.js`, verified matched `sender.url` origins for `clipzero:get-shortcuts` and site-prefs messages in `background.js`, cleared `bridgePort`/`channelConfirmed` when closing invalidated ports, and added synchronous paste/upload liveness checks plus `isInstanceTornDown` guards.
 
 ### Changed
+- **Sober soft-geometry Firefox Acorn UI polish (Light & Dark):** Refined rounding, inset toggle rows (removing table-like row dividers), status/version pills, focus rings, dark-mode primary button parity (`#0a84ff` Firefox Blue), and tactile switches across the Popup, Pre-Upload Canvas Redactor modal, Secret Review modal, and floating toast notice—while strictly preserving the Light & Dark Firefox Acorn color palette and `prefers-reduced-motion` support.
 - **Native Firefox Acorn floating notice (`showToastNotice`):** Redesigned the on-screen toast using `getModalPalette()` for automatic Light (`#ffffff` / `#d7d7db`) and Dark (`#2b2a33` / `#42414d`) theme parity with the rest of ClipZero, adding a Firefox-green active dot (`#12bc00` / `#30e60b`), balanced two-column layout, and solid Firefox-blue action button (`#0060df` / `#0a84ff`) with hover and `:focus-visible` states.
 - **High-contrast geometric extension icon (`16`–`128 px`):** Replaced the dark-slate toolbar icon with a two-color Firefox Blue (`#0060df`) and white clipboard/redaction emblem (`assets/logo.svg`, `icons/icon-{16,32,48,96,128}.png`) and added explicit `16` and `32` entries to `manifest.json` for crisp rendering on light and dark toolbars.
-- **GitHub documentation & `@2x` Retina previews:** Rebuilt `README.md` with a native GitHub hero, structured Markdown format/shortcut tables, and tight `@2x` Retina screenshots (`01-canvas-editor.png`, `02-secret-guard.png`, `03-popup-controls.png`).
+- **GitHub documentation & CI Node 24 upgrade:** Rebuilt `README.md` with a native GitHub hero, structured Markdown format/shortcut tables comparing Firefox vs. Chromium defaults, updated `.github/workflows/ci.yml` to `@v7` actions (`Node.js 24`), and refreshed `@2x` Retina screenshots (`01-canvas-editor.png`, `02-secret-guard.png`, `03-popup-controls.png`).
 
 ## [1.3.3] — 2026-11-19
 

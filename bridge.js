@@ -22,6 +22,11 @@
   let handshakeTimer = null;
   let cachedI18nStrings = null;
   let latestShortcuts = null;
+  let storedPrefsPending = false;
+  let latestStoredPrefs = null;
+  let latestStoredCorrupt = false;
+  let storedPrefsSettled = false;
+  let storedPrefsLoadPromise = null;
   const retryDelays = [90, 320];
   let retryIdx = 0;
 
@@ -226,6 +231,26 @@
         latestShortcuts = null;
       }
     }
+    if (firstConfirm && storedPrefsPending) {
+      try {
+        port.postMessage({
+          __clipzero: TO_MAIN,
+          token: bridgeToken,
+          requestId: 0,
+          payload: {
+            type: 'clipzero:apply-stored-prefs',
+            prefs: latestStoredPrefs,
+            corrupt: latestStoredCorrupt,
+          },
+        });
+      } catch {
+        // Ignore stored prefs push failures cleanly.
+      } finally {
+        storedPrefsPending = false;
+        latestStoredPrefs = null;
+        latestStoredCorrupt = false;
+      }
+    }
   }
 
   function isExtensionContextAlive() {
@@ -276,7 +301,27 @@
           } catch {
             // Ignore cleanup errors.
           }
+          pendingPorts.delete(fromPort);
+          if (bridgePort === fromPort) {
+            bridgePort = null;
+            channelConfirmed = false;
+          }
         }
+      }
+      return true;
+    }
+    if (data.migratePrefs && typeof data.migratePrefs === 'object') {
+      if (fromPort) {
+        confirmChannelPort(fromPort);
+      }
+      if (ext?.runtime?.sendMessage) {
+        Promise.resolve(
+          ext.runtime.sendMessage({
+            type: 'clipzero:save-site-prefs',
+            saveSite: true,
+            prefs: data.migratePrefs,
+          })
+        ).catch(() => {});
       }
       return true;
     }
@@ -415,8 +460,39 @@
     });
   }
 
+  async function handleExtensionMessage(message) {
+    if (!storedPrefsSettled && storedPrefsLoadPromise) {
+      await Promise.race([
+        storedPrefsLoadPromise,
+        new Promise((resolve) => setTimeout(resolve, 250)),
+      ]);
+    }
+    const result = await forwardToMain(message);
+    if (
+      result?.ok &&
+      result.state &&
+      (message.type === 'clipzero:command' || message.type === 'clipzero:set-custom-words') &&
+      (result.state.saveSite || message.command === 'toggle-save' || message.saveSite === false) &&
+      ext?.runtime?.sendMessage
+    ) {
+      try {
+        await ext.runtime.sendMessage({
+          type: 'clipzero:save-site-prefs',
+          saveSite: Boolean(result.state.saveSite),
+          prefs: result.state,
+        });
+      } catch {
+        // Ignore if background script is unavailable during shutdown/reload.
+      }
+    }
+    return result;
+  }
+
   ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!message || typeof message.type !== 'string') {
+      return undefined;
+    }
+    if (!ext?.runtime?.id || !sender || sender.id !== ext.runtime.id || sender.tab) {
       return undefined;
     }
     if (
@@ -424,7 +500,7 @@
       message.type === 'clipzero:get-state' ||
       message.type === 'clipzero:set-custom-words'
     ) {
-      forwardToMain(message).then(sendResponse);
+      handleExtensionMessage(message).then(sendResponse);
       return true;
     }
     return undefined;
@@ -470,24 +546,63 @@
   });
 
   // Push active keyboard shortcuts cleanly once confirmed (or via single active channel).
-  ext.runtime
-    .sendMessage({ type: 'clipzero:get-shortcuts' })
-    .then((shortcuts) => {
-      if (shortcuts && typeof shortcuts === 'object') {
-        if (bridgePort && channelConfirmed) {
-          postMessageToMain({
-            __clipzero: TO_MAIN,
-            token: bridgeToken,
-            requestId: 0,
-            payload: { type: 'clipzero:shortcuts', shortcuts },
-          });
-          latestShortcuts = channelConfirmed ? null : shortcuts;
-        } else {
-          latestShortcuts = shortcuts;
+  if (ext?.runtime?.sendMessage) {
+    Promise.resolve(ext.runtime.sendMessage({ type: 'clipzero:get-shortcuts' }))
+      .then((shortcuts) => {
+        if (shortcuts && typeof shortcuts === 'object') {
+          if (bridgePort && channelConfirmed) {
+            postMessageToMain({
+              __clipzero: TO_MAIN,
+              token: bridgeToken,
+              requestId: 0,
+              payload: { type: 'clipzero:shortcuts', shortcuts },
+            });
+            latestShortcuts = channelConfirmed ? null : shortcuts;
+          } else {
+            latestShortcuts = shortcuts;
+          }
         }
-      }
-    })
-    .catch(() => {
-      // Ignore if background script is unavailable during shutdown/reload.
-    });
+      })
+      .catch(() => {
+        // Ignore if background script is unavailable during shutdown/reload.
+      });
+  }
+
+  // Load extension-isolated per-site preferences without touching host-page localStorage.
+  storedPrefsLoadPromise = ext?.runtime?.sendMessage
+    ? Promise.resolve(ext.runtime.sendMessage({ type: 'clipzero:load-site-prefs' }))
+        .then((resp) => {
+          if (resp && resp.ok === true) {
+            if (bridgePort && channelConfirmed) {
+              try {
+                bridgePort.postMessage({
+                  __clipzero: TO_MAIN,
+                  token: bridgeToken,
+                  requestId: 0,
+                  payload: {
+                    type: 'clipzero:apply-stored-prefs',
+                    prefs: resp.prefs || null,
+                    corrupt: Boolean(resp.corrupt),
+                  },
+                });
+                storedPrefsPending = false;
+                latestStoredPrefs = null;
+                latestStoredCorrupt = false;
+                return;
+              } catch {
+                // Fall through and queue until re-confirmed.
+              }
+            }
+            storedPrefsPending = true;
+            latestStoredPrefs = resp.prefs || null;
+            latestStoredCorrupt = Boolean(resp.corrupt);
+          }
+        })
+        .catch(() => {
+          // Ignore if background script is unavailable during shutdown/reload.
+        })
+        .finally(() => {
+          storedPrefsSettled = true;
+        })
+    : ((storedPrefsSettled = true), Promise.resolve());
 })();

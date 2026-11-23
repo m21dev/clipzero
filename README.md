@@ -44,7 +44,7 @@ Detects and masks API keys, bearer tokens, JWTs, Luhn-valid payment cards, IBANs
 </p>
 
 ### Zero-Permission Controls & Filename Anonymizer
-Replaces identifying filenames (`Screenshot 2026-11-19.png` → `clip_a4f9c2.png`, or `doc_*` for documents in strict mode), automatically flattens decodable `.bmp`, `.ico`, `.tiff`, and `.heic`/`.heif` images to `.png`, caps optional output resolution at `2048 px`, flags un-reloaded open tabs (`!`), and cleanly tears itself down (`teardownMainWorld()`) if disabled or removed.
+Replaces identifying filenames (`Screenshot 2026-11-19.png` → `clip_a4f9c2.png`, or `doc_*` for documents in strict mode), automatically flattens decodable `.jxl`, `.bmp`, `.ico`, `.tiff`, and `.heic`/`.heif` images to `.png`, caps optional output resolution at `2048 px`, flags un-reloaded open tabs (`!`), and cleanly tears itself down (`teardownMainWorld()`) if disabled or removed.
 
 <p align="center">
   <img src="assets/03-popup-controls.png" width="760" alt="ClipZero Popup Protection and Settings Tabs">
@@ -63,7 +63,7 @@ All sanitization happens in volatile tab memory; your original files on disk are
 | **GIF / AVIF** | Strips GIF comments/XMP; cleans static AVIF files | `<= 256 KB` animated GIF probe; keeps animation frames intact |
 | **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs &amp; CSS/`marker` URLs | Up to `8 MB` |
 | **PDF** | Blanks `/Info` (direct, `#xx`, indirect) &amp; XMP packets in-place | Up to `50 MB`; `xref` tables &amp; bookmarks preserved |
-| **Exotic Rasters** | Flattens `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` to `.png` | Handled via local Canvas when browser-decodable |
+| **Exotic Rasters** | Flattens `.jxl`, `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` to `.png` | Handled via local Canvas when browser-decodable |
 | **Text / Code Files** | Masks secrets, PII &amp; custom words in `.env`, `.txt`, `.json`, `.md`, `.log`, etc. | Up to `512 KB`; adds `Secrets masked` pill to upload toast |
 
 ---
@@ -75,7 +75,7 @@ All sanitization happens in volatile tab memory; your original files on disk are
 - **From source (development):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json) (or run `python scripts/package.py` and load `dist/firefox/`).
 
 ### Chromium (`111+` Chrome, Edge, Brave — Developer Build)
-- Download **`clipzero-chromium-1.3.3.zip`** from **[Releases](https://github.com/m21dev/clipzero/releases)** and extract it (or run `python scripts/package.py` to generate `dist/chromium/`).
+- Download **`clipzero-chromium-1.3.4.zip`** from **[Releases](https://github.com/m21dev/clipzero/releases)** and extract it (or run `python scripts/package.py` to generate `dist/chromium/`).
 - Open `chrome://extensions` (or `edge://extensions`), enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
 - Because Chromium enforces a maximum of `4` default `suggested_key` bindings per extension, the 4 primary shortcuts are pre-bound automatically and the other 3 can be configured at `chrome://extensions/shortcuts`.
 
