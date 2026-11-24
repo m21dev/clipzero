@@ -8,14 +8,14 @@
 if (typeof importScripts === 'function') {
   if (typeof globalThis.clipzeroFindMatchedSite !== 'function') {
     try {
-      importScripts('site_match.js');
+      importScripts('/src/core/site_match.js');
     } catch {
       // Ignore if already loaded in non-worker environment.
     }
   }
   if (!globalThis.ClipZeroRules) {
     try {
-      importScripts('rules_schema.js');
+      importScripts('/src/core/rules_schema.js');
     } catch {
       // Ignore if already loaded in non-worker environment.
     }
@@ -543,7 +543,7 @@ function ensureScrubberWorker() {
     return scrubberWorker;
   }
   try {
-    const w = new Worker(ext.runtime.getURL('scrubber_worker.js'));
+    const w = new Worker(ext.runtime.getURL('src/workers/scrubber_worker.js'));
     w.onmessage = (event) => {
       const data = event && event.data;
       if (!data || typeof data.id !== 'number') {
@@ -872,7 +872,7 @@ if (ext?.runtime?.onInstalled?.addListener) {
     }
     if (details?.reason === 'install' && ext?.tabs?.create && ext?.runtime?.getURL) {
       try {
-        Promise.resolve(ext.tabs.create({ url: ext.runtime.getURL('welcome.html') })).catch(() => {});
+        Promise.resolve(ext.tabs.create({ url: ext.runtime.getURL('src/ui/welcome/welcome.html') })).catch(() => {});
       } catch {
         // Ignore welcome tab creation errors in restricted environments.
       }
@@ -914,10 +914,10 @@ function isTrustedExtensionPageSender(sender) {
     return true;
   }
   if (typeof sender.url === 'string' && typeof ext?.runtime?.getURL === 'function') {
-    const optUrl = ext.runtime.getURL('options.html');
-    const popUrl = ext.runtime.getURL('popup.html');
-    const welcomeUrl = ext.runtime.getURL('welcome.html');
-    const helpUrl = ext.runtime.getURL('help.html');
+    const optUrl = ext.runtime.getURL('src/ui/options/options.html');
+    const popUrl = ext.runtime.getURL('src/ui/popup/popup.html');
+    const welcomeUrl = ext.runtime.getURL('src/ui/welcome/welcome.html');
+    const helpUrl = ext.runtime.getURL('src/ui/help/help.html');
     const baseUrl = sender.url.split(/[?#]/, 1)[0];
     if (
       (optUrl && baseUrl === optUrl) ||

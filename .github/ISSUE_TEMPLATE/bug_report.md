@@ -9,7 +9,7 @@ labels: bug
 
 **Environment**
 - ClipZero version: (e.g. `1.4.0`)
-- Browser version & OS: (e.g. Firefox `160` Windows / Firefox Android `142` / Chrome `157` / Edge `158`)
+- Browser version & OS: (e.g. Firefox `161` Windows / Firefox Android `142` / Chrome `157` / Edge `158`)
 - Website URL (origin): (e.g. `https://web.whatsapp.com`)
 
 **What happened?**

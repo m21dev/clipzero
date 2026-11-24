@@ -451,13 +451,13 @@ if (fileDropzoneEl) {
 
 if (openHelpBtnEl) {
   openHelpBtnEl.addEventListener('click', () => {
-    window.location.href = 'help.html';
+    window.location.href = '../help/help.html';
   });
 }
 
 if (openOptionsBtnEl) {
   openOptionsBtnEl.addEventListener('click', () => {
-    window.location.href = 'options.html';
+    window.location.href = '../options/options.html';
   });
 }
 

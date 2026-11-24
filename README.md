@@ -20,7 +20,7 @@
     <a href="#supported-formats">Formats</a> &middot;
     <a href="#keyboard-shortcuts">Shortcuts</a> &middot;
     <a href="CHANGELOG.md">Changelog</a> &middot;
-    <a href="SECURITY.md">Security</a>
+    <a href=".github/SECURITY.md">Security</a>
   </p>
 </div>
 
@@ -39,7 +39,7 @@ Everyday uploads and pastes leak far more than what you see on screen—and once
 | **Sharing phone photos & support screenshots** | Exact GPS coordinates, camera serial/EXIF, `C2PA`/`iDOT` chunks, and visible emails or account balances on screen | Strips image metadata losslessly and lets you irreversibly **Pixelate (`P`)**, **Cover**, or **Crop (`C`)** screenshots in a Closed Shadow DOM modal before upload |
 
 <p align="center">
-  <img src="assets/demo-clipzero.gif" width="880" alt="ClipZero live local protection walkthrough: paste masking, Office &amp; EXIF scrubbing, and zero-setup onboarding">
+  <img src="assets/demo-clipzero.gif" width="900" alt="ClipZero live local protection walkthrough: paste masking, Office &amp; EXIF scrubbing, guided rules, and offline help">
 </p>
 
 > **Zero-config from second one (Firefox &amp; Chromium):** On first install only, ClipZero opens an interactive local **Welcome** sandbox (`welcome.html`, zero extra permissions, never shown on updates) with 3 sample secrets, 1-click paste simulation, RAM-only file scrubbing preview, and direct navigation to the beginner-friendly **Rules &amp; Backup** (`options.html`) builder and offline **Help &amp; Guide** (`help.html`).
@@ -52,21 +52,32 @@ Everyday uploads and pastes leak far more than what you see on screen—and once
 Visually inspect and scrub screenshots inside an isolated Closed Shadow DOM modal before upload: **Cover** solid blocks, irreversible **Pixelate (`P`)** mosaic (`<= 64×64` zeroed buffer), **Outline (`O`)** frames, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` output dimensions, **Scroll (`H`)**, batch slide navigation (`Skip` / `Include`, `PgUp` / `PgDn`), and single-touch `pointerId` palm rejection.
 
 <p align="center">
-  <img src="assets/01-canvas-editor.png" width="880" alt="ClipZero Pre-Upload Canvas Redactor">
+  <img src="assets/screenshots/01-canvas-editor.png" width="900" alt="ClipZero Pre-Upload Canvas Redactor">
 </p>
 
-### Secret, PII, Custom Words & Custom Regex Guard
-Detects and masks API keys, bearer tokens, JWTs, Luhn-valid payment cards, IBANs, URL credentials, private keys, optional emails/phones/IPs, up to `50` per-site **Custom hidden words**, and up to `20` global **Custom Regex Rules** (protected by static anti-ReDoS validation + per-rule runtime budgets) across clipboard pastes, text drops, and uploaded text/code files (`<= 512 KB`, tagged `Secrets masked` in the upload toast). Consistent session placeholders (`[REDACTED_*_N]`) stay reversible locally via the **Review** modal, **Restore originals** copy toast, and the popup **Tokens** inspector.
+### Secret, PII, Custom Words &amp; Custom Regex Guard
+Detects and masks API keys, bearer tokens, JWTs, Luhn-valid payment cards, IBANs, URL credentials, private keys, optional emails/phones/IPs, up to `50` per-site **Custom hidden words**, and up to `20` global **Custom Masking Rules** (protected by static anti-ReDoS validation + per-rule runtime budgets) across clipboard pastes, text drops, and uploaded text/code files (`<= 512 KB`, tagged `Secrets masked` in the upload toast). Consistent session placeholders (`[REDACTED_*_N]`) stay reversible locally via the **Review** modal, **Restore originals** copy toast (covering `Clipboard.write`, `writeText`, editables, `clipboardData.setData`, and Markdown escapes), and the popup **Tokens** inspector.
 
 <p align="center">
-  <img src="assets/02-secret-guard.png" width="880" alt="ClipZero Secret, PII and Custom Words Guard">
+  <img src="assets/screenshots/02-secret-guard.png" width="900" alt="ClipZero Secret, PII and Custom Rules Guard">
 </p>
 
-### 3-Tab Controls, Guided Rules, Token Inspector &amp; Offline Help
-Manage protection, inspect active masked session tokens (masked by default with on-demand **Show** / **Copy** and **Clear vault**), create custom masking rules effortlessly using **5 one-click templates** or the **Guided builder (no regex required)** alongside **Advanced regex** with a syntax cheatsheet and live draft tester, export/import portable `.json` profiles (Merge or Replace) via **Rules &amp; Backup** (`options.html`), and browse the searchable offline **Help &amp; Guide** (`help.html`) from the popup `?` button. All per-site preferences and global rules live exclusively in extension-isolated `IndexedDB`.
+### 3-Tab Controls, Token Inspector &amp; Direct Offline Help
+Manage protection per tab, inspect active masked session tokens (masked by default with on-demand **Show** / **Copy** and **Clear vault**), configure custom hidden words, or jump straight to the searchable offline **Help &amp; Guide** (`help.html`) via the `?` button.
 
 <p align="center">
-  <img src="assets/03-popup-controls.png" width="760" alt="ClipZero 3-Tab Popup Controls and Token Inspector">
+  <img src="assets/screenshots/03-popup-controls.png" width="880" alt="ClipZero 3-Tab Popup Controls and Token Inspector">
+</p>
+
+### Guided Rules (No Regex Needed), Portable Backup &amp; Welcome Sandbox
+Create masking rules in seconds using **5 one-click templates** or the **Guided builder** (prefix + character type + length → safe regex + live draft tester), switch to **Advanced regex** with a collapsible cheatsheet whenever needed, export/import validated `.json` backups (Merge or Replace), and verify everything locally on first install with the interactive **Welcome** sandbox (`welcome.html`).
+
+<p align="center">
+  <img src="assets/screenshots/04-guided-rules.png" width="860" alt="ClipZero Guided Rule Builder, Quick Templates and Live Local Tester">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/05-welcome-sandbox.png" width="860" alt="ClipZero Interactive First-Install Welcome Sandbox">
 </p>
 
 ---
@@ -147,14 +158,42 @@ All 7 shortcuts are pre-bound by default in **Firefox** (`about:addons` → Mana
 - **`scrubber_worker.js`, `rules_schema.js`, `site_match.js`, `background.js`, `popup.*`, `options.*`, `welcome.*` &amp; `help.*`:** Offloads heavy PDF/Office/SVG scrubbing with `Transferable` buffers, validates custom regex patterns &amp; portable JSON configs, persists site profiles &amp; global rules in extension-isolated `IndexedDB`, serves the first-install sandbox (`welcome.html`) and offline searchable guide (`help.html`), and runs with `0` API permissions (`data_collection_permissions: ["none"]`).
 
 ```bash
-python tests/verify_repo.py   # Manifests (Firefox + Chromium), locales (342 keys x6), sinks & syntax
-python scripts/package.py     # Builds dist/firefox/, dist/chromium/, and release ZIPs
+python -B tests/verify_repo.py   # Manifests (Firefox + Chromium), locales (342 keys x6), sinks, assets & syntax
+python -B scripts/package.py     # Builds dist/firefox/, dist/chromium/, and release ZIPs
 ```
+
+<details>
+<summary>Repository layout (unminified WebExtension root)</summary>
+
+```text
+clipzero/
+├── manifest.json             # Firefox MV3 manifest (source of truth; Chromium MV3 generated by scripts/package.py)
+├── src/
+│   ├── background/           # background.js — event-driven background / MV3 worker & IndexedDB v2 store
+│   ├── content/              # content.js (MAIN) & bridge.js (ISOLATED)
+│   ├── core/                 # site_match.js & rules_schema.js (anti-ReDoS + v2 JSON schema)
+│   ├── workers/              # scrubber_worker.js — dedicated Transferable OOXML / PDF / SVG worker
+│   └── ui/
+│       ├── popup/            # popup.{html,css,js} — 3-tab popup + Token Inspector
+│       ├── options/          # options.{html,css,js} — Guided Rule Builder, Regex & JSON Backup
+│       ├── welcome/          # welcome.{html,css,js} — first-install local sandbox
+│       └── help/             # help.{html,css,js} — offline searchable Help & Guide
+├── _locales/                 # 6 complete translations (de, en, es, fr, pt_BR, zh_CN · 342 keys each)
+├── icons/                    # Toolbar & store icons (16, 32, 48, 96, 128 px)
+├── assets/                   # README-only visuals (excluded from ZIPs: logo.svg, @2x demo GIF & screenshots/)
+├── docs/                     # ROADMAP.md
+├── scripts/                  # package.py (reproducible Firefox + Chromium MV3 builds)
+├── tests/                    # verify_repo.py (zero-dependency integrity, security, locale & HiDPI checks)
+└── .github/                  # CI workflow, SECURITY.md, CONTRIBUTING.md, FUNDING & issue templates
+```
+
+</details>
 
 <div align="center">
   <br>
   <a href="LICENSE">GPL-3.0-or-later</a> &middot;
-  <a href="SECURITY.md">Security Policy</a> &middot;
-  <a href="ROADMAP.md">Roadmap</a> &middot;
+  <a href=".github/CONTRIBUTING.md">Contributing</a> &middot;
+  <a href=".github/SECURITY.md">Security Policy</a> &middot;
+  <a href="docs/ROADMAP.md">Roadmap</a> &middot;
   <a href="https://github.com/sponsors/m21dev">Sponsor @m21dev</a>
 </div>

@@ -930,7 +930,7 @@ if (optionsBtnEl) {
     }
     if (ext?.tabs?.create && ext?.runtime?.getURL) {
       try {
-        await ext.tabs.create({ url: ext.runtime.getURL('options.html') });
+        await ext.tabs.create({ url: ext.runtime.getURL('src/ui/options/options.html') });
         window.close();
       } catch {
         // Ignore open failure cleanly.
@@ -941,7 +941,7 @@ if (optionsBtnEl) {
 
 function openHelpPage() {
   if (ext?.tabs?.create && ext?.runtime?.getURL) {
-    Promise.resolve(ext.tabs.create({ url: ext.runtime.getURL('help.html') }))
+    Promise.resolve(ext.tabs.create({ url: ext.runtime.getURL('src/ui/help/help.html') }))
       .then(() => window.close())
       .catch(() => {});
   }

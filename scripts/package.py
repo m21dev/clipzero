@@ -13,27 +13,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RUNTIME_FILES = (
     "LICENSE",
     "README.md",
-    "background.js",
-    "bridge.js",
-    "content.js",
-    "help.css",
-    "help.html",
-    "help.js",
     "manifest.json",
-    "options.css",
-    "options.html",
-    "options.js",
-    "popup.css",
-    "popup.html",
-    "popup.js",
-    "rules_schema.js",
-    "scrubber_worker.js",
-    "site_match.js",
-    "welcome.css",
-    "welcome.html",
-    "welcome.js",
 )
-RUNTIME_DIRS = ("icons", "_locales")
+RUNTIME_DIRS = ("icons", "_locales", "src")
 CHROMIUM_DEFAULT_COMMANDS = frozenset(
     ("toggle-enabled", "toggle-exif", "toggle-redact", "toggle-secrets")
 )
@@ -43,7 +25,7 @@ def build_chromium_manifest(ff_manifest):
     """Transform Firefox MV3 manifest.json into a Chromium MV3 manifest (<= 4 suggested keys)."""
     manifest = copy.deepcopy(ff_manifest)
     manifest["minimum_chrome_version"] = "111"
-    manifest["background"] = {"service_worker": "background.js"}
+    manifest["background"] = {"service_worker": "src/background/background.js"}
     manifest.pop("browser_specific_settings", None)
 
     cmds = manifest.get("commands")

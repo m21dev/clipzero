@@ -66,7 +66,7 @@
     "extension_pages": "default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';"
   },
   "options_ui": {
-    "page": "options.html",
+    "page": "src/ui/options/options.html",
     "open_in_tab": true
   },
   "icons": {
@@ -84,13 +84,13 @@
       "96": "icons/icon-96.png"
     },
     "default_title": "ClipZero",
-    "default_popup": "popup.html"
+    "default_popup": "src/ui/popup/popup.html"
   },
   "background": {
     "scripts": [
-      "site_match.js",
-      "rules_schema.js",
-      "background.js"
+      "src/core/site_match.js",
+      "src/core/rules_schema.js",
+      "src/background/background.js"
     ]
   },
   "commands": {
@@ -204,7 +204,7 @@
         "https://outlook.cloud.microsoft/*"
       ],
       "js": [
-        "content.js"
+        "src/content/content.js"
       ],
       "run_at": "document_start",
       "world": "MAIN"
@@ -268,7 +268,7 @@
         "https://outlook.cloud.microsoft/*"
       ],
       "js": [
-        "bridge.js"
+        "src/content/bridge.js"
       ],
       "run_at": "document_start",
       "world": "ISOLATED"
