@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClipZero — Rules &amp; Backup</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div class="brand">
+        <img src="icons/icon-48.png" alt="ClipZero" class="logo" width="32" height="32">
+        <div class="brand-text">
+          <div class="title-row">
+            <h1 class="title">ClipZero</h1>
+            <span class="version">1.4.0</span>
+            <span class="page-tag" data-i18n="optionsTitle">Rules &amp; Backup</span>
+          </div>
+          <p class="subtitle" data-i18n="optionsSubtitle">Custom rules, portable JSON export/import, and remembered sites · 100% local</p>
+        </div>
+      </div>
+      <nav class="subnav" aria-label="ClipZero pages">
+        <a class="nav-pill" href="welcome.html" data-i18n="navStart">Start &amp; Try</a>
+        <a class="nav-pill is-current" href="options.html" aria-current="page" data-i18n="navRules">Rules &amp; Backup</a>
+        <a class="nav-pill" href="help.html" data-i18n="navHelp">Help &amp; Guide</a>
+      </nav>
+    </header>
+
+    <main class="content">
+      <section class="card" aria-labelledby="regex-heading">
+        <div class="card-head">
+          <div>
+            <h2 id="regex-heading" class="card-title" data-i18n="optionsRegexTitle">Custom masking rules</h2>
+            <p class="card-desc" data-i18n="optionsRegexDesc">Mask internal IDs, ticket numbers, or custom codes automatically across all 55 supported sites.</p>
+          </div>
+          <span class="pill" id="regex-count-pill">0/20</span>
+        </div>
+
+        <div class="templates-block">
+          <div class="templates-head">
+            <span class="field-label" data-i18n="optionsTemplatesTitle">Quick templates (1 click · no regex needed)</span>
+          </div>
+          <div class="templates-row" id="templates-row">
+            <button type="button" class="tpl-chip" data-tpl="emp">
+              <span class="tpl-name" data-i18n="optionsTplEmp">Employee ID</span>
+              <span class="tpl-ex mono">EMP-104298</span>
+            </button>
+            <button type="button" class="tpl-chip" data-tpl="ticket">
+              <span class="tpl-name" data-i18n="optionsTplTicket">Ticket / Incident</span>
+              <span class="tpl-ex mono">INC-84920</span>
+            </button>
+            <button type="button" class="tpl-chip" data-tpl="client">
+              <span class="tpl-name" data-i18n="optionsTplClient">Client code</span>
+              <span class="tpl-ex mono">CLI-ES-4092</span>
+            </button>
+            <button type="button" class="tpl-chip" data-tpl="order">
+              <span class="tpl-name" data-i18n="optionsTplOrder">Order / Invoice</span>
+              <span class="tpl-ex mono">FAC-2026481</span>
+            </button>
+            <button type="button" class="tpl-chip" data-tpl="token">
+              <span class="tpl-name" data-i18n="optionsTplToken">Internal token</span>
+              <span class="tpl-ex mono">INT_Ab92kLm84Pq1</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="builder-mode-bar" role="tablist" aria-label="Rule builder mode">
+          <button type="button" class="builder-tab is-active" id="mode-easy-btn" role="tab" aria-selected="true" data-mode="easy" data-i18n="optionsModeEasy">Guided builder (no regex)</button>
+          <button type="button" class="builder-tab" id="mode-advanced-btn" role="tab" aria-selected="false" data-mode="advanced" data-i18n="optionsModeAdvanced">Advanced regex</button>
+        </div>
+
+        <form id="regex-form" class="regex-form" novalidate>
+          <div id="easy-builder" class="easy-builder">
+            <p class="builder-hint" data-i18n="optionsEasyHint">Describe how your code looks (prefix + characters) and ClipZero builds a safe rule automatically.</p>
+            <div class="easy-grid">
+              <label class="field">
+                <span class="field-label" data-i18n="optionsLabelField">Token label</span>
+                <input type="text" id="easy-label" class="input mono" maxlength="24" autocomplete="off" spellcheck="false" data-i18n-placeholder="optionsLabelPlaceholder" placeholder="EMPLOYEE_ID">
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="optionsEasyPrefix">Starts with (prefix)</span>
+                <input type="text" id="easy-prefix" class="input mono" maxlength="24" autocomplete="off" spellcheck="false" data-i18n-placeholder="optionsEasyPrefixPh" placeholder="EMP-">
+              </label>
+              <label class="field">
+                <span class="field-label" data-i18n="optionsEasyType">Followed by</span>
+                <select id="easy-charset" class="input">
+                  <option value="digits" data-i18n="optionsEasyDigits">Numbers only (0–9)</option>
+                  <option value="alnum" data-i18n="optionsEasyAlnum">Letters &amp; numbers (A–Z, 0–9)</option>
+                  <option value="letters" data-i18n="optionsEasyLetters">Letters only (A–Z)</option>
+                </select>
+              </label>
+              <div class="field len-field">
+                <span class="field-label" data-i18n="optionsEasyLength">Length (min – max)</span>
+                <div class="len-inputs">
+                  <input type="number" id="easy-min" class="input mono" min="1" max="32" value="6" aria-label="Minimum length">
+                  <span class="len-sep">–</span>
+                  <input type="number" id="easy-max" class="input mono" min="1" max="32" value="6" aria-label="Maximum length">
+                </div>
+              </div>
+            </div>
+
+            <div class="easy-preview" id="easy-preview">
+              <div class="easy-preview-row">
+                <span class="easy-preview-lbl" data-i18n="optionsEasyExample">Example match</span>
+                <span class="easy-preview-val mono" id="easy-example-val">EMP-482910 → [REDACTED_EMPLOYEE_ID]</span>
+              </div>
+              <div class="easy-preview-row">
+                <span class="easy-preview-lbl" data-i18n="optionsEasyGenerated">Generated pattern</span>
+                <span class="easy-preview-val mono" id="easy-pattern-val">EMP-\d{6}</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="advanced-builder" class="advanced-builder" hidden>
+            <div class="form-grid">
+              <label class="field">
+                <span class="field-label" data-i18n="optionsLabelField">Token label</span>
+                <input type="text" id="rule-label" class="input mono" maxlength="24" autocomplete="off" spellcheck="false" data-i18n-placeholder="optionsLabelPlaceholder" placeholder="EMPLOYEE_ID">
+              </label>
+              <label class="field field-wide">
+                <span class="field-label" data-i18n="optionsPatternField">Regex pattern</span>
+                <input type="text" id="rule-pattern" class="input mono" maxlength="160" autocomplete="off" spellcheck="false" data-i18n-placeholder="optionsPatternPlaceholder" placeholder="EMP-\d{6}">
+              </label>
+            </div>
+
+            <details class="cheatsheet">
+              <summary class="cheatsheet-summary" data-i18n="optionsCheatSummary">Quick regex guide (safe syntax)</summary>
+              <div class="cheatsheet-grid">
+                <div class="cheat-item"><code class="mono">\d</code> <span data-i18n="optionsCheatDigit">Any digit (0–9)</span></div>
+                <div class="cheat-item"><code class="mono">[A-Z]</code> <span data-i18n="optionsCheatLetter">Any letter (A–Z)</span></div>
+                <div class="cheat-item"><code class="mono">{6}</code> <span data-i18n="optionsCheatExact">Exactly 6 characters</span></div>
+                <div class="cheat-item"><code class="mono">{4,8}</code> <span data-i18n="optionsCheatRange">Between 4 and 8 characters</span></div>
+                <div class="cheat-item"><code class="mono">(?:INC|TKT)</code> <span data-i18n="optionsCheatChoice">Match INC or TKT</span></div>
+                <div class="cheat-item"><code class="mono">\.</code> <span data-i18n="optionsCheatLiteral">Literal dot or special char</span></div>
+              </div>
+              <p class="cheatsheet-note" data-i18n="optionsCheatSafety">For your browser's speed and safety, nested quantifiers like (a+)+, lookbehinds, and backreferences are blocked automatically.</p>
+            </details>
+          </div>
+
+          <div class="form-footer">
+            <div class="flags-row">
+              <label class="check-label">
+                <input type="checkbox" id="rule-flag-i" checked>
+                <span data-i18n="optionsFlagCase">Ignore case (i)</span>
+              </label>
+              <label class="check-label">
+                <input type="checkbox" id="rule-flag-m">
+                <span data-i18n="optionsFlagMultiline">Multiline (m)</span>
+              </label>
+              <span class="preview-chip mono" id="rule-tag-preview">[REDACTED_LABEL]</span>
+            </div>
+            <button type="submit" class="btn btn-primary" id="rule-add-btn" data-i18n="optionsAddRuleBtn">Add rule</button>
+          </div>
+          <p class="feedback is-error" id="regex-error" hidden></p>
+        </form>
+
+        <div id="rules-list" class="item-list"></div>
+        <p id="rules-empty" class="empty-note" data-i18n="optionsRegexEmpty">No custom rules yet. Click a template above or use the Guided builder to create one in seconds.</p>
+
+        <div class="sandbox-box">
+          <div class="sandbox-head">
+            <label for="sandbox-input" class="field-label" data-i18n="optionsSandboxLabel">Live local tester (saved rules + current draft)</label>
+            <div class="sandbox-meta">
+              <button type="button" class="mini-action-btn" id="sandbox-fill-btn" data-i18n="optionsSandboxFillBtn">Insert sample</button>
+              <span class="pill" id="sandbox-status" data-i18n="optionsSandboxNoMatch">No matches</span>
+            </div>
+          </div>
+          <textarea id="sandbox-input" class="textarea mono" rows="2" spellcheck="false" data-i18n-placeholder="optionsSandboxPlaceholder" placeholder="Paste sample text here (e.g. EMP-104298) to preview masked output…"></textarea>
+          <pre id="sandbox-output" class="sandbox-output mono" hidden></pre>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="backup-heading">
+        <div class="card-head">
+          <div>
+            <h2 id="backup-heading" class="card-title" data-i18n="optionsBackupTitle">Portable JSON backup</h2>
+            <p class="card-desc" data-i18n="optionsBackupDesc">Export or import your custom rules and saved per-site profiles locally. Nothing leaves your browser.</p>
+          </div>
+          <div class="summary-pills">
+            <span class="pill" id="summary-rules-pill">0 regex rules</span>
+            <span class="pill" id="summary-sites-pill">0 saved sites</span>
+          </div>
+        </div>
+
+        <div class="backup-controls">
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="export-json-btn" data-i18n="optionsExportBtn">Export .json</button>
+            <button type="button" class="btn btn-secondary" id="copy-json-btn" data-i18n="optionsCopyJsonBtn">Copy JSON</button>
+          </div>
+
+          <div class="import-group">
+            <div class="mode-switch" role="radiogroup" aria-label="Import mode">
+              <label class="radio-pill">
+                <input type="radio" name="import-mode" value="merge" checked>
+                <span data-i18n="optionsImportModeMerge">Merge with existing</span>
+              </label>
+              <label class="radio-pill">
+                <input type="radio" name="import-mode" value="replace">
+                <span data-i18n="optionsImportModeReplace">Replace existing</span>
+              </label>
+            </div>
+            <button type="button" class="btn btn-secondary" id="import-json-btn" data-i18n="optionsImportBtn">Import .json</button>
+            <input type="file" id="import-file-input" accept=".json,application/json" hidden>
+          </div>
+        </div>
+
+        <p class="feedback" id="backup-feedback" hidden></p>
+      </section>
+
+      <section class="card" aria-labelledby="sites-heading">
+        <div class="card-head">
+          <div>
+            <h2 id="sites-heading" class="card-title" data-i18n="optionsSitesTitle">Remembered sites</h2>
+            <p class="card-desc" data-i18n="optionsSitesDesc">Domains with saved preferences stored in extension-isolated IndexedDB.</p>
+          </div>
+        </div>
+
+        <div id="sites-list" class="item-list"></div>
+        <p id="sites-empty" class="empty-note" data-i18n="optionsSitesEmpty">No sites remembered yet. Enable “Remember this site” in the popup on any supported site.</p>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p data-i18n="optionsFooterPrivacy">Zero API permissions · Zero network calls · Stored locally in extension IndexedDB</p>
+    </footer>
+  </div>
+
+  <script src="site_match.js"></script>
+  <script src="rules_schema.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

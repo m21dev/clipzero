@@ -18,17 +18,30 @@ const COMMAND_STATE_KEY = Object.freeze({
   'toggle-debug': 'debugLogs',
 });
 
+const TAB_ORDER = Object.freeze(['main', 'tokens', 'advanced']);
+
 const hostLabelEl = document.getElementById('host-label');
 const statusBadgeEl = document.getElementById('status-badge');
 const statusTextEl = document.getElementById('status-text');
 const noticeAreaEl = document.getElementById('notice-area');
 const standbyBannerEl = document.getElementById('standby-banner');
 const noticeActionBtnEl = document.getElementById('notice-action-btn');
+const optionsBtnEl = document.getElementById('options-btn');
+const helpBtnEl = document.getElementById('help-btn');
+const helpHeaderBtnEl = document.getElementById('help-header-btn');
+const rulesCountBadgeEl = document.getElementById('rules-count-badge');
 const shortcutsBtnEl = document.getElementById('shortcuts-btn');
 const footerHintEl = document.getElementById('footer-hint');
 const customWordsInputEl = document.getElementById('custom-words-input');
 const customWordsCountEl = document.getElementById('custom-words-count');
 const customWordsClearBtnEl = document.getElementById('custom-words-clear');
+const tokensTabCountEl = document.getElementById('tokens-tab-count');
+const tokensCountPillEl = document.getElementById('tokens-count-pill');
+const tokensClearBtnEl = document.getElementById('tokens-clear-btn');
+const tokensEmptyEl = document.getElementById('tokens-empty');
+const tokensEmptyTitleEl = document.getElementById('tokens-empty-title');
+const tokensEmptyDescEl = document.getElementById('tokens-empty-desc');
+const tokensListEl = document.getElementById('tokens-list');
 const toggleRows = Array.from(document.querySelectorAll('.toggle-row[data-command]'));
 const shortcutBadges = Array.from(document.querySelectorAll('[data-shortcut-for]'));
 const tabButtons = Array.from(document.querySelectorAll('.tab-btn[data-tab]'));
@@ -44,9 +57,10 @@ let queuedCustomWords = null;
 let customWordsDebounceTimer = null;
 let probeTimer = null;
 let detachTimer = null;
+let tokensFetchSeq = 0;
 
 /**
- * Looks up a localized message via Firefox's i18n API.
+ * Looks up a localized message via the extension i18n API.
  * @param {string} key
  * @param {string | string[]} [substitutions]
  * @returns {string}
@@ -81,6 +95,14 @@ function applyTranslations() {
       el.setAttribute('placeholder', translated);
     }
   }
+  for (const el of document.querySelectorAll('[data-i18n-title]')) {
+    const key = el.getAttribute('data-i18n-title');
+    const translated = key ? msg(key) : '';
+    if (translated) {
+      el.setAttribute('title', translated);
+      el.setAttribute('aria-label', translated);
+    }
+  }
 }
 
 /**
@@ -91,6 +113,11 @@ function applyTranslations() {
 function countCustomWords(raw) {
   if (typeof raw !== 'string' || !raw) {
     return 0;
+  }
+  const helper = globalThis.ClipZeroRules;
+  if (helper && typeof helper.sanitizeCustomWords === 'function') {
+    const clean = helper.sanitizeCustomWords(raw);
+    return clean ? clean.split(', ').length : 0;
   }
   const parts = raw.slice(0, 500).split(/[,;\r\n]+/);
   const seen = new Set();
@@ -124,6 +151,26 @@ function updateCustomWordsMeta() {
 }
 
 /**
+ * Updates the active custom regex count pill on the Rules & Backup menu item.
+ * @param {unknown} rules
+ */
+function updateRegexRulesBadge(rules) {
+  if (!rulesCountBadgeEl) {
+    return;
+  }
+  const activeCount = Array.isArray(rules)
+    ? rules.filter((r) => r && r.enabled !== false).length
+    : 0;
+  if (activeCount > 0) {
+    rulesCountBadgeEl.textContent =
+      msg('popupRulesCount', [String(activeCount)]) || `${activeCount} active`;
+    rulesCountBadgeEl.hidden = false;
+  } else {
+    rulesCountBadgeEl.hidden = true;
+  }
+}
+
+/**
  * Populates live shortcut badges inside each control row.
  * @param {Record<string, string>} shortcuts
  */
@@ -138,8 +185,190 @@ function renderShortcuts(shortcuts) {
 }
 
 /**
- * Updates popup header and switches for a supported AI tab.
- * @param {{ enabled: boolean, strictMode: boolean, stripExif: boolean, redactImage: boolean, maskSecrets: boolean, optimizeImage: boolean, showToast: boolean, saveSite: boolean }} state
+ * Renders the Active Session Token Inspector panel safely via pure DOM nodes.
+ * @param {Array<{ token: string, preview: string }>} tokens
+ * @param {number} maxEntries
+ * @param {boolean} isSupportedTab
+ */
+function renderTokenInspector(tokens, maxEntries, isSupportedTab) {
+  const safeList = Array.isArray(tokens) ? tokens : [];
+  const cap = typeof maxEntries === 'number' && maxEntries > 0 ? maxEntries : 500;
+
+  if (tokensTabCountEl) {
+    if (isSupportedTab && safeList.length > 0) {
+      tokensTabCountEl.textContent = String(safeList.length);
+      tokensTabCountEl.hidden = false;
+    } else {
+      tokensTabCountEl.textContent = '0';
+      tokensTabCountEl.hidden = true;
+    }
+  }
+  if (tokensCountPillEl) {
+    tokensCountPillEl.textContent = `${safeList.length}/${cap}`;
+  }
+  if (tokensClearBtnEl) {
+    tokensClearBtnEl.disabled = !isSupportedTab || safeList.length === 0;
+    tokensClearBtnEl.hidden = !isSupportedTab || safeList.length === 0;
+  }
+  if (!tokensListEl || !tokensEmptyEl) {
+    return;
+  }
+
+  while (tokensListEl.firstChild) {
+    tokensListEl.removeChild(tokensListEl.firstChild);
+  }
+
+  if (!isSupportedTab || safeList.length === 0) {
+    tokensListEl.hidden = true;
+    tokensEmptyEl.hidden = false;
+    if (tokensEmptyTitleEl) {
+      tokensEmptyTitleEl.textContent =
+        msg('tokensEmptyTitle') || 'No masked tokens in this tab yet';
+    }
+    if (tokensEmptyDescEl) {
+      tokensEmptyDescEl.textContent = isSupportedTab
+        ? msg('tokensEmptyDesc') ||
+          'Masked secrets, contacts, custom words, and regex matches appear here until the tab reloads or closes.'
+        : msg('tokensStandbyDesc') ||
+          'Open a supported tab to inspect active masked tokens for that session.';
+    }
+    return;
+  }
+
+  tokensEmptyEl.hidden = true;
+  tokensListEl.hidden = false;
+
+  const showLabel = msg('secretsShowBtn') || 'Show';
+  const hideLabel = msg('secretsHideBtn') || 'Hide';
+  const copyLabel = msg('tokensCopyBtn') || 'Copy';
+  const copiedLabel = msg('tokensCopiedBtn') || 'Copied';
+
+  for (const item of safeList) {
+    if (!item || typeof item.token !== 'string') {
+      continue;
+    }
+    const row = document.createElement('div');
+    row.className = 'token-item';
+
+    const main = document.createElement('div');
+    main.className = 'token-main';
+
+    const tagEl = document.createElement('span');
+    tagEl.className = 'token-tag';
+    tagEl.textContent = item.token;
+
+    const previewEl = document.createElement('span');
+    previewEl.className = 'token-preview';
+    previewEl.textContent = item.preview || '••••••••';
+
+    main.appendChild(tagEl);
+    main.appendChild(previewEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'token-actions';
+
+    let isRevealed = false;
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'mini-link-btn';
+    toggleBtn.textContent = showLabel;
+    toggleBtn.addEventListener('click', async () => {
+      if (!isValidTabId(activeTabId)) {
+        return;
+      }
+      if (isRevealed) {
+        isRevealed = false;
+        previewEl.textContent = item.preview || '••••••••';
+        previewEl.classList.remove('is-revealed');
+        toggleBtn.textContent = showLabel;
+        return;
+      }
+      toggleBtn.disabled = true;
+      try {
+        const res = await ext.tabs.sendMessage(activeTabId, {
+          type: 'clipzero:reveal-session-token',
+          token: item.token,
+        });
+        if (res && res.ok && typeof res.raw === 'string') {
+          isRevealed = true;
+          previewEl.textContent = res.raw;
+          previewEl.classList.add('is-revealed');
+          toggleBtn.textContent = hideLabel;
+        }
+      } catch {
+        // Ignore reveal failure if tab navigated away.
+      } finally {
+        toggleBtn.disabled = false;
+      }
+    });
+
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'mini-link-btn';
+    copyBtn.textContent = copyLabel;
+    copyBtn.addEventListener('click', async () => {
+      if (!isValidTabId(activeTabId)) {
+        return;
+      }
+      copyBtn.disabled = true;
+      try {
+        const res = await ext.tabs.sendMessage(activeTabId, {
+          type: 'clipzero:reveal-session-token',
+          token: item.token,
+        });
+        if (res && res.ok && typeof res.raw === 'string' && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(res.raw);
+          copyBtn.textContent = copiedLabel;
+          setTimeout(() => {
+            copyBtn.textContent = copyLabel;
+          }, 1400);
+        }
+      } catch {
+        // Ignore clipboard failure cleanly.
+      } finally {
+        copyBtn.disabled = false;
+      }
+    });
+
+    actions.appendChild(toggleBtn);
+    actions.appendChild(copyBtn);
+    row.appendChild(main);
+    row.appendChild(actions);
+    tokensListEl.appendChild(row);
+  }
+}
+
+/**
+ * Fetches the masked active-session token snapshot from the active tab.
+ * @param {number} tabId
+ */
+async function refreshSessionTokens(tabId) {
+  if (!isValidTabId(tabId) || !ext?.tabs?.sendMessage) {
+    renderTokenInspector([], 500, false);
+    return;
+  }
+  tokensFetchSeq += 1;
+  const seq = tokensFetchSeq;
+  try {
+    const res = await ext.tabs.sendMessage(tabId, { type: 'clipzero:get-session-tokens' });
+    if (seq !== tokensFetchSeq || activeTabId !== tabId) {
+      return;
+    }
+    if (res && res.ok && Array.isArray(res.tokens)) {
+      renderTokenInspector(res.tokens, res.maxEntries || 500, true);
+    } else {
+      renderTokenInspector([], 500, true);
+    }
+  } catch {
+    if (seq === tokensFetchSeq) {
+      renderTokenInspector([], 500, false);
+    }
+  }
+}
+
+/**
+ * Updates popup header and switches for a supported tab.
+ * @param {Record<string, any>} state
  * @param {string} hostPrefix
  */
 function renderSupportedState(state, hostPrefix) {
@@ -200,10 +429,14 @@ function renderSupportedState(state, hostPrefix) {
     }
     updateCustomWordsMeta();
   }
+  updateRegexRulesBadge(state.customRegexRules);
+  if (isValidTabId(activeTabId)) {
+    refreshSessionTokens(activeTabId);
+  }
 }
 
 /**
- * Checks whether the content script replied with all v1.2 state fields.
+ * Checks whether the content script replied with all v1.4 state fields.
  * Older content scripts still running in an already-open tab omit newer keys.
  * @param {unknown} state
  * @returns {boolean}
@@ -222,7 +455,8 @@ function hasCompleteState(state) {
     typeof state.showToast === 'boolean' &&
     typeof state.saveSite === 'boolean' &&
     typeof state.debugLogs === 'boolean' &&
-    typeof state.customWords === 'string'
+    typeof state.customWords === 'string' &&
+    Array.isArray(state.customRegexRules)
   );
 }
 
@@ -246,6 +480,7 @@ function disablePerTabControls() {
     lastSyncedCustomWords = '';
   }
   updateCustomWordsMeta();
+  renderTokenInspector([], 500, false);
 }
 
 /**
@@ -316,7 +551,7 @@ function renderMissingPermissionsState(tabId, missingOrigins) {
 }
 
 /**
- * Updates popup header and disables per-tab switches when no supported AI tab is active.
+ * Updates popup header and disables per-tab switches when no supported tab is active.
  */
 function renderStandbyState() {
   showNoticeState({
@@ -365,8 +600,7 @@ async function getMissingHostOrigins() {
 }
 
 /**
- * Updates popup header when a supported tab was already open before ClipZero activated
- * (or is blocked by Firefox Quarantined Domains after permission grant).
+ * Updates popup header when a supported tab was already open before ClipZero activated.
  * @param {number} tabId
  * @param {string} hostname
  */
@@ -396,10 +630,6 @@ function matchTabSite(tabUrl) {
 
 /**
  * Resolves why the active tab did not return live content-script state.
- * Uses host_permissions-scoped tab.url to flag already-open supported tabs without activeTab,
- * while keeping unrelated pages (e.g. Google Drive) cleanly in Standby.
- * @param {chrome.tabs.Tab | browser.tabs.Tab | undefined} tab
- * @param {Promise<string[]>} [precomputedMissingPromise]
  */
 async function resolveUnavailableTabState(tab, precomputedMissingPromise) {
   const tabId = tab?.id;
@@ -455,6 +685,23 @@ async function loadShortcuts() {
 }
 
 /**
+ * Loads global regex rule count for standby tabs so the Settings tab badge stays accurate.
+ */
+async function loadGlobalRulesBadge() {
+  if (!ext?.runtime?.sendMessage) {
+    return;
+  }
+  try {
+    const res = await ext.runtime.sendMessage({ type: 'clipzero:get-all-config' });
+    if (res && res.ok && Array.isArray(res.customRegexRules)) {
+      updateRegexRulesBadge(res.customRegexRules);
+    }
+  } catch {
+    // Ignore background unavailability cleanly.
+  }
+}
+
+/**
  * Applies a live content-script state reply to the popup UI.
  * @param {number} tabId
  * @param {any} response
@@ -479,8 +726,8 @@ function applyLiveTabResponse(tabId, response) {
 async function initPopup() {
   applyTranslations();
 
-  // Never let shortcut enumeration or permission lookups block querying/messaging the active tab.
   loadShortcuts().then(renderShortcuts).catch(() => {});
+  loadGlobalRulesBadge().catch(() => {});
   const missingOriginsPromise = getMissingHostOrigins();
 
   const tabs = ext?.tabs?.query
@@ -517,8 +764,6 @@ async function initPopup() {
     return false;
   };
 
-  // Fast path: if onInstalled already flagged this tab with '!' in the parent process, render
-  // the reload prompt immediately (<15 ms) without waiting for a busy SPA renderer to time out.
   const badgeText = await badgePromise;
   if (badgeText === '!' && matched) {
     renderAlreadyOpenTabReloadState(tabId, matched.hostname);
@@ -656,6 +901,60 @@ function isChromiumRuntime() {
   }
 }
 
+if (tokensClearBtnEl) {
+  tokensClearBtnEl.addEventListener('click', async () => {
+    if (!isValidTabId(activeTabId)) {
+      return;
+    }
+    const currentTabId = activeTabId;
+    tokensClearBtnEl.disabled = true;
+    try {
+      await ext.tabs.sendMessage(currentTabId, { type: 'clipzero:clear-session-tokens' });
+      renderTokenInspector([], 500, true);
+    } catch {
+      await handleActiveTabDisconnected();
+    }
+  });
+}
+
+if (optionsBtnEl) {
+  optionsBtnEl.addEventListener('click', async () => {
+    try {
+      if (ext?.runtime?.openOptionsPage) {
+        await ext.runtime.openOptionsPage();
+        window.close();
+        return;
+      }
+    } catch {
+      // Fallback to tabs.create below.
+    }
+    if (ext?.tabs?.create && ext?.runtime?.getURL) {
+      try {
+        await ext.tabs.create({ url: ext.runtime.getURL('options.html') });
+        window.close();
+      } catch {
+        // Ignore open failure cleanly.
+      }
+    }
+  });
+}
+
+function openHelpPage() {
+  if (ext?.tabs?.create && ext?.runtime?.getURL) {
+    Promise.resolve(ext.tabs.create({ url: ext.runtime.getURL('help.html') }))
+      .then(() => window.close())
+      .catch(() => {});
+  }
+}
+
+if (helpBtnEl) {
+  helpBtnEl.addEventListener('click', openHelpPage);
+}
+
+if (helpHeaderBtnEl) {
+  helpHeaderBtnEl.addEventListener('click', openHelpPage);
+}
+
 if (noticeActionBtnEl) {
   noticeActionBtnEl.addEventListener('click', () => {
     if (!pendingNoticeAction) {
@@ -675,11 +974,10 @@ if (noticeActionBtnEl) {
         return;
       }
       noticeActionBtnEl.disabled = true;
-      // Invoke permissions.request synchronously in the click handler to preserve the user gesture.
       let reqPromise;
       try {
         reqPromise = Promise.resolve(ext.permissions.request({ origins }));
-      } catch (err) {
+      } catch {
         noticeActionBtnEl.disabled = false;
         return;
       }
@@ -690,8 +988,6 @@ if (noticeActionBtnEl) {
               .sendMessage({ type: 'clipzero:arm-reload', tabId: targetTabId })
               .catch(() => {})
           : Promise.resolve();
-      // Firefox Bug 1798454: Firefox renders the permission bubble behind the open popup.
-      // Close the popup shortly after arming background reload so Allow/Deny is unobstructed.
       let settled = false;
       if (detachTimer !== null) {
         clearTimeout(detachTimer);
@@ -775,7 +1071,7 @@ if (customWordsClearBtnEl && customWordsInputEl) {
 }
 
 function switchTab(targetTab, focusTabBtn) {
-  const activeKey = targetTab === 'advanced' ? 'advanced' : 'main';
+  const activeKey = TAB_ORDER.includes(targetTab) ? targetTab : 'main';
   for (const btn of tabButtons) {
     const isSel = btn.getAttribute('data-tab') === activeKey;
     btn.setAttribute('aria-selected', String(isSel));
@@ -784,9 +1080,17 @@ function switchTab(targetTab, focusTabBtn) {
       btn.focus();
     }
   }
+  const panelMap = {
+    main: 'panel-main',
+    tokens: 'panel-tokens',
+    advanced: 'panel-advanced',
+  };
+  const expectedId = panelMap[activeKey];
   for (const panel of tabPanels) {
-    const expectedId = activeKey === 'advanced' ? 'panel-advanced' : 'panel-main';
     panel.hidden = panel.id !== expectedId;
+  }
+  if (activeKey === 'tokens' && isValidTabId(activeTabId)) {
+    refreshSessionTokens(activeTabId);
   }
 }
 
@@ -795,10 +1099,20 @@ for (const btn of tabButtons) {
     switchTab(btn.getAttribute('data-tab'), false);
   });
   btn.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    const curKey = btn.getAttribute('data-tab') || 'main';
+    const curIdx = TAB_ORDER.indexOf(curKey);
+    if (e.key === 'ArrowRight') {
       e.preventDefault();
-      const next = btn.getAttribute('data-tab') === 'main' ? 'advanced' : 'main';
-      switchTab(next, true);
+      switchTab(TAB_ORDER[(curIdx + 1) % TAB_ORDER.length], true);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      switchTab(TAB_ORDER[(curIdx - 1 + TAB_ORDER.length) % TAB_ORDER.length], true);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      switchTab(TAB_ORDER[0], true);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      switchTab(TAB_ORDER[TAB_ORDER.length - 1], true);
     }
   });
 }
@@ -844,6 +1158,11 @@ window.addEventListener('pagehide', () => {
   }
   queuedCustomWords = null;
   pendingNoticeAction = null;
+  if (tokensListEl) {
+    while (tokensListEl.firstChild) {
+      tokensListEl.removeChild(tokensListEl.firstChild);
+    }
+  }
 });
 
 initPopup();

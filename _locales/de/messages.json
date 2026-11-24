@@ -1,6 +1,6 @@
 {
   "extDescription": {
-    "message": "Benennt Uploads privat um, bereinigt EXIF/GPS, SVG & PDF, schwärzt Bilder im Canvas und schützt Secrets in KI-Chats & Social Web."
+    "message": "Datenschutz-Umbenenner, verlustfreier EXIF/SVG/PDF/Office-Bereiniger, Bildschwärzung, Regex & Geheimnisschutz."
   },
   "cmdToggleEnabled": {
     "message": "ClipZero im aktiven Tab pausieren oder fortsetzen"
@@ -139,7 +139,7 @@
     "message": "Metadaten entfernen"
   },
   "optExifDesc": {
-    "message": "JPEG EXIF/GPS, PNG, WebP, SVG & PDF"
+    "message": "JPEG, PNG, WebP, SVG, PDF & Office"
   },
   "optRedactTitle": {
     "message": "Vor Upload schwärzen"
@@ -160,7 +160,7 @@
     "message": "E-Mails, Telefonnummern & IPs beim Einfügen"
   },
   "popupMoreSettings": {
-    "message": "Weitere Einstellungen"
+    "message": "Optionen"
   },
   "optOptimizeTitle": {
     "message": "Große Bilder verkleinern"
@@ -265,7 +265,7 @@
     "message": "Metadaten entfernen · EIN"
   },
   "toastExifOnSub": {
-    "message": "EXIF-, GPS- und SVG-Bereinigung aktiv"
+    "message": "EXIF-, GPS-, SVG-, PDF- und Office-Bereiniger aktiv"
   },
   "toastExifOffTitle": {
     "message": "Metadaten entfernen · AUS"
@@ -503,5 +503,606 @@
   },
   "redactWeightThick": {
     "message": "Dick"
+  },
+  "popupTabTokens": {
+    "message": "Tokens"
+  },
+  "tokensSectionTitle": {
+    "message": "Aktive Sitzungs-Tokens"
+  },
+  "tokensClearBtn": {
+    "message": "Tresor leeren"
+  },
+  "tokensEmptyTitle": {
+    "message": "Noch keine maskierten Tokens in diesem Tab"
+  },
+  "tokensEmptyDesc": {
+    "message": "Maskierte Geheimnisse, Kontakte, eigene Begriffe und Regex-Treffer erscheinen hier bis zum Neuladen oder Schließen."
+  },
+  "tokensStandbyDesc": {
+    "message": "Öffne einen unterstützten Tab, um aktive Sitzungs-Tokens zu prüfen."
+  },
+  "tokensFooterNote": {
+    "message": "Nur im Tab-RAM · beim Neuladen oder Schließen gelöscht"
+  },
+  "tokensCopyBtn": {
+    "message": "Kopieren"
+  },
+  "tokensCopiedBtn": {
+    "message": "Kopiert"
+  },
+  "popupRulesBtn": {
+    "message": "Regeln, Regex & Backup…"
+  },
+  "popupRulesCount": {
+    "message": "$COUNT$ aktiv",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsTitle": {
+    "message": "Regeln & Backup"
+  },
+  "optionsSubtitle": {
+    "message": "Eigene Regex-Regeln, portabler JSON-Export/Import und gemerkte Websites · 100 % lokal"
+  },
+  "optionsRegexTitle": {
+    "message": "Eigene Regex-Regeln"
+  },
+  "optionsRegexDesc": {
+    "message": "Maskiert eigene IDs, Ticketnummern oder interne Codes automatisch auf allen unterstützten Websites."
+  },
+  "optionsLabelField": {
+    "message": "Token-Bezeichnung"
+  },
+  "optionsLabelPlaceholder": {
+    "message": "MITARBEITER_ID"
+  },
+  "optionsPatternField": {
+    "message": "Regex-Muster"
+  },
+  "optionsPatternPlaceholder": {
+    "message": "EMP-\\d{6}"
+  },
+  "optionsFlagCase": {
+    "message": "Groß-/Kleinschreibung ignorieren (i)"
+  },
+  "optionsFlagMultiline": {
+    "message": "Mehrzeilig (m)"
+  },
+  "optionsAddRuleBtn": {
+    "message": "Regel hinzufügen"
+  },
+  "optionsDeleteBtn": {
+    "message": "Löschen"
+  },
+  "optionsRegexEmpty": {
+    "message": "Noch keine eigenen Regeln. Klicken Sie oben auf eine Vorlage oder nutzen Sie den geführten Assistenten."
+  },
+  "optionsSandboxLabel": {
+    "message": "Lokaler Live-Tester (gespeicherte Regeln + Entwurf)"
+  },
+  "optionsSandboxPlaceholder": {
+    "message": "Beispieltext einfügen (z. B. EMP-104298), um die Maskierung zu prüfen…"
+  },
+  "optionsSandboxMatches": {
+    "message": "$COUNT$ Treffer maskiert",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsSandboxNoMatch": {
+    "message": "Keine Treffer"
+  },
+  "optionsErrInvalidLabel": {
+    "message": "Bezeichnung muss mit einem Buchstaben beginnen (A–Z, 0–9, _ · max. 24 Zeichen)."
+  },
+  "optionsErrUnsafeRegex": {
+    "message": "Muster aus Sicherheitsgründen abgelehnt (verschachtelte Quantoren, Rückverweise oder ReDoS-Risiko)."
+  },
+  "optionsErrEmptyMatch": {
+    "message": "Das Muster darf keinen leeren Text treffen."
+  },
+  "optionsErrInvalidRegex": {
+    "message": "Ungültige Syntax für regulären Ausdruck."
+  },
+  "optionsErrTooManyRules": {
+    "message": "Maximal 20 eigene Regex-Regeln erreicht."
+  },
+  "optionsBackupTitle": {
+    "message": "Portables JSON-Backup"
+  },
+  "optionsBackupDesc": {
+    "message": "Exportiere oder importiere eigene Regex-Regeln und Website-Profile lokal. Nichts verlässt den Browser."
+  },
+  "optionsCountRules": {
+    "message": "$COUNT$ Regex-Regeln",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsCountSites": {
+    "message": "$COUNT$ gespeicherte Seiten",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsExportBtn": {
+    "message": ".json exportieren"
+  },
+  "optionsCopyJsonBtn": {
+    "message": "JSON kopieren"
+  },
+  "optionsImportBtn": {
+    "message": ".json importieren"
+  },
+  "optionsImportModeMerge": {
+    "message": "Mit vorhandenen zusammenführen"
+  },
+  "optionsImportModeReplace": {
+    "message": "Vorhandene ersetzen"
+  },
+  "optionsExportDone": {
+    "message": "Konfiguration lokal exportiert."
+  },
+  "optionsCopyDone": {
+    "message": "Konfigurations-JSON in die Zwischenablage kopiert."
+  },
+  "optionsImportDone": {
+    "message": "Konfiguration importiert und mit offenen Tabs synchronisiert."
+  },
+  "optionsImportErrInvalid": {
+    "message": "Import abgelehnt: ungültige oder inkompatible ClipZero-JSON-Datei."
+  },
+  "optionsImportErrOrigin": {
+    "message": "Import abgelehnt: Datei enthält einen nicht unterstützten Website-Ursprung."
+  },
+  "optionsImportErrRule": {
+    "message": "Import abgelehnt: Datei enthält eine unsichere oder ungültige Regex-Regel."
+  },
+  "optionsSitesTitle": {
+    "message": "Gemerkte Websites"
+  },
+  "optionsSitesDesc": {
+    "message": "Domains mit gespeicherten Einstellungen in der isolierten Erweiterungs-IndexedDB."
+  },
+  "optionsSitesEmpty": {
+    "message": "Noch keine Websites gemerkt. Aktiviere „Diese Website merken“ im Popup auf einer unterstützten Seite."
+  },
+  "optionsForgetBtn": {
+    "message": "Vergessen"
+  },
+  "optionsFooterPrivacy": {
+    "message": "Keine API-Berechtigungen · Keine Netzwerkaufrufe · Lokal in der Erweiterungs-IndexedDB gespeichert"
+  },
+  "welcomeTitle": {
+    "message": "Willkommen bei ClipZero"
+  },
+  "welcomeSubtitle": {
+    "message": "Lokale Datenschutz-Firewall ohne Einrichtung · sofort aktiv auf 55 KI-Chat-, Social-, Dev- und Webmail-Seiten."
+  },
+  "welcomeStatusReady": {
+    "message": "Geschützt · Sofort einsatzbereit"
+  },
+  "welcomeStatusPerm": {
+    "message": "Ein Klick zum Aktivieren"
+  },
+  "welcomePermBanner": {
+    "message": "Dein Browser hat noch keinen Zugriff auf $COUNT$ unterstützte Website(s) gewährt. Einmal erlauben für automatischen Schutz.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomePermBtn": {
+    "message": "Alle unterstützten Seiten erlauben ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeTryTitle": {
+    "message": "Jetzt sofort testen (100 % lokal)"
+  },
+  "welcomeTryDesc": {
+    "message": "Wählen Sie ein Testbeispiel und klicken Sie auf „Einfügen testen“ oder drücken Sie Strg+V / Cmd+V."
+  },
+  "welcomeCopyFakeBtn": {
+    "message": "Kopieren"
+  },
+  "welcomeCopiedFakeBtn": {
+    "message": "Kopiert — unten mit Strg+V einfügen"
+  },
+  "welcomePastePlaceholder": {
+    "message": "Fügen Sie den Testschlüssel hier ein (Strg+V / Cmd+V) oder klicken Sie auf „Einfügen testen“…"
+  },
+  "welcomePasteResultOk": {
+    "message": "$COUNT$ sensible(s) Element(e) lokal maskiert, bevor eine Seite es lesen konnte.",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeRestoreBtn": {
+    "message": "Original wiederherstellen"
+  },
+  "welcomeRemaskBtn": {
+    "message": "Maskiert lassen"
+  },
+  "welcomeFileTitle": {
+    "message": "Oder Metadaten-Bereinigung testen"
+  },
+  "welcomeFileDesc": {
+    "message": "Foto, SVG, PDF oder Office-Datei (.docx, .xlsx, .pptx) ablegen oder auswählen — nur im RAM geprüft, nie hochgeladen."
+  },
+  "welcomeFilePickBtn": {
+    "message": "Testdatei wählen"
+  },
+  "welcomeFileCleaned": {
+    "message": "Lokal bereinigt: Metadaten entfernt ($SAVED$ Bytes gespart · 0 Bytes hochgeladen).",
+    "placeholders": {
+      "saved": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeFileAlreadyClean": {
+    "message": "Lokal geprüft: Datei enthält bereits keine verfolgbaren Metadaten (0 Bytes hochgeladen)."
+  },
+  "welcomeFileUnsupported": {
+    "message": "Lokal geprüft: Format unverändert (Dateinamen-Anonymisierung gilt weiterhin auf unterstützten Seiten)."
+  },
+  "welcomeOpenOptionsBtn": {
+    "message": "Regeln, Regex & Backup…"
+  },
+  "welcomeDoneBtn": {
+    "message": "Verstanden, Tab schließen"
+  },
+  "navStart": {
+    "message": "Start & Test"
+  },
+  "navRules": {
+    "message": "Regeln & Backup"
+  },
+  "navHelp": {
+    "message": "Hilfe & Anleitung"
+  },
+  "popupHelpBtn": {
+    "message": "Hilfe & Anleitung…"
+  },
+  "welcomePillar1Title": {
+    "message": "Geheimnis- & PII-Schutz"
+  },
+  "welcomePillar1Desc": {
+    "message": "Maskiert API-Schlüssel, Tokens, Karten und eigene Muster vor dem Einfügen."
+  },
+  "welcomePillar2Title": {
+    "message": "Verlustfreie Metadaten-Bereinigung"
+  },
+  "welcomePillar2Desc": {
+    "message": "Entfernt EXIF, GPS, PDF-, SVG- und Office-Autorendaten (.docx/.xlsx/.pptx) nur im RAM."
+  },
+  "welcomePillar3Title": {
+    "message": "Visueller Canvas-Schwärzer"
+  },
+  "welcomePillar3Desc": {
+    "message": "Schwärzen, unumkehrbar verpixeln oder zuschneiden vor dem Hochladen – Originale bleiben unberührt."
+  },
+  "welcomeLocalBadge": {
+    "message": "100 % lokal"
+  },
+  "welcomeRamBadge": {
+    "message": "Nur RAM"
+  },
+  "welcomeSampleApi": {
+    "message": "API-Key + E-Mail"
+  },
+  "welcomeSampleToken": {
+    "message": "GitHub + JWT"
+  },
+  "welcomeSampleUrl": {
+    "message": "Datenbank-URL"
+  },
+  "welcomeTryPasteBtn": {
+    "message": "Einfügen testen"
+  },
+  "welcomeClearBtn": {
+    "message": "Leeren"
+  },
+  "welcomePasteNoSecret": {
+    "message": "Keine Geheimnisse in diesem Text erkannt. Testen Sie eines der Beispiele oben."
+  },
+  "welcomeDropHint": {
+    "message": "Datei hier ablegen oder vom Gerät auswählen"
+  },
+  "welcomeFileRenameLabel": {
+    "message": "Upload-Dateiname"
+  },
+  "welcomeFileSizeLabel": {
+    "message": "Größenänderung"
+  },
+  "welcomeOpenHelpBtn": {
+    "message": "Hilfe & Anleitung"
+  },
+  "optionsTemplatesTitle": {
+    "message": "Schnellvorlagen (1 Klick · ohne Regex-Kenntnisse)"
+  },
+  "optionsTplEmp": {
+    "message": "Mitarbeiter-ID"
+  },
+  "optionsTplTicket": {
+    "message": "Ticket / Vorfall"
+  },
+  "optionsTplClient": {
+    "message": "Kundencode"
+  },
+  "optionsTplOrder": {
+    "message": "Bestellung / Rechnung"
+  },
+  "optionsTplToken": {
+    "message": "Internes Token"
+  },
+  "optionsModeEasy": {
+    "message": "Geführter Assistent (ohne Regex)"
+  },
+  "optionsModeAdvanced": {
+    "message": "Erweitertes Regex"
+  },
+  "optionsEasyHint": {
+    "message": "Beschreiben Sie Ihren Code (Präfix + Zeichen) – ClipZero erstellt automatisch eine sichere Regel."
+  },
+  "optionsEasyPrefix": {
+    "message": "Beginnt mit (Präfix)"
+  },
+  "optionsEasyPrefixPh": {
+    "message": "EMP-"
+  },
+  "optionsEasyType": {
+    "message": "Gefolgt von"
+  },
+  "optionsEasyDigits": {
+    "message": "Nur Ziffern (0–9)"
+  },
+  "optionsEasyAlnum": {
+    "message": "Buchstaben & Ziffern (A–Z, 0–9)"
+  },
+  "optionsEasyLetters": {
+    "message": "Nur Buchstaben (A–Z)"
+  },
+  "optionsEasyLength": {
+    "message": "Länge (Min – Max)"
+  },
+  "optionsEasyExample": {
+    "message": "Beispiel-Treffer"
+  },
+  "optionsEasyGenerated": {
+    "message": "Erzeugtes Muster"
+  },
+  "optionsCheatSummary": {
+    "message": "Regex-Kurzreferenz (sichere Syntax)"
+  },
+  "optionsCheatDigit": {
+    "message": "Beliebige Ziffer (0–9)"
+  },
+  "optionsCheatLetter": {
+    "message": "Beliebiger Buchstabe (A–Z)"
+  },
+  "optionsCheatExact": {
+    "message": "Genau 6 Zeichen"
+  },
+  "optionsCheatRange": {
+    "message": "Zwischen 4 und 8 Zeichen"
+  },
+  "optionsCheatChoice": {
+    "message": "Passt zu INC oder TKT"
+  },
+  "optionsCheatLiteral": {
+    "message": "Wörtlicher Punkt / Sonderzeichen"
+  },
+  "optionsCheatSafety": {
+    "message": "Für Geschwindigkeit und Sicherheit werden verschachtelte Quantoren wie (a+)+, Lookbehinds und Rückreferenzen automatisch blockiert."
+  },
+  "optionsSandboxFillBtn": {
+    "message": "Beispiel einfügen"
+  },
+  "helpPageTag": {
+    "message": "Hilfe & Anleitung"
+  },
+  "helpSubtitle": {
+    "message": "Offline-Handbuch für Firefox und Chromium · 100 % lokal, keine Netzwerkaufrufe"
+  },
+  "helpSearchLabel": {
+    "message": "Hilfethemen filtern"
+  },
+  "helpSearchPlaceholder": {
+    "message": "Themen filtern (z. B. Regex, Office, Verpixeln, Tastenkürzel, Tokens)…"
+  },
+  "helpSearchEmpty": {
+    "message": "Keine Hilfeseiten passen zu diesem Filter. Leeren Sie das Suchfeld für die komplette Anleitung."
+  },
+  "helpJumpStart": {
+    "message": "Schnellstart"
+  },
+  "helpJumpSecrets": {
+    "message": "Geheimnisse & Regeln"
+  },
+  "helpJumpFiles": {
+    "message": "Dateien & Office"
+  },
+  "helpJumpCanvas": {
+    "message": "Canvas-Schwärzer"
+  },
+  "helpJumpShortcuts": {
+    "message": "Tastenkürzel"
+  },
+  "helpJumpFaq": {
+    "message": "FAQ"
+  },
+  "helpStartTitle": {
+    "message": "Schnellstart (3 Schritte)"
+  },
+  "helpStartDesc": {
+    "message": "ClipZero arbeitet automatisch auf 55 KI-Chat-, Messenger-, Social-, Entwickler- und Webmail-Seiten in Firefox und Chromium."
+  },
+  "helpStep1Title": {
+    "message": "Unterstützte Seite öffnen"
+  },
+  "helpStep1Desc": {
+    "message": "ChatGPT, Claude, Gemini, Gmail, Outlook, WhatsApp Web, Discord, GitHub und 47 weitere Seiten sind sofort geschützt."
+  },
+  "helpStep2Title": {
+    "message": "Wie gewohnt einfügen oder hochladen"
+  },
+  "helpStep2Desc": {
+    "message": "ClipZero fängt Einfügen, Drag-and-Drop und Uploads im RAM ab, bevor die Seite sie liest – Ihre Originaldateien bleiben unverändert."
+  },
+  "helpStep3Title": {
+    "message": "Prüfen, wiederherstellen oder anpassen"
+  },
+  "helpStep3Desc": {
+    "message": "Nutzen Sie das Popup für Tab-Optionen, den Token-Inspektor oder Regeln & Backup für eigene Muster."
+  },
+  "helpSecretsTitle": {
+    "message": "Geheimnisse, eigene Wörter & eigene Regeln"
+  },
+  "helpSecretsDesc": {
+    "message": "Wählen Sie das passende Werkzeug für das, was Sie beim Einfügen oder Hochladen von Textdateien verbergen möchten:"
+  },
+  "helpSecAutoTitle": {
+    "message": "Automatischer Geheimnis- & PII-Schutz"
+  },
+  "helpSecAutoDesc": {
+    "message": "Standardmäßig in KI-Chats aktiv. Erkennt API-Keys (OpenAI, Anthropic, Google, AWS, GitHub), JWTs, Karten, IBANs, URL-Passwörter sowie optional E-Mails, Telefonnummern und IPs."
+  },
+  "helpSecWordsTitle": {
+    "message": "Eigene versteckte Wörter (pro Website)"
+  },
+  "helpSecWordsDesc": {
+    "message": "Im Tab „Einstellungen“ des Popups genaue Namen, Firmen oder Projekte mit Komma trennen (bis zu 50 pro Website). Ideal für feste Namen."
+  },
+  "helpSecRegexTitle": {
+    "message": "Eigene Regeln (auf allen 55 Seiten)"
+  },
+  "helpSecRegexDesc": {
+    "message": "Wählen Sie unter Regeln & Backup eine 1-Klick-Vorlage oder den geführten Assistenten (ohne Regex), um Codes wie EMP-104298 oder INC-84920 überall zu verbergen."
+  },
+  "helpSecTokensTip": {
+    "message": "Tipp: Platzhalter wie [REDACTED_OPENAI_KEY] bleiben nur im Tab-RAM umkehrbar. Im Popup-Tab „Tokens“ lassen sie sich prüfen oder leeren; beim Kopieren erscheint „Originale wiederherstellen“."
+  },
+  "helpFilesTitle": {
+    "message": "Datei- & Metadaten-Bereinigung"
+  },
+  "helpFilesDesc": {
+    "message": "Verlustfrei im Arbeitsspeicher bereinigt (und in einem eigenen Web Worker für große PDF-, Office- und SVG-Dateien)."
+  },
+  "helpColFormat": {
+    "message": "Format"
+  },
+  "helpColRemoved": {
+    "message": "Was ClipZero lokal entfernt"
+  },
+  "helpFmtOffice": {
+    "message": "Autor, Firma, benutzerdefinierte Eigenschaften, Vorschaubilder, Kommentar-/Änderungsautoren und -daten, Word-rsid & Vorlagenpfade, Excel-Ordnerpfade (absPath), ZIP-Zeitstempel/Kommentare sowie EXIF in eingebetteten Bildern."
+  },
+  "helpFmtPdf": {
+    "message": "Dokument-/Info-Felder und XMP-Metadaten direkt im Dokument – Layout, Lesezeichen und xref-Tabellen bleiben erhalten (bis 50 MB)."
+  },
+  "helpFmtImg": {
+    "message": "EXIF-Kamera-/Seriennummern, GPS-Koordinaten, RGB-Vorschaubilder, XMP, PNG-Chunks (tEXt/eXIf/C2PA/iDOT) und GIF-Kommentare bei erhaltener Ausrichtung und Animation."
+  },
+  "helpFmtSvgTxt": {
+    "message": "Entfernt Skripte, Event-Handler, Kommentare und Editor-Pfade aus SVGs; maskiert Geheimnisse, PII, eigene Wörter und Regeln in hochgeladenen Text-/Codedateien (bis 512 KB)."
+  },
+  "helpCanvasTitle": {
+    "message": "Visueller Canvas-Schwärzer (Screenshots)"
+  },
+  "helpCanvasDesc": {
+    "message": "Aktivieren Sie „Vor dem Hochladen schwärzen“ im Popup (oder Alt+Shift+B), um Bilder vor dem Upload in einem privaten Shadow-DOM-Modal zu bearbeiten."
+  },
+  "helpToolCover": {
+    "message": "Abdecken — deckender Balken"
+  },
+  "helpToolPixel": {
+    "message": "Verpixeln — unumkehrbares Mosaik"
+  },
+  "helpToolOutline": {
+    "message": "Rahmen — Hervorhebung (Dünn / Mittel / Dick)"
+  },
+  "helpToolPen": {
+    "message": "Stift — Freihand-Markierung"
+  },
+  "helpToolCrop": {
+    "message": "Zuschneiden — Ränder mit Live-Maßen kürzen"
+  },
+  "helpToolScroll": {
+    "message": "Scrollen — lange Screenshots bequem verschieben"
+  },
+  "helpCanvasKeysTip": {
+    "message": "Editor-Tasten: Pfeile / Shift+Pfeile verschieben/skalieren · Entf löscht · Strg/Cmd+Z macht rückgängig · Bild↑/↓ wechselt Bilder · Enter lädt hoch."
+  },
+  "helpShortcutsTitle": {
+    "message": "Tastenkürzel (Firefox & Chromium)"
+  },
+  "helpShortcutsDesc": {
+    "message": "Firefox belegt alle 7 Kürzel automatisch. Chromium erlaubt 4 Standards; die anderen 3 lassen sich unter chrome://extensions/shortcuts festlegen."
+  },
+  "helpColShortcut": {
+    "message": "Windows / Linux (macOS)"
+  },
+  "helpColAction": {
+    "message": "Aktion"
+  },
+  "helpBindDefault": {
+    "message": "Standard"
+  },
+  "helpBindManual": {
+    "message": "Manuell"
+  },
+  "helpFaqTitle": {
+    "message": "Häufige Fragen"
+  },
+  "helpFaq1Q": {
+    "message": "Warum zeigt das ClipZero-Symbol ein oranges „!“-Abzeichen?"
+  },
+  "helpFaq1A": {
+    "message": "Dieser Tab war vor der Installation oder Aktualisierung bereits geöffnet. Aus Sicherheitsgründen greift ClipZero ab document_start ein – laden Sie den Tab einfach einmal neu (oder klicken Sie im Popup auf „Tab neu laden“)."
+  },
+  "helpFaq2Q": {
+    "message": "Warum bittet Firefox um Zugriff auf unterstützte Websites?"
+  },
+  "helpFaq2A": {
+    "message": "In Firefox Manifest V3 können Host-Berechtigungen anfangs deaktiviert sein. Klicken Sie einmal auf „Erlauben“ im Popup oder auf der Startseite für die 55 Seiten – ClipZero benötigt weiterhin null API-Berechtigungen."
+  },
+  "helpFaq3Q": {
+    "message": "Wie verberge ich eigene Codes ohne Regex-Kenntnisse?"
+  },
+  "helpFaq3A": {
+    "message": "Öffnen Sie Regeln & Backup und wählen Sie eine 1-Klick-Vorlage oder den geführten Assistenten: Präfix, Zeichentyp und Länge eingeben, live testen und speichern."
+  },
+  "helpFaq4Q": {
+    "message": "Wo werden Tokens und Regeln gespeichert – verlässt etwas mein Gerät?"
+  },
+  "helpFaq4A": {
+    "message": "Maskierte Sitzungstokens liegen nur im flüchtigen Tab-RAM und verschwinden beim Neuladen, Schließen oder Leeren. Website-Einstellungen und Regeln bleiben im isolierten IndexedDB der Erweiterung. ClipZero tätigt null Netzwerkaufrufe und null Telemetrie."
+  },
+  "helpFaq5Q": {
+    "message": "Warum wurde eine alte .doc- oder passwortgeschützte Office-Datei nicht geändert?"
+  },
+  "helpFaq5A": {
+    "message": "ClipZero bereinigt moderne OOXML-Dateien (.docx, .xlsx, .pptx) verlustfrei. Alte OLE2-Binärdateien (.doc/.xls/.ppt) und verschlüsselte Dokumente bleiben absichtlich unverändert, um Beschädigungen zu vermeiden."
+  },
+  "helpFooterTryBtn": {
+    "message": "Interaktive Testseite öffnen"
   }
 }

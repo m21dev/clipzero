@@ -14,15 +14,18 @@
         <div class="brand-text">
           <div class="title-row">
             <h1 class="title">ClipZero</h1>
-            <span class="version">1.3.4</span>
+            <span class="version">1.4.0</span>
           </div>
           <p class="subtitle" id="host-label" data-i18n="popupChecking">Checking tab…</p>
         </div>
       </div>
-      <span class="status is-standby" id="status-badge">
-        <span class="status-dot" aria-hidden="true"></span>
-        <span id="status-text" data-i18n="popupStandbyBadge">Off</span>
-      </span>
+      <div class="header-right">
+        <span class="status is-standby" id="status-badge">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status-text" data-i18n="popupStandbyBadge">Off</span>
+        </span>
+        <button type="button" class="icon-help-btn" id="help-header-btn" data-i18n-title="popupHelpBtn" title="Help &amp; Guide" aria-label="Help &amp; Guide">?</button>
+      </div>
     </header>
 
     <div class="divider"></div>
@@ -35,7 +38,11 @@ Keyboard shortcuts apply to those tabs.</p>
 
     <div class="tab-bar" role="tablist" aria-label="ClipZero tabs">
       <button type="button" class="tab-btn" id="tab-main" role="tab" aria-selected="true" aria-controls="panel-main" data-tab="main" data-i18n="popupTabProtection">Protection</button>
-      <button type="button" class="tab-btn" id="tab-advanced" role="tab" aria-selected="false" aria-controls="panel-advanced" tabindex="-1" data-tab="advanced" data-i18n="popupMoreSettings">More settings</button>
+      <button type="button" class="tab-btn" id="tab-tokens" role="tab" aria-selected="false" aria-controls="panel-tokens" tabindex="-1" data-tab="tokens">
+        <span data-i18n="popupTabTokens">Tokens</span>
+        <span class="tab-count" id="tokens-tab-count" hidden>0</span>
+      </button>
+      <button type="button" class="tab-btn" id="tab-advanced" role="tab" aria-selected="false" aria-controls="panel-advanced" tabindex="-1" data-tab="advanced" data-i18n="popupMoreSettings">Settings</button>
     </div>
 
     <div class="divider"></div>
@@ -66,7 +73,7 @@ Keyboard shortcuts apply to those tabs.</p>
       <button type="button" class="toggle-row" data-command="toggle-exif" role="switch" aria-checked="true" disabled>
         <span class="row-main">
           <span class="row-title" data-i18n="optExifTitle">Strip metadata</span>
-          <span class="row-desc" data-i18n="optExifDesc">JPEG EXIF/GPS, PNG, WebP, SVG &amp; PDF</span>
+          <span class="row-desc" data-i18n="optExifDesc">JPEG, PNG, WebP, SVG, PDF &amp; Office</span>
         </span>
         <span class="row-right">
           <kbd class="kbd" data-shortcut-for="toggle-exif">…</kbd>
@@ -105,6 +112,25 @@ Keyboard shortcuts apply to those tabs.</p>
           <span class="switch" aria-hidden="true"><span class="thumb"></span></span>
         </span>
       </button>
+    </section>
+
+    <section class="tab-panel" id="panel-tokens" role="tabpanel" aria-labelledby="tab-tokens" hidden>
+      <div class="tokens-header">
+        <span class="row-title" data-i18n="tokensSectionTitle">Active session tokens</span>
+        <div class="custom-words-meta">
+          <span id="tokens-count-pill" class="kbd">0/500</span>
+          <button id="tokens-clear-btn" type="button" class="mini-link-btn" hidden data-i18n="tokensClearBtn">Clear vault</button>
+        </div>
+      </div>
+
+      <div id="tokens-empty" class="tokens-empty-card">
+        <p class="tokens-empty-title" id="tokens-empty-title" data-i18n="tokensEmptyTitle">No masked tokens in this tab yet</p>
+        <p class="tokens-empty-desc" id="tokens-empty-desc" data-i18n="tokensEmptyDesc">Masked secrets, contacts, custom words, and regex matches appear here until the tab reloads or closes.</p>
+      </div>
+
+      <div id="tokens-list" class="tokens-list" hidden></div>
+
+      <p class="tokens-footer-note" data-i18n="tokensFooterNote">Stored in tab RAM only · cleared on reload or close</p>
     </section>
 
     <section class="tab-panel" id="panel-advanced" role="tabpanel" aria-labelledby="tab-advanced" hidden>
@@ -167,6 +193,21 @@ Keyboard shortcuts apply to those tabs.</p>
       <div class="divider"></div>
 
       <footer class="footer">
+        <button type="button" class="menu-item-btn" id="options-btn">
+          <span data-i18n="popupRulesBtn">Rules, Regex &amp; Backup…</span>
+          <span class="menu-item-right">
+            <span class="kbd" id="rules-count-badge" hidden>0</span>
+            <svg class="chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+              <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </button>
+        <button type="button" class="menu-item-btn" id="help-btn">
+          <span data-i18n="popupHelpBtn">Help &amp; Guide…</span>
+          <svg class="chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+            <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <button type="button" class="menu-item-btn" id="shortcuts-btn">
           <span data-i18n="popupShortcutsBtn">Keyboard shortcuts…</span>
           <svg class="chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
@@ -196,6 +237,7 @@ Keyboard shortcuts apply to those tabs.</p>
   </main>
 
   <script src="site_match.js"></script>
+  <script src="rules_schema.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

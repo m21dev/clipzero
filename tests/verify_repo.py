@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Standalone repository verification checks for ClipZero."""
 
 import json
@@ -10,8 +11,35 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXPECTED_LOCALES = ("de", "en", "es", "fr", "pt_BR", "zh_CN")
-RUNTIME_JS_FILES = ("background.js", "site_match.js", "content.js", "bridge.js", "popup.js")
-ALL_RUNTIME_TEXT_FILES = RUNTIME_JS_FILES + ("popup.html", "popup.css")
+EXPECTED_LOCALE_KEYS = 342
+RUNTIME_JS_FILES = (
+    "background.js",
+    "site_match.js",
+    "rules_schema.js",
+    "scrubber_worker.js",
+    "content.js",
+    "bridge.js",
+    "popup.js",
+    "options.js",
+    "welcome.js",
+    "help.js",
+)
+ALL_RUNTIME_TEXT_FILES = RUNTIME_JS_FILES + (
+    "popup.html",
+    "popup.css",
+    "options.html",
+    "options.css",
+    "welcome.html",
+    "welcome.css",
+    "help.html",
+    "help.css",
+)
+ALLOWED_JS_URLS = {
+    "http://www.w3.org/2000/svg",
+    "http://ns.adobe.com/xap/1.0/",
+    "https://*/*",
+    "https://",
+}
 
 
 def read_text(rel_path):
@@ -23,11 +51,18 @@ def check_manifest():
     manifest = json.loads(read_text("manifest.json"))
     assert manifest.get("manifest_version") == 3, "manifest_version must be 3"
     assert not manifest.get("permissions"), "manifest.json must declare zero API permissions"
+    assert "web_accessible_resources" not in manifest, "web_accessible_resources must remain omitted"
     assert "service_worker" not in manifest.get("background", {}), "background.service_worker must be omitted"
     assert manifest.get("background", {}).get("scripts") == [
         "site_match.js",
+        "rules_schema.js",
         "background.js",
-    ], "background.scripts must load site_match.js before background.js"
+    ], "background.scripts must load site_match.js and rules_schema.js before background.js"
+
+    options_ui = manifest.get("options_ui", {})
+    assert options_ui.get("page") == "options.html" and options_ui.get("open_in_tab") is True, (
+        f"Invalid options_ui: {options_ui!r}"
+    )
 
     gecko = manifest.get("browser_specific_settings", {}).get("gecko", {})
     assert gecko.get("id") == "{0985b1c5-a3bc-44fc-a2f8-5c829208c439}", "Invalid gecko.id"
@@ -60,7 +95,7 @@ def check_manifest():
         assert cmd_cfg.get("suggested_key", {}).get("default"), f"Missing suggested_key on {cmd_name}"
 
     csp = manifest.get("content_security_policy", {}).get("extension_pages", "")
-    for directive in ("default-src 'none'", "script-src 'self'", "object-src 'none'"):
+    for directive in ("default-src 'none'", "script-src 'self'", "worker-src 'self'", "object-src 'none'"):
         assert directive in csp, f"Missing CSP directive: {directive}"
 
     icons = manifest.get("icons", {})
@@ -79,6 +114,7 @@ def check_manifest():
     )
     assert cr.get("minimum_chrome_version") == "111", "Missing Chromium minimum_chrome_version"
     assert "browser_specific_settings" not in cr, "Chromium manifest must omit browser_specific_settings"
+    assert cr.get("options_ui") == {"page": "options.html", "open_in_tab": True}
     cr_cmds = cr.get("commands", {})
     assert len(cr_cmds) == 7, f"Expected 7 Chromium commands, got {len(cr_cmds)}"
     cr_default_cmds = {k for k, v in cr_cmds.items() if "suggested_key" in v}
@@ -88,6 +124,7 @@ def check_manifest():
 
     bg_js = read_text("background.js")
     assert "importScripts('site_match.js')" in bg_js, "background.js must import site_match.js for Chromium worker"
+    assert "importScripts('rules_schema.js')" in bg_js, "background.js must import rules_schema.js for Chromium worker"
 
     return manifest
 
@@ -112,7 +149,9 @@ def check_locales():
                     assert f"${ph_name.upper()}$" in msg or f"${ph_name}$" in msg, (
                         f"Missing placeholder token ${ph_name}$ in {lang}:{key}"
                     )
-    assert len(base_keys) == 155, f"Expected 155 locale keys, got {len(base_keys)}"
+    assert len(base_keys) == EXPECTED_LOCALE_KEYS, (
+        f"Expected {EXPECTED_LOCALE_KEYS} locale keys, got {len(base_keys)}"
+    )
 
 
 def check_security_static(manifest_version):
@@ -122,6 +161,7 @@ def check_security_static(manifest_version):
         r"\.insertAdjacentHTML\s*\(",
         r"\bdocument\.write\s*\(",
         r"\beval\s*\(",
+        r"\bnew\s+Function\s*\(",
         r"\bfetch\s*\(",
         r"\bXMLHttpRequest\b",
         r"\bWebSocket\b",
@@ -130,6 +170,12 @@ def check_security_static(manifest_version):
         src = read_text(rel)
         for pat in forbidden_sinks:
             assert not re.search(pat, src), f"Forbidden pattern {pat!r} found in {rel}"
+
+    for rel in RUNTIME_JS_FILES:
+        src = read_text(rel)
+        urls = set(re.findall(r"https?://[^\s'\"`<>)]*", src))
+        bad_urls = sorted(u for u in urls if u not in ALLOWED_JS_URLS)
+        assert not bad_urls, f"Unexpected literal URL(s) in {rel}: {bad_urls}"
 
     popup_html = read_text("popup.html")
     assert f'<span class="version">{manifest_version}</span>' in popup_html, (
@@ -142,8 +188,23 @@ def check_security_static(manifest_version):
     close_adv_pos = popup_html.index("</section>", adv_pos)
     assert adv_pos < sponsor_pos < close_adv_pos, "Sponsor link must remain inside #panel-advanced"
 
+    options_html = read_text("options.html")
+    assert f'<span class="version">{manifest_version}</span>' in options_html, (
+        f"options.html version span must match manifest version {manifest_version}"
+    )
+
+    welcome_html = read_text("welcome.html")
+    assert f'<span class="version">{manifest_version}</span>' in welcome_html, (
+        f"welcome.html version span must match manifest version {manifest_version}"
+    )
+
+    help_html = read_text("help.html")
+    assert f'<span class="version">{manifest_version}</span>' in help_html, (
+        f"help.html version span must match manifest version {manifest_version}"
+    )
+
     content_js = read_text("content.js")
-    assert "renderPixelatedBox" in content_js and "redactModePixel" in content_js, "Pixelate mode missing in v1.3.2"
+    assert "renderPixelatedBox" in content_js and "redactModePixel" in content_js, "Pixelate mode missing"
     assert "isInstanceSuperseded" not in content_js, "Legacy supersede state must not be present"
     assert "REDACT_WEIGHTS" in content_js and ":host{all:initial" in content_js, (
         "Closed shadow CSS reset or stroke weight table missing"
@@ -154,6 +215,19 @@ def check_security_static(manifest_version):
     assert not re.search(r"\bnew\s+(?:DataView|Uint8Array)\s*\(", content_js), (
         "content.js must use NativeDataView / NativeUint8Array captures"
     )
+    assert "stripOfficeZipBytes" in content_js and "getSessionTokensSnapshot" in content_js, (
+        "v1.4.0 Office scrubber or Token Inspector missing in content.js"
+    )
+
+    worker_js = read_text("scrubber_worker.js")
+    assert "scrubOfficeZipBytes" in worker_js and "scrubPdfBytes" in worker_js, (
+        "scrubber_worker.js missing core scrubbers"
+    )
+    rules_js = read_text("rules_schema.js")
+    assert "isSafeRegexPattern" in rules_js and "parseImportPayload" in rules_js, (
+        "rules_schema.js missing ReDoS or JSON import guards"
+    )
+
     bridge_js = read_text("bridge.js")
     assert "sender.id !== ext.runtime.id || sender.tab" in bridge_js, (
         "bridge.js must enforce strict sender validation on runtime.onMessage"
@@ -161,6 +235,9 @@ def check_security_static(manifest_version):
     bg_js = read_text("background.js")
     assert "clipzero_prefs_db" in bg_js and "getVerifiedSenderOrigin" in bg_js, (
         "background.js must isolate site prefs in IndexedDB per verified origin"
+    )
+    assert "details?.reason === 'install'" in bg_js and "welcome.html" in bg_js, (
+        "background.js must open welcome.html strictly on first install"
     )
 
 
@@ -182,7 +259,7 @@ def main():
     js_checked = check_js_syntax()
     print(
         f"OK: ClipZero v{manifest['version']} verified "
-        f"(55 hosts, 0 API perms, 6 locales x 155 keys, 0 sinks, node_syntax={js_checked})."
+        f"(55 hosts, 0 API perms, 6 locales x {EXPECTED_LOCALE_KEYS} keys, 0 sinks, node_syntax={js_checked})."
     )
 
 

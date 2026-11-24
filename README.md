@@ -3,7 +3,7 @@
   <h1>ClipZero</h1>
   <p>
     <strong>Local upload &amp; paste privacy firewall for Firefox and Chromium.</strong><br>
-    Anonymizes filenames, strips metadata losslessly, redacts screenshots on Canvas, and masks secrets before websites read your data.
+    Anonymizes filenames, strips image/PDF/Office metadata losslessly, redacts screenshots on Canvas, and masks secrets &amp; custom regex patterns before websites read your data.
   </p>
 
   <p>
@@ -14,6 +14,7 @@
   </p>
 
   <p>
+    <a href="#why-it-matters">Why It Matters</a> &middot;
     <a href="#install">Install</a> &middot;
     <a href="#features">Features</a> &middot;
     <a href="#supported-formats">Formats</a> &middot;
@@ -25,46 +26,65 @@
 
 ---
 
-Everything runs **100% locally inside your browser tab** before pages touch `paste`, `drop`, or `<input type="file">` events—with **zero API permissions**, **zero network calls**, **zero telemetry**, and **unminified source code**.
+Everything runs **100% locally inside your browser** before pages touch `paste`, `drop`, `<input type="file">`, or `showOpenFilePicker` events—with **zero API permissions**, **zero network calls**, **zero telemetry**, and **unminified source code**.
+
+## Why It Matters
+
+Everyday uploads and pastes leak far more than what you see on screen—and once a website reads `clipboardData` or `FileList`, you cannot take it back:
+
+| Real-World Scenario | What Quietly Leaks | How ClipZero Stops It Locally |
+| :--- | :--- | :--- |
+| **Pasting stack traces or `.env` snippets into AI chats** | API keys (`sk-proj-*`, `ghp_*`, AWS), bearer JWTs, client emails, and internal employee/ticket IDs stored in chat history | Replaces secrets with reversible `[REDACTED_*]` session tokens before the page reads the paste—restorable locally on copy |
+| **Sending `.docx`, `.xlsx`, `.pptx`, or `.pdf` reports** | Author/company names, revision & comment authors, `w:rsid` trails, local disk paths (`C:\Users\...`), page thumbnails, and GPS EXIF inside embedded photos | Losslessly scrubs OOXML ZIPs and PDFs in volatile RAM / Web Worker and anonymizes filenames while keeping text and layout intact |
+| **Sharing phone photos & support screenshots** | Exact GPS coordinates, camera serial/EXIF, `C2PA`/`iDOT` chunks, and visible emails or account balances on screen | Strips image metadata losslessly and lets you irreversibly **Pixelate (`P`)**, **Cover**, or **Crop (`C`)** screenshots in a Closed Shadow DOM modal before upload |
+
+<p align="center">
+  <img src="assets/demo-clipzero.gif" width="880" alt="ClipZero live local protection walkthrough: paste masking, Office &amp; EXIF scrubbing, and zero-setup onboarding">
+</p>
+
+> **Zero-config from second one (Firefox &amp; Chromium):** On first install only, ClipZero opens an interactive local **Welcome** sandbox (`welcome.html`, zero extra permissions, never shown on updates) with 3 sample secrets, 1-click paste simulation, RAM-only file scrubbing preview, and direct navigation to the beginner-friendly **Rules &amp; Backup** (`options.html`) builder and offline **Help &amp; Guide** (`help.html`).
+
+---
 
 ## Features
 
 ### Pre-Upload Canvas Redactor
-Visually inspect and scrub screenshots inside an isolated Shadow DOM modal before upload: **Cover** solid blocks, irreversible **Pixelate (`P`)** mosaic (`<= 64×64` zeroed buffer), **Outline (`O`)** frames, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` output dimensions, **Scroll (`H`)**, batch slide navigation (`Skip` / `Include`, `PgUp` / `PgDn`), and single-touch `pointerId` palm rejection.
+Visually inspect and scrub screenshots inside an isolated Closed Shadow DOM modal before upload: **Cover** solid blocks, irreversible **Pixelate (`P`)** mosaic (`<= 64×64` zeroed buffer), **Outline (`O`)** frames, **Pen (`D`)** strokes (`Thin` / `Medium` / `Thick`), non-destructive **Crop (`C`)** with live `origW×origH → outW×outH` output dimensions, **Scroll (`H`)**, batch slide navigation (`Skip` / `Include`, `PgUp` / `PgDn`), and single-touch `pointerId` palm rejection.
 
 <p align="center">
   <img src="assets/01-canvas-editor.png" width="880" alt="ClipZero Pre-Upload Canvas Redactor">
 </p>
 
-### Secret, PII & Custom Words Guard
-Detects and masks API keys, bearer tokens, JWTs, Luhn-valid payment cards, IBANs, URL credentials, private keys, optional emails/phones/IPs, and up to `50` user-defined **Custom hidden words** in both clipboard pastes and uploaded text/code files (`<= 512 KB`, tagged `Secrets masked` in the upload toast). Consistent session placeholders (`[REDACTED_*_N]`) stay reversible locally via the **Review** modal and **Restore originals** copy toast.
+### Secret, PII, Custom Words & Custom Regex Guard
+Detects and masks API keys, bearer tokens, JWTs, Luhn-valid payment cards, IBANs, URL credentials, private keys, optional emails/phones/IPs, up to `50` per-site **Custom hidden words**, and up to `20` global **Custom Regex Rules** (protected by static anti-ReDoS validation + per-rule runtime budgets) across clipboard pastes, text drops, and uploaded text/code files (`<= 512 KB`, tagged `Secrets masked` in the upload toast). Consistent session placeholders (`[REDACTED_*_N]`) stay reversible locally via the **Review** modal, **Restore originals** copy toast, and the popup **Tokens** inspector.
 
 <p align="center">
   <img src="assets/02-secret-guard.png" width="880" alt="ClipZero Secret, PII and Custom Words Guard">
 </p>
 
-### Zero-Permission Controls & Filename Anonymizer
-Replaces identifying filenames (`Screenshot 2026-11-19.png` → `clip_a4f9c2.png`, or `doc_*` for documents in strict mode), automatically flattens decodable `.jxl`, `.bmp`, `.ico`, `.tiff`, and `.heic`/`.heif` images to `.png`, caps optional output resolution at `2048 px`, flags un-reloaded open tabs (`!`), and cleanly tears itself down (`teardownMainWorld()`) if disabled or removed.
+### 3-Tab Controls, Guided Rules, Token Inspector &amp; Offline Help
+Manage protection, inspect active masked session tokens (masked by default with on-demand **Show** / **Copy** and **Clear vault**), create custom masking rules effortlessly using **5 one-click templates** or the **Guided builder (no regex required)** alongside **Advanced regex** with a syntax cheatsheet and live draft tester, export/import portable `.json` profiles (Merge or Replace) via **Rules &amp; Backup** (`options.html`), and browse the searchable offline **Help &amp; Guide** (`help.html`) from the popup `?` button. All per-site preferences and global rules live exclusively in extension-isolated `IndexedDB`.
 
 <p align="center">
-  <img src="assets/03-popup-controls.png" width="760" alt="ClipZero Popup Protection and Settings Tabs">
+  <img src="assets/03-popup-controls.png" width="760" alt="ClipZero 3-Tab Popup Controls and Token Inspector">
 </p>
 
 ---
 
 ## Supported Formats
 
-All sanitization happens in volatile tab memory; your original files on disk are never modified.
+All sanitization happens in volatile browser memory; your original files on disk are never modified. Heavy PDF, Office ZIP, and large SVG (`>= 256 KB`) jobs offload to a dedicated extension Web Worker with `Transferable` buffers in Firefox MV3 (with seamless native-stream async execution in Chromium MV3).
 
 | Format | Local Sanitization | Limits &amp; Notes |
 | :--- | :--- | :--- |
+| **Office (`.docx`, `.xlsx`, `.pptx`)** | Deep lossless OOXML ZIP scrub: empties `docProps/{core,app,custom}.xml`, removes `docProps/thumbnail.*` + rels/content-types, anonymizes Word/Excel/PPT comments &amp; track-changes authors/dates, strips Word `rsid` &amp; Excel `absPath`, zeros ZIP timestamps/comments, and scrubs EXIF inside embedded `*/media/*` images | Up to `50 MB`; untouched entries copied verbatim; encrypted OLE2 &amp; ZIP-bomb protected |
+| **PDF** | Blanks `/Info` (direct, `#xx`, indirect) &amp; XMP packets in-place | Up to `50 MB`; `xref` tables &amp; bookmarks preserved |
 | **JPEG** | Strips EXIF, GPS, XMP &amp; APP0 RGB thumbnails | Preserves safe orientation tag (`0x0112`) across progressive scans |
 | **PNG / WebP** | Rebuilt via strict chunk allowlists | Removes `iDOT`, `C2PA`, `eXIf`, `tEXt`, `zTXt`, `iTXt` |
 | **GIF / AVIF** | Strips GIF comments/XMP; cleans static AVIF files | `<= 256 KB` animated GIF probe; keeps animation frames intact |
-| **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs &amp; CSS/`marker` URLs | Up to `8 MB` |
-| **PDF** | Blanks `/Info` (direct, `#xx`, indirect) &amp; XMP packets in-place | Up to `50 MB`; `xref` tables &amp; bookmarks preserved |
+| **SVG** | Removes `<script>`, `<foreignObject>`, `on*`, unsafe URIs &amp; CSS/`marker` URLs | Up to `8 MB`; `>= 256 KB` pre-scrubbed off-thread before DOM validation |
 | **Exotic Rasters** | Flattens `.jxl`, `.bmp`, `.ico`, `.tiff`, `.heic`/`.heif` to `.png` | Handled via local Canvas when browser-decodable |
-| **Text / Code Files** | Masks secrets, PII &amp; custom words in `.env`, `.txt`, `.json`, `.md`, `.log`, etc. | Up to `512 KB`; adds `Secrets masked` pill to upload toast |
+| **Text / Code Files** | Masks secrets, PII, custom words &amp; custom regex in `.env`, `.txt`, `.json`, `.md`, `.log`, etc. | Up to `512 KB`; adds `Secrets masked` pill to upload toast |
 
 ---
 
@@ -75,7 +95,7 @@ All sanitization happens in volatile tab memory; your original files on disk are
 - **From source (development):** Open `about:debugging#/runtime/this-firefox` → **Load Temporary Add-on…** → select [`manifest.json`](manifest.json) (or run `python scripts/package.py` and load `dist/firefox/`).
 
 ### Chromium (`111+` Chrome, Edge, Brave — Developer Build)
-- Download **`clipzero-chromium-1.3.4.zip`** from **[Releases](https://github.com/m21dev/clipzero/releases)** and extract it (or run `python scripts/package.py` to generate `dist/chromium/`).
+- Download **`clipzero-chromium-1.4.0.zip`** from **[Releases](https://github.com/m21dev/clipzero/releases)** and extract it (or run `python scripts/package.py` to generate `dist/chromium/`).
 - Open `chrome://extensions` (or `edge://extensions`), enable **Developer mode**, click **Load unpacked**, and select the extracted folder.
 - Because Chromium enforces a maximum of `4` default `suggested_key` bindings per extension, the 4 primary shortcuts are pre-bound automatically and the other 3 can be configured at `chrome://extensions/shortcuts`.
 
@@ -122,12 +142,12 @@ All 7 shortcuts are pre-bound by default in **Firefox** (`about:addons` → Mana
 
 ## Privacy, Architecture &amp; Checks
 
-- **`content.js` (`MAIN` @ `document_start`):** Captures native DOM/Canvas/Event/MessagePort APIs at startup, enforces local scrubbing inside closed Shadow DOM, releases `ImageBitmap` and `<canvas>` buffers immediately, validates `injectedAtDocumentStart` on open tabs, and runs `teardownMainWorld()` if disabled or removed.
-- **`bridge.js` (`ISOLATED` @ `document_start`):** Relays localized strings (`6` locales × `155` keys), commands, liveness pongs (`isExtensionContextAlive()`), and state queries across a token-authenticated `MessageChannel`.
-- **`site_match.js`, `background.js` &amp; `popup.*`:** Flags already-open tabs missing injection (`!`), manages permission-reload arming, and forwards shortcuts with `0` API permissions (`data_collection_permissions: ["none"]`).
+- **`content.js` (`MAIN` @ `document_start`):** Captures native DOM/Canvas/Stream/Event/MessagePort APIs at startup, enforces local scrubbing inside Closed Shadow DOM, releases `ImageBitmap` and `<canvas>` buffers immediately, applies ReDoS-guarded custom regex rules, validates `injectedAtDocumentStart` on open tabs, and runs `teardownMainWorld()` if disabled or removed.
+- **`bridge.js` (`ISOLATED` @ `document_start`):** Relays localized strings (`6` locales × `342` keys), commands, `Transferable` worker jobs, live rule broadcasts, token inspector queries, and liveness pongs (`isExtensionContextAlive()`) across a token-authenticated `MessageChannel`.
+- **`scrubber_worker.js`, `rules_schema.js`, `site_match.js`, `background.js`, `popup.*`, `options.*`, `welcome.*` &amp; `help.*`:** Offloads heavy PDF/Office/SVG scrubbing with `Transferable` buffers, validates custom regex patterns &amp; portable JSON configs, persists site profiles &amp; global rules in extension-isolated `IndexedDB`, serves the first-install sandbox (`welcome.html`) and offline searchable guide (`help.html`), and runs with `0` API permissions (`data_collection_permissions: ["none"]`).
 
 ```bash
-python tests/verify_repo.py   # Manifests (Firefox + Chromium), locales (155 keys x6), sinks & syntax
+python tests/verify_repo.py   # Manifests (Firefox + Chromium), locales (342 keys x6), sinks & syntax
 python scripts/package.py     # Builds dist/firefox/, dist/chromium/, and release ZIPs
 ```
 

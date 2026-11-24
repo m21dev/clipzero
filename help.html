@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClipZero — Help &amp; Guide</title>
+  <link rel="stylesheet" href="help.css">
+</head>
+<body>
+  <div class="page">
+    <header class="page-header">
+      <div class="brand">
+        <img src="icons/icon-48.png" alt="ClipZero" class="logo" width="32" height="32">
+        <div class="brand-text">
+          <div class="title-row">
+            <h1 class="title">ClipZero</h1>
+            <span class="version">1.4.0</span>
+            <span class="page-tag" data-i18n="helpPageTag">Help &amp; Guide</span>
+          </div>
+          <p class="subtitle" data-i18n="helpSubtitle">Offline user guide for Firefox and Chromium · 100% local, zero network calls</p>
+        </div>
+      </div>
+      <nav class="subnav" aria-label="ClipZero pages">
+        <a class="nav-pill" href="welcome.html" data-i18n="navStart">Start &amp; Try</a>
+        <a class="nav-pill" href="options.html" data-i18n="navRules">Rules &amp; Backup</a>
+        <a class="nav-pill is-current" href="help.html" aria-current="page" data-i18n="navHelp">Help &amp; Guide</a>
+      </nav>
+    </header>
+
+    <div class="search-bar">
+      <label class="sr-only" for="help-search" data-i18n="helpSearchLabel">Filter help topics</label>
+      <input
+        type="search"
+        id="help-search"
+        class="search-input"
+        autocomplete="off"
+        data-i18n-placeholder="helpSearchPlaceholder"
+        placeholder="Filter topics (e.g. regex, office, pixelate, shortcuts, tokens)…"
+      >
+      <div class="jump-pills" aria-label="Quick sections">
+        <a class="jump-pill" href="#sec-start" data-i18n="helpJumpStart">Quick start</a>
+        <a class="jump-pill" href="#sec-secrets" data-i18n="helpJumpSecrets">Secrets &amp; Rules</a>
+        <a class="jump-pill" href="#sec-files" data-i18n="helpJumpFiles">Files &amp; Office</a>
+        <a class="jump-pill" href="#sec-canvas" data-i18n="helpJumpCanvas">Canvas Redactor</a>
+        <a class="jump-pill" href="#sec-shortcuts" data-i18n="helpJumpShortcuts">Shortcuts</a>
+        <a class="jump-pill" href="#sec-faq" data-i18n="helpJumpFaq">FAQ</a>
+      </div>
+    </div>
+
+    <p class="empty-note" id="help-empty" hidden data-i18n="helpSearchEmpty">No help sections match that filter. Clear the search box to view the full guide.</p>
+
+    <main class="content" id="help-sections">
+      <section class="card help-item" id="sec-start" aria-labelledby="start-h">
+        <h2 id="start-h" class="card-title" data-i18n="helpStartTitle">Quick start (3 steps)</h2>
+        <p class="card-desc" data-i18n="helpStartDesc">ClipZero runs automatically on 55 AI chat, messaging, social, developer, and webmail sites on both Firefox and Chromium.</p>
+        <div class="steps-grid">
+          <div class="step-box">
+            <span class="step-num">1</span>
+            <div>
+              <h3 class="step-title" data-i18n="helpStep1Title">Open a supported site</h3>
+              <p class="step-desc" data-i18n="helpStep1Desc">ChatGPT, Claude, Gemini, Gmail, Outlook, WhatsApp Web, Discord, GitHub, and 47 more sites are protected out of the box.</p>
+            </div>
+          </div>
+          <div class="step-box">
+            <span class="step-num">2</span>
+            <div>
+              <h3 class="step-title" data-i18n="helpStep2Title">Paste or upload as usual</h3>
+              <p class="step-desc" data-i18n="helpStep2Desc">ClipZero intercepts paste, drag-and-drop, and file uploads in RAM before the page reads them—your original files on disk are never changed.</p>
+            </div>
+          </div>
+          <div class="step-box">
+            <span class="step-num">3</span>
+            <div>
+              <h3 class="step-title" data-i18n="helpStep3Title">Review, restore, or customize</h3>
+              <p class="step-desc" data-i18n="helpStep3Desc">Use the toolbar popup to toggle options per tab, inspect active session tokens, or open Rules &amp; Backup for custom patterns.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card help-item" id="sec-secrets" aria-labelledby="secrets-h">
+        <h2 id="secrets-h" class="card-title" data-i18n="helpSecretsTitle">Secrets, custom words &amp; custom rules</h2>
+        <p class="card-desc" data-i18n="helpSecretsDesc">Choose the right tool depending on what you want to hide when pasting or uploading text/code files:</p>
+        <div class="compare-grid">
+          <div class="info-box">
+            <h3 class="info-title" data-i18n="helpSecAutoTitle">Automatic Secret &amp; PII Guard</h3>
+            <p class="info-desc" data-i18n="helpSecAutoDesc">Enabled by default on AI chats. Detects API keys (OpenAI, Anthropic, Google, AWS, GitHub), JWTs, payment cards, IBANs, URL passwords, and optional emails, phones, or IPs.</p>
+          </div>
+          <div class="info-box">
+            <h3 class="info-title" data-i18n="helpSecWordsTitle">Custom hidden words (per site)</h3>
+            <p class="info-desc" data-i18n="helpSecWordsDesc">In the popup Settings tab, list exact names, companies, or projects separated by commas (up to 50 per site). Best for fixed names without patterns.</p>
+          </div>
+          <div class="info-box">
+            <h3 class="info-title" data-i18n="helpSecRegexTitle">Custom rules (all 55 sites)</h3>
+            <p class="info-desc" data-i18n="helpSecRegexDesc">In Rules &amp; Backup, pick a 1-click template or use the Guided builder (no regex knowledge needed) to hide structured codes like EMP-104298 or INC-84920 everywhere.</p>
+          </div>
+        </div>
+        <p class="tip-banner" data-i18n="helpSecTokensTip">Tip: Masked placeholders like [REDACTED_OPENAI_KEY] stay reversible in tab RAM only. Open the popup Tokens tab to inspect or clear them, or copy a tokenized reply to get a 1-click “Restore originals” button.</p>
+      </section>
+
+      <section class="card help-item" id="sec-files" aria-labelledby="files-h">
+        <h2 id="files-h" class="card-title" data-i18n="helpFilesTitle">File &amp; metadata cleaning</h2>
+        <p class="card-desc" data-i18n="helpFilesDesc">Cleaned losslessly in browser memory (and off-thread in a dedicated Web Worker for heavy PDF, Office, and large SVG files).</p>
+        <div class="table-wrap">
+          <table class="acorn-table">
+            <thead>
+              <tr>
+                <th data-i18n="helpColFormat">Format</th>
+                <th data-i18n="helpColRemoved">What ClipZero removes locally</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Office</strong> <span class="mono">.docx .xlsx .pptx</span></td>
+                <td data-i18n="helpFmtOffice">Author, company, custom properties, page thumbnails, comment &amp; track-changes authors/dates, Word rsid &amp; local template paths, Excel local folder paths (absPath), ZIP timestamps/comments, and EXIF inside embedded photos.</td>
+              </tr>
+              <tr>
+                <td><strong>PDF</strong> <span class="mono">.pdf</span></td>
+                <td data-i18n="helpFmtPdf">Document /Info author/creator fields and XMP metadata packets in-place while keeping layout, bookmarks, and xref tables intact (up to 50 MB).</td>
+              </tr>
+              <tr>
+                <td><strong>Images</strong> <span class="mono">.jpg .png .webp .gif .avif .jxl</span></td>
+                <td data-i18n="helpFmtImg">EXIF camera/serial tags, GPS coordinates, RGB thumbnails, XMP, PNG tEXt/eXIf/C2PA/iDOT chunks, and GIF comments while keeping orientation and animation intact.</td>
+              </tr>
+              <tr>
+                <td><strong>SVG &amp; Text</strong> <span class="mono">.svg .txt .env .json .log</span></td>
+                <td data-i18n="helpFmtSvgTxt">Strips scripts, event handlers, comments, and editor paths from SVGs; masks secrets, PII, custom words, and custom rules inside uploaded text/code files (up to 512 KB).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card help-item" id="sec-canvas" aria-labelledby="canvas-h">
+        <h2 id="canvas-h" class="card-title" data-i18n="helpCanvasTitle">Visual Canvas Redactor (screenshots)</h2>
+        <p class="card-desc" data-i18n="helpCanvasDesc">Enable “Redact before upload” in the popup (or press Alt+Shift+B) to inspect and censor images inside a private Shadow DOM modal before uploading.</p>
+        <div class="tools-grid">
+          <div class="tool-chip"><kbd>N</kbd> <span data-i18n="helpToolCover">Cover — solid opaque redaction block</span></div>
+          <div class="tool-chip"><kbd>P</kbd> <span data-i18n="helpToolPixel">Pixelate — irreversible quantized mosaic</span></div>
+          <div class="tool-chip"><kbd>O</kbd> <span data-i18n="helpToolOutline">Outline — highlight box (Thin / Med / Thick)</span></div>
+          <div class="tool-chip"><kbd>D</kbd> <span data-i18n="helpToolPen">Pen — freehand marker strokes</span></div>
+          <div class="tool-chip"><kbd>C</kbd> <span data-i18n="helpToolCrop">Crop — trim margins with live W×H readout</span></div>
+          <div class="tool-chip"><kbd>H</kbd> <span data-i18n="helpToolScroll">Scroll — pan tall screenshots comfortably</span></div>
+        </div>
+        <p class="tip-banner" data-i18n="helpCanvasKeysTip">Editor keys: Arrows / Shift+Arrows move or resize the selected box · Del removes it · Ctrl/Cmd+Z undoes · PageUp/PageDown switches batch images · Enter uploads.</p>
+      </section>
+
+      <section class="card help-item" id="sec-shortcuts" aria-labelledby="shortcuts-h">
+        <h2 id="shortcuts-h" class="card-title" data-i18n="helpShortcutsTitle">Keyboard shortcuts (Firefox &amp; Chromium)</h2>
+        <p class="card-desc" data-i18n="helpShortcutsDesc">Firefox binds all 7 shortcuts automatically. Chromium allows 4 defaults; the other 3 can be assigned manually in chrome://extensions/shortcuts.</p>
+        <div class="table-wrap">
+          <table class="acorn-table">
+            <thead>
+              <tr>
+                <th data-i18n="helpColShortcut">Windows / Linux (macOS)</th>
+                <th data-i18n="helpColAction">Action</th>
+                <th>Firefox</th>
+                <th>Chromium</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">Alt+Shift+P <span class="muted">(Ctrl+Shift+P)</span></td>
+                <td data-i18n="cmdToggleEnabled">Pause / resume protection on active tab</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindDefault">Default</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+E <span class="muted">(Ctrl+Shift+E)</span></td>
+                <td data-i18n="cmdToggleExif">Toggle metadata stripping</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindDefault">Default</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+B <span class="muted">(Ctrl+Shift+B)</span></td>
+                <td data-i18n="cmdToggleRedact">Toggle Canvas Redactor before upload</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindDefault">Default</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+K <span class="muted">(Ctrl+Shift+K)</span></td>
+                <td data-i18n="cmdToggleSecrets">Toggle Secret &amp; API Key Guard</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindDefault">Default</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+S <span class="muted">(Ctrl+Shift+S)</span></td>
+                <td data-i18n="cmdToggleStrict">Toggle rename all files (strict mode)</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindManual">Manual</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+T <span class="muted">(Ctrl+Shift+T)</span></td>
+                <td data-i18n="cmdToggleToast">Show / hide on-screen upload notice</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindManual">Manual</td>
+              </tr>
+              <tr>
+                <td class="mono">Alt+Shift+G <span class="muted">(Ctrl+Shift+G)</span></td>
+                <td data-i18n="cmdToggleSave">Remember / forget current domain</td>
+                <td data-i18n="helpBindDefault">Default</td>
+                <td data-i18n="helpBindManual">Manual</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card help-item" id="sec-faq" aria-labelledby="faq-h">
+        <h2 id="faq-h" class="card-title" data-i18n="helpFaqTitle">Frequently asked questions</h2>
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary class="faq-q" data-i18n="helpFaq1Q">Why does the ClipZero toolbar icon show an orange “!” badge?</summary>
+            <p class="faq-a" data-i18n="helpFaq1A">That tab was already open before you installed or updated ClipZero. Because ClipZero hooks paste and upload APIs at document_start for security, simply reload that tab once (or click “Reload tab” in the popup) to activate protection.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q" data-i18n="helpFaq2Q">Why does Firefox ask me to grant access to supported sites?</summary>
+            <p class="faq-a" data-i18n="helpFaq2A">In Firefox Manifest V3, host permissions can start disabled depending on browser settings. Click the “Allow” banner in the popup or Welcome page once to grant access to the 55 supported sites—ClipZero still requests zero API permissions.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q" data-i18n="helpFaq3Q">How do I hide custom codes if I don’t know regular expressions?</summary>
+            <p class="faq-a" data-i18n="helpFaq3A">Open Rules &amp; Backup and click any 1-click template (Employee ID, Ticket, Client code, Invoice, Internal token) or use the Guided builder: enter the prefix, character type, and length, test it in the live sandbox, and save.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q" data-i18n="helpFaq4Q">Where are my tokens and rules stored, and does anything leave my device?</summary>
+            <p class="faq-a" data-i18n="helpFaq4A">Masked session tokens exist only in volatile tab RAM and vanish when you reload, close the tab, or click Clear vault. Your saved per-site preferences and custom rules stay in extension-isolated IndexedDB. ClipZero makes zero network calls and collects zero telemetry.</p>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-q" data-i18n="helpFaq5Q">Why wasn’t a legacy .doc or password-protected Office file modified?</summary>
+            <p class="faq-a" data-i18n="helpFaq5A">ClipZero cleans modern OOXML archives (.docx, .xlsx, .pptx) losslessly. Legacy binary OLE2 files (.doc/.xls/.ppt) and encrypted documents are intentionally passed through untouched so they are never corrupted (filename anonymization still applies when enabled).</p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p class="privacy-note" data-i18n="optionsFooterPrivacy">Zero API permissions · Zero network calls · Stored locally in extension IndexedDB</p>
+      <div class="footer-actions">
+        <a class="btn btn-secondary" href="welcome.html" data-i18n="helpFooterTryBtn">Open interactive sandbox</a>
+        <a class="btn btn-primary" href="options.html" data-i18n="welcomeOpenOptionsBtn">Rules, Regex &amp; Backup…</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="help.js"></script>
+</body>
+</html>

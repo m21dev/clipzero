@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Package clean runtime ClipZero builds for Firefox MV3 and Chromium MV3 inside dist/."""
 
 import copy
@@ -15,11 +16,22 @@ RUNTIME_FILES = (
     "background.js",
     "bridge.js",
     "content.js",
+    "help.css",
+    "help.html",
+    "help.js",
     "manifest.json",
+    "options.css",
+    "options.html",
+    "options.js",
     "popup.css",
     "popup.html",
     "popup.js",
+    "rules_schema.js",
+    "scrubber_worker.js",
     "site_match.js",
+    "welcome.css",
+    "welcome.html",
+    "welcome.js",
 )
 RUNTIME_DIRS = ("icons", "_locales")
 CHROMIUM_DEFAULT_COMMANDS = frozenset(

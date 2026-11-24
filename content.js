@@ -38,6 +38,16 @@
   const NativePromise = typeof window.Promise === 'function' ? window.Promise : null;
   const NativeDOMException = typeof window.DOMException === 'function' ? window.DOMException : null;
   const NativeUint8Array = window.Uint8Array;
+  const NativeUint32Array = typeof window.Uint32Array === 'function' ? window.Uint32Array : null;
+  const NativeArrayBuffer = typeof window.ArrayBuffer === 'function' ? window.ArrayBuffer : null;
+  const nativeIsArrayBufferView =
+    NativeArrayBuffer && typeof NativeArrayBuffer.isView === 'function'
+      ? NativeArrayBuffer.isView
+      : () => false;
+  const NativeCompressionStream =
+    typeof window.CompressionStream === 'function' ? window.CompressionStream : null;
+  const NativeDecompressionStream =
+    typeof window.DecompressionStream === 'function' ? window.DecompressionStream : null;
   const NativeDataView = window.DataView;
   const NativeRegExp = window.RegExp;
   const TextEncoderCtor = window.TextEncoder;
@@ -65,6 +75,7 @@
   const nativeObjKeys = typeof Object.keys === 'function' ? Object.keys : null;
   const nativeObjCreate = typeof Object.create === 'function' ? Object.create : null;
   const nativeIsArray = typeof Array.isArray === 'function' ? Array.isArray : (v) => v instanceof Array;
+  const nativeArrayFrom = typeof Array.from === 'function' ? Array.from : null;
   const nativeMathMin = Math.min;
   const nativeMathMax = Math.max;
   const nativeMathRound = Math.round;
@@ -241,6 +252,16 @@
   const readBlobArrayBuffer =
     window.Blob && window.Blob.prototype && typeof window.Blob.prototype.arrayBuffer === 'function'
       ? window.Blob.prototype.arrayBuffer
+      : null;
+  const readBlobText =
+    window.Blob && window.Blob.prototype && typeof window.Blob.prototype.text === 'function'
+      ? window.Blob.prototype.text
+      : null;
+  const nativeClipboardItemGetType =
+    typeof ClipboardItem === 'function' &&
+    ClipboardItem.prototype &&
+    typeof ClipboardItem.prototype.getType === 'function'
+      ? ClipboardItem.prototype.getType
       : null;
   const canvasToBlob =
     NativeHTMLCanvasElement &&
@@ -618,6 +639,18 @@
       ? nativeMapSizeDesc.get.call(m)
       : m.size;
   }
+  function mapKeysToArray(m) {
+    const out = [];
+    const it = nativeMapKeys ? nativeMapKeys.call(m) : m.keys();
+    while (true) {
+      const step = nativeMapIterNext ? nativeMapIterNext.call(it) : it.next();
+      if (!step || step.done) {
+        break;
+      }
+      nativeArrayPush.call(out, step.value);
+    }
+    return out;
+  }
   function setAdd(s, val) {
     return nativeSetAdd ? nativeSetAdd.call(s, val) : s.add(val);
   }
@@ -789,7 +822,12 @@
     if (nativeRemoveAttribute) nativeRemoveAttribute.call(el, name);
     else el.removeAttribute(name);
   }
-  function postPortMessageSafe(port, msg) {
+  function postPortMessageSafe(port, msg, transfer) {
+    if (transfer && nativeIsArray(transfer) && transfer.length > 0) {
+      return nativePortPostMessage
+        ? nativePortPostMessage.call(port, msg, transfer)
+        : port.postMessage(msg, transfer);
+    }
     return nativePortPostMessage ? nativePortPostMessage.call(port, msg) : port.postMessage(msg);
   }
   function setPortOnMessageSafe(port, fn) {
@@ -899,6 +937,9 @@
   let sessionBridgeToken = null;
   let bridgePort = null;
   let hasIsolatedBridge = false;
+  let supportsWorkerOffload = false;
+  let workerJobSeq = 0;
+  const pendingWorkerJobs = new NativeMap();
   let isInstanceTornDown = false;
   let pingCounter = 0;
   let lastProactivePingAt = 0;
@@ -907,6 +948,8 @@
   const pendingPings = [];
   let origClipboardProtoWriteTextDesc = null;
   let origNavigatorClipboardWriteTextDesc = null;
+  let origClipboardProtoWriteDesc = null;
+  let origNavigatorClipboardWriteDesc = null;
   let origInputClickDesc = null;
   let origInputShowPickerDesc = null;
   let origDtiWebkitEntryDesc = null;
@@ -914,6 +957,10 @@
   let origShowOpenFilePickerDesc = null;
   let clipboardProtoWrappedFn = null;
   let navClipboardWrappedFn = null;
+  let clipboardProtoWriteWrappedFn = null;
+  let navClipboardWriteWrappedFn = null;
+  let lastCopyRestoreText = '';
+  let lastCopyRestoreAt = 0;
   let inputClickWrappedFn = null;
   let inputShowPickerWrappedFn = null;
   let dtiWebkitEntryWrappedFn = null;
@@ -1043,7 +1090,7 @@
   }
 
   // RAM-only defaults unless user explicitly opts in to per-site persistence.
-  const state = { ...DEFAULT_STATE };
+  const state = { ...DEFAULT_STATE, customRegexRules: [] };
 
   let shortcuts = {
     'toggle-enabled': 'Alt+Shift+P',
@@ -1071,7 +1118,7 @@
     strictOffTitle: 'Rename all · OFF',
     strictOffSub: 'Custom unique names and documents kept',
     exifOnTitle: 'Strip metadata · ON',
-    exifOnSub: 'EXIF, GPS, and SVG metadata cleaner enabled',
+    exifOnSub: 'EXIF, GPS, SVG, PDF, and Office cleaner enabled',
     exifOffTitle: 'Strip metadata · OFF',
     exifOffSub: 'Instant zero-delay upload restored',
     redactOnTitle: 'Canvas redactor · ON',
@@ -1396,10 +1443,32 @@
     }
   }
 
+  function cloneCustomRegexRules(rules) {
+    const out = [];
+    if (!nativeIsArray(rules)) {
+      return out;
+    }
+    for (let i = 0; i < rules.length; i += 1) {
+      const r = rules[i];
+      if (!r || typeof r !== 'object') {
+        continue;
+      }
+      nativeArrayPush.call(out, {
+        id: String(r.id || ''),
+        label: String(r.label || ''),
+        pattern: String(r.pattern || ''),
+        flags: String(r.flags || ''),
+        enabled: Boolean(r.enabled),
+      });
+    }
+    return out;
+  }
+
   function snapshotState() {
     const snap = pickPersistedState();
     snap.saveSite = Boolean(state.saveSite);
     snap.storageReset = Boolean(storageResetOccurred);
+    snap.customRegexRules = cloneCustomRegexRules(state.customRegexRules);
     return snap;
   }
 
@@ -1836,6 +1905,19 @@
     return /\.(?:png|jpe?g|webp|gif|avif|jxl|bmp|tiff?|svg|ico|heic|heif)$/i.test(file.name || '');
   }
 
+  const MAX_OFFICE_BYTES = 50 * 1024 * 1024;
+  const MAX_OFFICE_ENTRIES = 2000;
+  const MAX_OFFICE_XML_UNCOMPRESSED = 8 * 1024 * 1024;
+  const MAX_OFFICE_MEDIA_UNCOMPRESSED = 12 * 1024 * 1024;
+  const WORKER_SVG_THRESHOLD_BYTES = 256 * 1024;
+  const WORKER_SCRUB_TIMEOUT_MS = 15000;
+
+  const OFFICE_OOXML_MIMES = new NativeSet([
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  ]);
+
   function detectExifFormat(file) {
     const mime = (file.type || '').toLowerCase().split(';')[0].trim();
     const name = (file.name || '').toLowerCase();
@@ -1860,9 +1942,20 @@
     if (mime === 'application/pdf' || mime === 'application/x-pdf' || mime === 'application/acrobat') {
       return 'pdf';
     }
+    if (setHas(OFFICE_OOXML_MIMES, mime)) {
+      return 'office';
+    }
     const ambiguousMime = !mime || mime === 'application/octet-stream' || mime === 'binary/octet-stream';
     if (ambiguousMime || mime === 'text/xml' || mime === 'application/xml') {
       if (name.endsWith('.svg')) return 'svg';
+    }
+    if (
+      ambiguousMime ||
+      mime === 'application/zip' ||
+      mime === 'application/x-zip-compressed' ||
+      mime === 'application/download'
+    ) {
+      if (/\.(?:docx|xlsx|pptx)$/.test(name)) return 'office';
     }
     if (ambiguousMime || mime === 'text/plain' || mime === 'application/download') {
       if (/\.jpe?g$/.test(name)) return 'jpeg';
@@ -1907,7 +2000,8 @@
     if (!file || typeof file.size !== 'number' || file.size <= 0 || file.size > MAX_SECRET_SCAN_CHARS) {
       return false;
     }
-    if (isImageFile(file) || detectExifFormat(file) === 'pdf') {
+    const exifFmt = detectExifFormat(file);
+    if (isImageFile(file) || exifFmt === 'pdf' || exifFmt === 'office') {
       return false;
     }
     const mime = (typeof file.type === 'string' ? file.type : '').toLowerCase().split(';')[0].trim();
@@ -3780,6 +3874,707 @@
     return modified ? out : null;
   }
 
+  // --- Deep Lossless Office OOXML ZIP Metadata Scrubber & Worker Offload Bridge ---
+
+  const ZIP_DOS_TIME_ZERO = 0x0000;
+  const ZIP_DOS_DATE_EPOCH = 0x0021; // 1980-01-01
+  const STRIP_ZIP_EXTRA_IDS = new NativeSet([0x5455, 0x5855, 0x7875, 0x000a]);
+  let sharedCrc32Table = null;
+
+  function getSharedCrc32Table() {
+    if (sharedCrc32Table) {
+      return sharedCrc32Table;
+    }
+    if (!NativeUint32Array) {
+      return null;
+    }
+    const tbl = new NativeUint32Array(256);
+    for (let n = 0; n < 256; n += 1) {
+      let c = n;
+      for (let k = 0; k < 8; k += 1) {
+        c = (c & 1) !== 0 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+      }
+      tbl[n] = c >>> 0;
+    }
+    sharedCrc32Table = tbl;
+    return tbl;
+  }
+
+  function computeZipCrc32(bytes) {
+    const tbl = getSharedCrc32Table();
+    if (!tbl) {
+      return 0;
+    }
+    let crc = 0xffffffff;
+    for (let i = 0; i < bytes.byteLength; i += 1) {
+      crc = tbl[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  }
+
+  async function transformZipDeflateRaw(bytes, isCompress, maxOutBytes) {
+    const StreamCtor = isCompress ? NativeCompressionStream : NativeDecompressionStream;
+    if (typeof StreamCtor !== 'function') {
+      throw new Error('streams-unavailable');
+    }
+    const stream = new StreamCtor('deflate-raw');
+    const writer = stream.writable.getWriter();
+    const reader = stream.readable.getReader();
+    let writeErr = null;
+    const writePromise = (async () => {
+      try {
+        await writer.write(bytes);
+        await writer.close();
+      } catch (err) {
+        writeErr = err;
+      }
+    })();
+
+    const chunks = [];
+    let total = 0;
+    try {
+      while (true) {
+        const res = await reader.read();
+        if (res.done) {
+          break;
+        }
+        const chunk = res.value;
+        if (chunk && chunk.byteLength > 0) {
+          total += chunk.byteLength;
+          if (!isCompress && maxOutBytes && total > maxOutBytes) {
+            await reader.cancel().catch(() => {});
+            throw new Error('zip-entry-too-large');
+          }
+          nativeArrayPush.call(chunks, chunk);
+        }
+      }
+    } finally {
+      await writePromise;
+    }
+    if (writeErr) {
+      throw writeErr;
+    }
+    return concatChunks(chunks);
+  }
+
+  function stripSensitiveZipExtraLocal(extraBytes) {
+    if (!extraBytes || extraBytes.byteLength === 0) {
+      return { bytes: extraBytes, changed: false };
+    }
+    const view = new NativeDataView(extraBytes.buffer, extraBytes.byteOffset, extraBytes.byteLength);
+    const kept = [];
+    let pos = 0;
+    let changed = false;
+    while (pos + 4 <= extraBytes.byteLength) {
+      const headerId = view.getUint16(pos, true);
+      const dataSize = view.getUint16(pos + 2, true);
+      const end = pos + 4 + dataSize;
+      if (end > extraBytes.byteLength) {
+        return { bytes: extraBytes, changed: false };
+      }
+      if (setHas(STRIP_ZIP_EXTRA_IDS, headerId)) {
+        changed = true;
+      } else {
+        nativeArrayPush.call(kept, extraBytes.subarray(pos, end));
+      }
+      pos = end;
+    }
+    if (!changed) {
+      return { bytes: extraBytes, changed: false };
+    }
+    return { bytes: concatChunks(kept), changed: true };
+  }
+
+  function emptyOoxmlRootPreservingAttrs(xmlText, rootLocalPattern) {
+    const declM = /^\s*(<\?xml\b[^>]*\?>)/.exec(xmlText);
+    const xmlDecl = declM ? declM[1] : '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    const openRe = new NativeRegExp(
+      `<((?:[a-zA-Z0-9_-]+:)?${rootLocalPattern})(\\s[^<>]*?)?\\s*(\\/?)>`,
+      'i'
+    );
+    const openM = nativeRegExpExec.call(openRe, xmlText);
+    if (!openM) {
+      return null;
+    }
+    const tagName = openM[1];
+    const attrs = (openM[2] || '').replace(/\s+\/$/, '');
+    if (openM[3] === '/' && !xmlText.includes('<!--')) {
+      return null;
+    }
+    const nextXml = `${xmlDecl}\n<${tagName}${attrs}/>`;
+    return nextXml === xmlText ? null : nextXml;
+  }
+
+  function scrubOoxmlTextEntryLocal(lowerName, xmlText, removedThumbSet) {
+    let next = xmlText;
+    if (lowerName === 'docprops/core.xml') {
+      return emptyOoxmlRootPreservingAttrs(xmlText, 'coreProperties');
+    }
+    if (lowerName === 'docprops/app.xml' || lowerName === 'docprops/custom.xml') {
+      return emptyOoxmlRootPreservingAttrs(xmlText, 'Properties');
+    }
+    if (lowerName === '_rels/.rels' && setSize(removedThumbSet) > 0) {
+      next = next.replace(
+        /<Relationship\b[^>]*\bTarget\s*=\s*(?:"\/?docProps\/thumbnail\.[^"]*"|'\/?docProps\/thumbnail\.[^']*')[^>]*?(?:\/>|>\s*<\/Relationship>)/gi,
+        ''
+      );
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === '[content_types].xml' && setSize(removedThumbSet) > 0) {
+      next = next.replace(
+        /<Override\b[^>]*\bPartName\s*=\s*(?:"\/?docProps\/thumbnail\.[^"]*"|'\/?docProps\/thumbnail\.[^']*')[^>]*?(?:\/>|>\s*<\/Override>)/gi,
+        ''
+      );
+      return next === xmlText ? null : next;
+    }
+    if (
+      lowerName === 'word/document.xml' ||
+      /^word\/(?:header|footer)\d*\.xml$/.test(lowerName) ||
+      lowerName === 'word/footnotes.xml' ||
+      lowerName === 'word/endnotes.xml'
+    ) {
+      next = next
+        .replace(/\b(w:author\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\s+\bw:date\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(/\s+\bw15:userId\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(/\s+\bw16cid:durableId\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(
+          /\s+\bw:rsid(?:R|RPr|RDefault|P|Del|Tr|Sect|SectPr)?\s*=\s*(?:"[^"]*"|'[^']*')/gi,
+          ''
+        );
+      return next === xmlText ? null : next;
+    }
+    if (/^word\/comments[a-z0-9_-]*\.xml$/.test(lowerName) || lowerName === 'word/people.xml') {
+      next = next
+        .replace(/\b(w:author\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\b(w:initials\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\b(w15:author\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\s+\bw:date\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(/\s+\bw16cex:dateUtc\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(/\s+\bw15:userId\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        .replace(/\s+\bw15:providerId\s*=\s*(?:"[^"]*"|'[^']*')/gi, '');
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === 'word/settings.xml') {
+      next = next
+        .replace(/<w:rsids\b[^>]*>[\s\S]*?<\/w:rsids>/gi, '')
+        .replace(/<w:rsids\b[^>]*\/>/gi, '')
+        .replace(/<w:rsidRoot\b[^>]*\/>/gi, '');
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === 'word/_rels/settings.xml.rels') {
+      next = next.replace(
+        /(<Relationship\b[^>]*\bTarget\s*=\s*)(?:"([^"]*)"|'([^']*)')([^>]*>)/gi,
+        (full, pre, dq, sq, post) => {
+          const target = dq !== undefined ? dq : sq || '';
+          const lowerT = target.trim().toLowerCase();
+          const isLocalLeak =
+            lowerT.startsWith('file:') ||
+            /^[a-z]:[\\/]/.test(lowerT) ||
+            lowerT.startsWith('\\\\') ||
+            lowerT.startsWith('/users/') ||
+            lowerT.startsWith('/home/');
+          return isLocalLeak ? `${pre}""${post}` : full;
+        }
+      );
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === 'xl/workbook.xml') {
+      next = next
+        .replace(/<[a-zA-Z0-9_-]+:absPath\b[^>]*\/>/gi, '')
+        .replace(/<[a-zA-Z0-9_-]+:absPath\b[^>]*>[\s\S]*?<\/[a-zA-Z0-9_-]+:absPath>/gi, '')
+        .replace(/<fileSharing\b[^>]*\/?>/gi, (tag) =>
+          tag.replace(/\s+\buserName\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        )
+        .replace(/<fileVersion\b[^>]*\/?>/gi, (tag) =>
+          tag
+            .replace(/\s+\blastEdited\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+            .replace(/\s+\blowestEdited\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+            .replace(/\s+\brupBuild\s*=\s*(?:"[^"]*"|'[^']*')/gi, '')
+        );
+      return next === xmlText ? null : next;
+    }
+    if (/^xl\/comments\d*\.xml$/.test(lowerName)) {
+      next = next.replace(/<author\b[^>]*>[^<]*<\/author>/gi, '<author/>');
+      return next === xmlText ? null : next;
+    }
+    if (/^xl\/(?:threadedcomments|persons)\/[^/]+\.xml$/.test(lowerName)) {
+      next = next
+        .replace(/\b(displayName\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\b(userId\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\s+\bdT\s*=\s*(?:"[^"]*"|'[^']*')/gi, '');
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === 'ppt/commentauthors.xml') {
+      next = next
+        .replace(/\b(name\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""')
+        .replace(/\b(initials\s*=\s*)(?:"[^"]*"|'[^']*')/gi, '$1""');
+      return next === xmlText ? null : next;
+    }
+    if (/^ppt\/comments\/[^/]+\.xml$/.test(lowerName)) {
+      next = next.replace(/\s+\bdt\s*=\s*(?:"[^"]*"|'[^']*')/gi, '');
+      return next === xmlText ? null : next;
+    }
+    if (lowerName === 'ppt/presentation.xml') {
+      next = next.replace(/\s+\blastModifiedBy\s*=\s*(?:"[^"]*"|'[^']*')/gi, '');
+      return next === xmlText ? null : next;
+    }
+    return null;
+  }
+
+  function isOfficeXmlTargetLocal(lowerName, hasRemovedThumb) {
+    if (
+      lowerName === 'docprops/core.xml' ||
+      lowerName === 'docprops/app.xml' ||
+      lowerName === 'docprops/custom.xml' ||
+      lowerName === 'word/document.xml' ||
+      lowerName === 'word/footnotes.xml' ||
+      lowerName === 'word/endnotes.xml' ||
+      lowerName === 'word/people.xml' ||
+      lowerName === 'word/settings.xml' ||
+      lowerName === 'word/_rels/settings.xml.rels' ||
+      lowerName === 'xl/workbook.xml' ||
+      lowerName === 'ppt/commentauthors.xml' ||
+      lowerName === 'ppt/presentation.xml'
+    ) {
+      return true;
+    }
+    if (hasRemovedThumb && (lowerName === '_rels/.rels' || lowerName === '[content_types].xml')) {
+      return true;
+    }
+    return (
+      /^word\/(?:header|footer)\d*\.xml$/.test(lowerName) ||
+      /^word\/comments[a-z0-9_-]*\.xml$/.test(lowerName) ||
+      /^xl\/comments\d*\.xml$/.test(lowerName) ||
+      /^xl\/(?:threadedcomments|persons)\/[^/]+\.xml$/.test(lowerName) ||
+      /^ppt\/comments\/[^/]+\.xml$/.test(lowerName)
+    );
+  }
+
+  function detectOfficeMediaFmtLocal(lowerName) {
+    if (!/^(?:word|xl|ppt)\/media\/[^/]+$/.test(lowerName)) {
+      return null;
+    }
+    if (/\.jpe?g$/.test(lowerName)) return 'jpeg';
+    if (lowerName.endsWith('.png')) return 'png';
+    if (lowerName.endsWith('.webp')) return 'webp';
+    if (lowerName.endsWith('.gif')) return 'gif';
+    return null;
+  }
+
+  async function stripOfficeZipBytes(bytes) {
+    if (
+      !bytes ||
+      bytes.byteLength < 22 ||
+      bytes.byteLength > MAX_OFFICE_BYTES ||
+      !sharedTextEncoder ||
+      !sharedTextDecoder ||
+      !NativeUint32Array
+    ) {
+      return null;
+    }
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b || bytes[2] !== 0x03 || bytes[3] !== 0x04) {
+      return null;
+    }
+    const len = bytes.byteLength;
+    const view = new NativeDataView(bytes.buffer, bytes.byteOffset, len);
+    const minEocd = nativeMathMax(0, len - 65557);
+    let eocdPos = -1;
+    for (let p = len - 22; p >= minEocd; p -= 1) {
+      if (
+        bytes[p] === 0x50 &&
+        bytes[p + 1] === 0x4b &&
+        bytes[p + 2] === 0x05 &&
+        bytes[p + 3] === 0x06
+      ) {
+        const commentLen = view.getUint16(p + 20, true);
+        if (p + 22 + commentLen === len) {
+          eocdPos = p;
+          break;
+        }
+      }
+    }
+    if (eocdPos < 0) {
+      return null;
+    }
+
+    const diskNum = view.getUint16(eocdPos + 4, true);
+    const cdDisk = view.getUint16(eocdPos + 6, true);
+    const diskEntries = view.getUint16(eocdPos + 8, true);
+    const totalEntries = view.getUint16(eocdPos + 10, true);
+    const cdSize = view.getUint32(eocdPos + 12, true);
+    const cdOffset = view.getUint32(eocdPos + 16, true);
+    const zipCommentLen = view.getUint16(eocdPos + 20, true);
+
+    if (
+      diskNum !== 0 ||
+      cdDisk !== 0 ||
+      diskEntries !== totalEntries ||
+      totalEntries === 0 ||
+      totalEntries === 0xffff ||
+      totalEntries > MAX_OFFICE_ENTRIES ||
+      cdSize === 0xffffffff ||
+      cdOffset === 0xffffffff ||
+      cdOffset + cdSize > eocdPos
+    ) {
+      return null;
+    }
+    if (eocdPos >= 20 && view.getUint32(eocdPos - 20, true) === 0x07064b50) {
+      return null;
+    }
+
+    const entries = [];
+    let hasContentTypes = false;
+    let hasOfficeRoot = false;
+    const removedThumbSet = new NativeSet();
+    let cdPos = cdOffset;
+
+    for (let i = 0; i < totalEntries; i += 1) {
+      if (cdPos + 46 > cdOffset + cdSize || view.getUint32(cdPos, true) !== 0x02014b50) {
+        return null;
+      }
+      const versionMadeBy = view.getUint16(cdPos + 4, true);
+      const versionNeeded = view.getUint16(cdPos + 6, true);
+      const flags = view.getUint16(cdPos + 8, true);
+      const method = view.getUint16(cdPos + 10, true);
+      const dosTime = view.getUint16(cdPos + 12, true);
+      const dosDate = view.getUint16(cdPos + 14, true);
+      const crc32 = view.getUint32(cdPos + 16, true);
+      const compSize = view.getUint32(cdPos + 20, true);
+      const uncompSize = view.getUint32(cdPos + 24, true);
+      const nameLen = view.getUint16(cdPos + 28, true);
+      const extraLen = view.getUint16(cdPos + 30, true);
+      const commentLen = view.getUint16(cdPos + 32, true);
+      const diskStart = view.getUint16(cdPos + 34, true);
+      const intAttr = view.getUint16(cdPos + 36, true);
+      const extAttr = view.getUint32(cdPos + 38, true);
+      const localOffset = view.getUint32(cdPos + 42, true);
+
+      const entryEnd = cdPos + 46 + nameLen + extraLen + commentLen;
+      if (entryEnd > cdOffset + cdSize || diskStart !== 0 || (flags & 0x0001) !== 0) {
+        return null;
+      }
+      if (localOffset + 30 > cdOffset || view.getUint32(localOffset, true) !== 0x04034b50) {
+        return null;
+      }
+      const lfhNameLen = view.getUint16(localOffset + 26, true);
+      const lfhExtraLen = view.getUint16(localOffset + 28, true);
+      const dataStart = localOffset + 30 + lfhNameLen + lfhExtraLen;
+      const dataEnd = dataStart + compSize;
+      if (dataEnd > cdOffset) {
+        return null;
+      }
+
+      const nameBytes = bytes.subarray(cdPos + 46, cdPos + 46 + nameLen);
+      const cdExtraBytes = bytes.subarray(cdPos + 46 + nameLen, cdPos + 46 + nameLen + extraLen);
+      const lfhExtraBytes = bytes.subarray(localOffset + 30 + lfhNameLen, dataStart);
+      const nameStr = nativeTextDecode
+        ? nativeTextDecode.call(sharedTextDecoder, nameBytes)
+        : sharedTextDecoder.decode(nameBytes);
+      const lowerName = nameStr.replace(/\\/g, '/').replace(/^\/+/, '').toLowerCase();
+
+      if (lowerName === '[content_types].xml') {
+        hasContentTypes = true;
+      } else if (
+        lowerName.startsWith('word/') ||
+        lowerName.startsWith('xl/') ||
+        lowerName.startsWith('ppt/')
+      ) {
+        hasOfficeRoot = true;
+      }
+
+      const isThumbnail =
+        !lowerName.includes('..') &&
+        /^docprops\/thumbnail\.(?:jpe?g|png|wmf|emf|gif|bmp)$/.test(lowerName);
+      if (isThumbnail) {
+        setAdd(removedThumbSet, lowerName);
+      }
+
+      nativeArrayPush.call(entries, {
+        versionMadeBy,
+        versionNeeded,
+        flags,
+        method,
+        dosTime,
+        dosDate,
+        crc32,
+        compSize,
+        uncompSize,
+        commentLen,
+        intAttr,
+        extAttr,
+        nameBytes,
+        cdExtraBytes,
+        lfhExtraBytes,
+        lowerName,
+        isThumbnail,
+        dataStart,
+        dataEnd,
+      });
+      cdPos = entryEnd;
+    }
+
+    if (!hasContentTypes || !hasOfficeRoot) {
+      return null;
+    }
+
+    const hasRemovedThumb = setSize(removedThumbSet) > 0;
+    let modified = hasRemovedThumb || zipCommentLen > 0;
+    const outEntries = [];
+
+    for (let i = 0; i < entries.length; i += 1) {
+      const e = entries[i];
+      if (e.isThumbnail) {
+        modified = true;
+        continue;
+      }
+
+      let outMethod = e.method;
+      const outFlags = e.flags & ~0x0008;
+      let outCrc32 = e.crc32;
+      let outCompBytes = bytes.subarray(e.dataStart, e.dataEnd);
+      let outUncompSize = e.uncompSize;
+
+      const cleanCdExtra = stripSensitiveZipExtraLocal(e.cdExtraBytes);
+      const cleanLfhExtra = stripSensitiveZipExtraLocal(e.lfhExtraBytes);
+      if (
+        cleanCdExtra.changed ||
+        cleanLfhExtra.changed ||
+        e.commentLen > 0 ||
+        e.dosTime !== ZIP_DOS_TIME_ZERO ||
+        e.dosDate !== ZIP_DOS_DATE_EPOCH
+      ) {
+        modified = true;
+      }
+
+      const safePath = !e.lowerName.includes('..');
+      if (safePath && (e.method === 0 || e.method === 8)) {
+        if (isOfficeXmlTargetLocal(e.lowerName, hasRemovedThumb)) {
+          if (e.uncompSize <= MAX_OFFICE_XML_UNCOMPRESSED) {
+            try {
+              const rawXmlBytes =
+                e.method === 0
+                  ? outCompBytes
+                  : await transformZipDeflateRaw(outCompBytes, false, MAX_OFFICE_XML_UNCOMPRESSED);
+              const xmlText = nativeTextDecode
+                ? nativeTextDecode.call(sharedTextDecoder, rawXmlBytes)
+                : sharedTextDecoder.decode(rawXmlBytes);
+              const scrubbedXml = scrubOoxmlTextEntryLocal(e.lowerName, xmlText, removedThumbSet);
+              if (scrubbedXml !== null) {
+                const newRawBytes = nativeTextEncode
+                  ? nativeTextEncode.call(sharedTextEncoder, scrubbedXml)
+                  : sharedTextEncoder.encode(scrubbedXml);
+                outCrc32 = computeZipCrc32(newRawBytes);
+                outUncompSize = newRawBytes.byteLength;
+                if (e.method === 8 && newRawBytes.byteLength > 0) {
+                  const deflated = await transformZipDeflateRaw(newRawBytes, true, 0);
+                  if (deflated.byteLength < newRawBytes.byteLength) {
+                    outMethod = 8;
+                    outCompBytes = deflated;
+                  } else {
+                    outMethod = 0;
+                    outCompBytes = newRawBytes;
+                  }
+                } else {
+                  outMethod = 0;
+                  outCompBytes = newRawBytes;
+                }
+                modified = true;
+              }
+            } catch {
+              // Fail safe: preserve entry verbatim if stream or size cap fails.
+            }
+          }
+        } else {
+          const mediaFmt = detectOfficeMediaFmtLocal(e.lowerName);
+          if (mediaFmt && e.uncompSize <= MAX_OFFICE_MEDIA_UNCOMPRESSED) {
+            try {
+              const rawMediaBytes =
+                e.method === 0
+                  ? outCompBytes
+                  : await transformZipDeflateRaw(outCompBytes, false, MAX_OFFICE_MEDIA_UNCOMPRESSED);
+              let scrubbedMedia = null;
+              if (mediaFmt === 'jpeg') scrubbedMedia = stripJpegBytes(rawMediaBytes);
+              else if (mediaFmt === 'png') scrubbedMedia = stripPngBytes(rawMediaBytes);
+              else if (mediaFmt === 'webp') scrubbedMedia = stripWebpBytes(rawMediaBytes);
+              else if (mediaFmt === 'gif') scrubbedMedia = stripGifBytes(rawMediaBytes);
+
+              if (scrubbedMedia) {
+                outCrc32 = computeZipCrc32(scrubbedMedia);
+                outUncompSize = scrubbedMedia.byteLength;
+                if (e.method === 8 && scrubbedMedia.byteLength > 0) {
+                  const deflated = await transformZipDeflateRaw(scrubbedMedia, true, 0);
+                  if (deflated.byteLength < scrubbedMedia.byteLength) {
+                    outMethod = 8;
+                    outCompBytes = deflated;
+                  } else {
+                    outMethod = 0;
+                    outCompBytes = scrubbedMedia;
+                  }
+                } else {
+                  outMethod = 0;
+                  outCompBytes = scrubbedMedia;
+                }
+                modified = true;
+              }
+            } catch {
+              // Fail safe: preserve embedded media verbatim.
+            }
+          }
+        }
+      }
+
+      nativeArrayPush.call(outEntries, {
+        versionMadeBy: e.versionMadeBy,
+        versionNeeded: e.versionNeeded,
+        flags: outFlags,
+        method: outMethod,
+        crc32: outCrc32,
+        compBytes: outCompBytes,
+        uncompSize: outUncompSize,
+        intAttr: e.intAttr,
+        extAttr: e.extAttr,
+        nameBytes: e.nameBytes,
+        cdExtraBytes: cleanCdExtra.bytes,
+        lfhExtraBytes: cleanLfhExtra.bytes,
+      });
+    }
+
+    if (!modified) {
+      return null;
+    }
+
+    let totalBytes = 22;
+    for (let i = 0; i < outEntries.length; i += 1) {
+      const oe = outEntries[i];
+      totalBytes +=
+        30 + oe.nameBytes.byteLength + oe.lfhExtraBytes.byteLength + oe.compBytes.byteLength;
+      totalBytes += 46 + oe.nameBytes.byteLength + oe.cdExtraBytes.byteLength;
+    }
+
+    const out = new NativeUint8Array(totalBytes);
+    const outView = new NativeDataView(out.buffer);
+    let offset = 0;
+    const localOffsets = new NativeUint32Array(outEntries.length);
+
+    for (let i = 0; i < outEntries.length; i += 1) {
+      const oe = outEntries[i];
+      localOffsets[i] = offset;
+      outView.setUint32(offset, 0x04034b50, true);
+      outView.setUint16(offset + 4, oe.versionNeeded, true);
+      outView.setUint16(offset + 6, oe.flags, true);
+      outView.setUint16(offset + 8, oe.method, true);
+      outView.setUint16(offset + 10, ZIP_DOS_TIME_ZERO, true);
+      outView.setUint16(offset + 12, ZIP_DOS_DATE_EPOCH, true);
+      outView.setUint32(offset + 14, oe.crc32, true);
+      outView.setUint32(offset + 18, oe.compBytes.byteLength, true);
+      outView.setUint32(offset + 22, oe.uncompSize, true);
+      outView.setUint16(offset + 26, oe.nameBytes.byteLength, true);
+      outView.setUint16(offset + 28, oe.lfhExtraBytes.byteLength, true);
+      offset += 30;
+      out.set(oe.nameBytes, offset);
+      offset += oe.nameBytes.byteLength;
+      if (oe.lfhExtraBytes.byteLength > 0) {
+        out.set(oe.lfhExtraBytes, offset);
+        offset += oe.lfhExtraBytes.byteLength;
+      }
+      if (oe.compBytes.byteLength > 0) {
+        out.set(oe.compBytes, offset);
+        offset += oe.compBytes.byteLength;
+      }
+    }
+
+    const newCdOffset = offset;
+    for (let i = 0; i < outEntries.length; i += 1) {
+      const oe = outEntries[i];
+      outView.setUint32(offset, 0x02014b50, true);
+      outView.setUint16(offset + 4, oe.versionMadeBy, true);
+      outView.setUint16(offset + 6, oe.versionNeeded, true);
+      outView.setUint16(offset + 8, oe.flags, true);
+      outView.setUint16(offset + 10, oe.method, true);
+      outView.setUint16(offset + 12, ZIP_DOS_TIME_ZERO, true);
+      outView.setUint16(offset + 14, ZIP_DOS_DATE_EPOCH, true);
+      outView.setUint32(offset + 16, oe.crc32, true);
+      outView.setUint32(offset + 20, oe.compBytes.byteLength, true);
+      outView.setUint32(offset + 24, oe.uncompSize, true);
+      outView.setUint16(offset + 28, oe.nameBytes.byteLength, true);
+      outView.setUint16(offset + 30, oe.cdExtraBytes.byteLength, true);
+      outView.setUint16(offset + 32, 0, true);
+      outView.setUint16(offset + 34, 0, true);
+      outView.setUint16(offset + 36, oe.intAttr, true);
+      outView.setUint32(offset + 38, oe.extAttr, true);
+      outView.setUint32(offset + 42, localOffsets[i], true);
+      offset += 46;
+      out.set(oe.nameBytes, offset);
+      offset += oe.nameBytes.byteLength;
+      if (oe.cdExtraBytes.byteLength > 0) {
+        out.set(oe.cdExtraBytes, offset);
+        offset += oe.cdExtraBytes.byteLength;
+      }
+    }
+
+    const newCdSize = offset - newCdOffset;
+    outView.setUint32(offset, 0x06054b50, true);
+    outView.setUint16(offset + 4, 0, true);
+    outView.setUint16(offset + 6, 0, true);
+    outView.setUint16(offset + 8, outEntries.length, true);
+    outView.setUint16(offset + 10, outEntries.length, true);
+    outView.setUint32(offset + 12, newCdSize, true);
+    outView.setUint32(offset + 16, newCdOffset, true);
+    outView.setUint16(offset + 20, 0, true);
+
+    return out;
+  }
+
+  function requestWorkerScrub(op, arrayBuf) {
+    if (
+      !NativePromise ||
+      !supportsWorkerOffload ||
+      !hasIsolatedBridge ||
+      !bridgePort ||
+      !sessionBridgeToken ||
+      isInstanceTornDown ||
+      !NativeArrayBuffer ||
+      !(arrayBuf instanceof NativeArrayBuffer)
+    ) {
+      return NativePromise
+        ? NativePromise.resolve({ ok: false, modified: false, buffer: null })
+        : Promise.resolve({ ok: false, modified: false, buffer: null });
+    }
+    return new NativePromise((resolve) => {
+      workerJobSeq += 1;
+      const jobId = workerJobSeq;
+      let settled = false;
+      const finish = (result) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        mapDelete(pendingWorkerJobs, jobId);
+        nativeClearTimeout(timer);
+        resolve(result);
+      };
+      const timer = nativeSetTimeout(() => {
+        finish({ ok: false, modified: false, buffer: null });
+      }, WORKER_SCRUB_TIMEOUT_MS);
+      mapSet(pendingWorkerJobs, jobId, finish);
+      try {
+        postPortMessageSafe(
+          bridgePort,
+          {
+            __clipzero: TO_ISOLATED,
+            token: sessionBridgeToken,
+            requestId: 0,
+            workerScrub: { jobId, op, buffer: arrayBuf },
+          },
+          [arrayBuf]
+        );
+      } catch {
+        finish({ ok: false, modified: false, buffer: null });
+      }
+    });
+  }
+
   function sniffFormatFromBytes(bytes) {
     if (!bytes || bytes.byteLength < 6) {
       return null;
@@ -3836,12 +4631,55 @@
       const inBytes = bytes.byteLength;
       const fmt = sniffFormatFromBytes(bytes) || declFmt;
       let out = null;
-      if (fmt === 'jpeg') out = stripJpegBytes(bytes);
-      else if (fmt === 'png') out = stripPngBytes(bytes);
-      else if (fmt === 'webp') out = stripWebpBytes(bytes);
-      else if (fmt === 'gif') out = stripGifBytes(bytes);
-      else if (fmt === 'svg') out = stripSvgBytes(bytes);
-      else if (fmt === 'pdf') out = stripPdfBytes(bytes, true);
+      let usedWorker = false;
+
+      const canOffload =
+        supportsWorkerOffload &&
+        hasIsolatedBridge &&
+        Boolean(bridgePort) &&
+        !isInstanceTornDown &&
+        (fmt === 'pdf' ||
+          fmt === 'office' ||
+          (fmt === 'svg' && inBytes >= WORKER_SVG_THRESHOLD_BYTES));
+
+      if (canOffload) {
+        const workerOp = fmt === 'svg' ? 'svg-pre' : fmt;
+        bytes = null;
+        const wRes = await requestWorkerScrub(workerOp, buf);
+        buf = null;
+        if (wRes && wRes.ok) {
+          usedWorker = true;
+          if (fmt === 'svg') {
+            if (wRes.modified && wRes.buffer instanceof NativeArrayBuffer) {
+              const preBytes = new NativeUint8Array(wRes.buffer);
+              const domClean = stripSvgBytes(preBytes);
+              out = domClean || preBytes;
+            } else {
+              const freshBuf = await readBlobArrayBuffer.call(file);
+              out = stripSvgBytes(new NativeUint8Array(freshBuf));
+            }
+          } else if (wRes.modified && wRes.buffer instanceof NativeArrayBuffer) {
+            out = new NativeUint8Array(wRes.buffer);
+          } else {
+            out = null;
+          }
+        } else {
+          // Worker unavailable or timed out: re-read immutable File and fall back cleanly in-process.
+          buf = await readBlobArrayBuffer.call(file);
+          bytes = new NativeUint8Array(buf);
+        }
+      }
+
+      if (!usedWorker && bytes) {
+        if (fmt === 'jpeg') out = stripJpegBytes(bytes);
+        else if (fmt === 'png') out = stripPngBytes(bytes);
+        else if (fmt === 'webp') out = stripWebpBytes(bytes);
+        else if (fmt === 'gif') out = stripGifBytes(bytes);
+        else if (fmt === 'svg') out = stripSvgBytes(bytes);
+        else if (fmt === 'pdf') out = stripPdfBytes(bytes, true);
+        else if (fmt === 'office') out = await stripOfficeZipBytes(bytes);
+      }
+
       // Drop input ArrayBuffer references immediately so large media buffers can be reclaimed.
       bytes = null;
       buf = null;
@@ -3850,6 +4688,7 @@
         inBytes,
         outBytes: out ? out.byteLength : inBytes,
         stripped: Boolean(out),
+        worker: usedWorker,
       });
       return out;
     } catch {
@@ -4295,15 +5134,319 @@
     return '••••••••';
   }
 
+  const MAX_CUSTOM_REGEX_RULES = 20;
+  const MAX_REGEX_PATTERN_LEN = 160;
+  const MAX_REGEX_LABEL_LEN = 24;
+  const MAX_REGEX_QUANTIFIER = 64;
+  const MAX_REGEX_NESTING = 4;
+  const MAX_CUSTOM_REGEX_MATCHES_PER_RULE = 200;
+  const MAX_CUSTOM_REGEX_BUDGET_MS = 25;
+
+  function sanitizeRegexLabelLocal(raw) {
+    if (typeof raw !== 'string') {
+      return '';
+    }
+    const cleaned = raw
+      .trim()
+      .toUpperCase()
+      .replace(/[\s-]+/g, '_')
+      .replace(/[^A-Z0-9_]/g, '')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, MAX_REGEX_LABEL_LEN);
+    return /^[A-Z][A-Z0-9_]{0,23}$/.test(cleaned) ? cleaned : '';
+  }
+
+  function sanitizeRegexFlagsLocal(raw) {
+    if (typeof raw !== 'string') {
+      return 'i';
+    }
+    let out = '';
+    if (raw.includes('i')) out += 'i';
+    if (raw.includes('m')) out += 'm';
+    if (raw.includes('u')) out += 'u';
+    return out;
+  }
+
+  function parseBraceQuantifierLocal(pattern, pos) {
+    const m = /^\{(\d+)(?:,(\d*))?\}/.exec(pattern.slice(pos));
+    if (!m) {
+      return null;
+    }
+    const minVal = Number.parseInt(m[1], 10);
+    const hasComma = m[2] !== undefined;
+    const maxVal = hasComma ? (m[2] === '' ? Infinity : Number.parseInt(m[2], 10)) : minVal;
+    const exceedsBounds =
+      !nativeNumberIsFinite(minVal) ||
+      minVal > MAX_REGEX_QUANTIFIER ||
+      (maxVal !== Infinity &&
+        (!nativeNumberIsFinite(maxVal) || maxVal > MAX_REGEX_QUANTIFIER || maxVal < minVal));
+    return {
+      end: pos + m[0].length,
+      repeating: maxVal > 1,
+      exceedsBounds,
+    };
+  }
+
+  function hasAmbiguousBranchesLocal(branches) {
+    if (branches.length < 2) {
+      return false;
+    }
+    const seenFirst = new NativeSet();
+    for (let i = 0; i < branches.length; i += 1) {
+      const b = branches[i];
+      if (!b || /[.[\]\\+*?{]/.test(b)) {
+        return true;
+      }
+      const first = b[0].toLowerCase();
+      if (setHas(seenFirst, first)) {
+        return true;
+      }
+      setAdd(seenFirst, first);
+    }
+    return false;
+  }
+
+  function isSafeRegexPatternLocal(pattern, flags) {
+    if (typeof pattern !== 'string' || pattern.length === 0 || pattern.length > MAX_REGEX_PATTERN_LEN) {
+      return false;
+    }
+    if (/[\x00-\x1f\x7f]/.test(pattern) || /\\(?:[1-9]|k<)/.test(pattern) || /\(\?<[=!]/.test(pattern)) {
+      return false;
+    }
+    const safeFlags = sanitizeRegexFlagsLocal(flags);
+    const stack = [{ hasQuantifier: false, hasAlternation: false, branches: [''], isLookaround: false }];
+    let inCharClass = false;
+    let i = 0;
+    while (i < pattern.length) {
+      const ch = pattern[i];
+      const top = stack[stack.length - 1];
+      if (ch === '\\') {
+        if (i + 1 >= pattern.length) return false;
+        top.branches[top.branches.length - 1] += pattern.slice(i, i + 2);
+        i += 2;
+        continue;
+      }
+      if (inCharClass) {
+        top.branches[top.branches.length - 1] += ch;
+        if (ch === ']') inCharClass = false;
+        i += 1;
+        continue;
+      }
+      if (ch === '[') {
+        inCharClass = true;
+        top.branches[top.branches.length - 1] += ch;
+        i += 1;
+        continue;
+      }
+      if (ch === '(') {
+        if (stack.length > MAX_REGEX_NESTING) return false;
+        let isLookaround = false;
+        let advance = 1;
+        if (pattern[i + 1] === '?') {
+          const n2 = pattern[i + 2];
+          if (n2 === '=' || n2 === '!') {
+            isLookaround = true;
+            advance = 3;
+          } else if (n2 === ':') {
+            advance = 3;
+          }
+        }
+        nativeArrayPush.call(stack, {
+          hasQuantifier: false,
+          hasAlternation: false,
+          branches: [''],
+          isLookaround,
+        });
+        i += advance;
+        continue;
+      }
+      if (ch === ')') {
+        if (stack.length <= 1) return false;
+        const closed = stack.pop();
+        const parent = stack[stack.length - 1];
+        if (closed.isLookaround && closed.hasQuantifier) return false;
+        i += 1;
+        let repeating = false;
+        let hasAnyQuant = false;
+        if (i < pattern.length) {
+          const nc = pattern[i];
+          if (nc === '*' || nc === '+') {
+            repeating = true;
+            hasAnyQuant = true;
+            i += 1;
+            if (pattern[i] === '?') i += 1;
+          } else if (nc === '?') {
+            hasAnyQuant = true;
+            i += 1;
+            if (pattern[i] === '?') i += 1;
+          } else if (nc === '{') {
+            const bq = parseBraceQuantifierLocal(pattern, i);
+            if (bq) {
+              if (bq.exceedsBounds) return false;
+              repeating = bq.repeating;
+              hasAnyQuant = true;
+              i = bq.end;
+              if (pattern[i] === '?') i += 1;
+            }
+          }
+        }
+        if (repeating) {
+          if (closed.hasQuantifier) return false;
+          if (closed.hasAlternation && hasAmbiguousBranchesLocal(closed.branches)) return false;
+        }
+        if (hasAnyQuant || closed.hasQuantifier) {
+          parent.hasQuantifier = true;
+        }
+        parent.branches[parent.branches.length - 1] += '()';
+        continue;
+      }
+      if (ch === '|') {
+        top.hasAlternation = true;
+        nativeArrayPush.call(top.branches, '');
+        i += 1;
+        continue;
+      }
+      if (ch === '*' || ch === '+') {
+        top.hasQuantifier = true;
+        top.branches[top.branches.length - 1] += ch;
+        i += 1;
+        if (pattern[i] === '?') i += 1;
+        continue;
+      }
+      if (ch === '?') {
+        top.branches[top.branches.length - 1] += ch;
+        i += 1;
+        if (pattern[i] === '?') i += 1;
+        continue;
+      }
+      if (ch === '{') {
+        const bq = parseBraceQuantifierLocal(pattern, i);
+        if (bq) {
+          if (bq.exceedsBounds) return false;
+          if (bq.repeating) top.hasQuantifier = true;
+          top.branches[top.branches.length - 1] += '{q}';
+          i = bq.end;
+          if (pattern[i] === '?') i += 1;
+          continue;
+        }
+      }
+      top.branches[top.branches.length - 1] += ch;
+      i += 1;
+    }
+    if (inCharClass || stack.length !== 1) {
+      return false;
+    }
+    try {
+      const re = new NativeRegExp(pattern, safeFlags);
+      if (re.test('')) {
+        return false;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function sanitizeCustomRegexRulesLocal(rawList) {
+    if (!nativeIsArray(rawList)) {
+      return [];
+    }
+    const out = [];
+    const seenIds = new NativeSet();
+    for (let i = 0; i < rawList.length && out.length < MAX_CUSTOM_REGEX_RULES; i += 1) {
+      const item = rawList[i];
+      if (!item || typeof item !== 'object' || nativeIsArray(item)) {
+        continue;
+      }
+      const label = sanitizeRegexLabelLocal(item.label);
+      if (!label || !isSafeRegexPatternLocal(item.pattern, item.flags)) {
+        continue;
+      }
+      let id =
+        typeof item.id === 'string' && /^[a-zA-Z0-9_-]{1,32}$/.test(item.id)
+          ? item.id
+          : `rule_${i + 1}`;
+      let suffix = 1;
+      while (setHas(seenIds, id)) {
+        suffix += 1;
+        id = `${id.slice(0, 24)}_${suffix}`;
+      }
+      setAdd(seenIds, id);
+      nativeArrayPush.call(out, {
+        id,
+        label,
+        pattern: item.pattern,
+        flags: sanitizeRegexFlagsLocal(item.flags),
+        enabled: item.enabled === undefined ? true : Boolean(item.enabled),
+      });
+    }
+    return out;
+  }
+
+  function hasActiveCustomRegexRules() {
+    if (!nativeIsArray(state.customRegexRules) || state.customRegexRules.length === 0) {
+      return false;
+    }
+    for (let i = 0; i < state.customRegexRules.length; i += 1) {
+      if (state.customRegexRules[i] && state.customRegexRules[i].enabled) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function isTextSecretScanningActive() {
+    return Boolean(
+      state.maskSecrets ||
+        state.maskPii ||
+        (state.customWords && state.customWords.trim()) ||
+        hasActiveCustomRegexRules()
+    );
+  }
+
+  function buildCustomRegexRuleList(rules) {
+    const out = [];
+    if (!nativeIsArray(rules) || rules.length === 0) {
+      return out;
+    }
+    for (let i = 0; i < rules.length; i += 1) {
+      const r = rules[i];
+      if (!r || !r.enabled || !r.label || !r.pattern) {
+        continue;
+      }
+      if (!isSafeRegexPatternLocal(r.pattern, r.flags)) {
+        continue;
+      }
+      try {
+        const re = new NativeRegExp(r.pattern, `g${sanitizeRegexFlagsLocal(r.flags)}`);
+        const tag = `[REDACTED_${r.label}]`;
+        nativeArrayPush.call(out, {
+          label: `Regex: ${r.label}`,
+          re,
+          isUserCustom: true,
+          replace: () => tag,
+        });
+      } catch {
+        // Skip invalid custom regex rules safely.
+      }
+    }
+    return out;
+  }
+
   function applyRedactionRuleList(segments, rules, counter) {
     let working = segments;
     for (let i = 0; i < rules.length; i += 1) {
       const rule = rules[i];
       const nextSegments = [];
       let anyChanged = false;
+      const isUserCustom = Boolean(rule.isUserCustom);
+      const ruleStartMs = isUserCustom && nativeDateNow ? nativeDateNow() : 0;
+      let ruleMatchCount = 0;
+      let budgetExceeded = false;
       for (let s = 0; s < working.length; s += 1) {
         const seg = working[s];
-        if (seg.finding !== null || !seg.currentText) {
+        if (budgetExceeded || seg.finding !== null || !seg.currentText) {
           nativeArrayPush.call(nextSegments, seg);
           continue;
         }
@@ -4316,6 +5459,16 @@
           if (m[0].length === 0) {
             rule.re.lastIndex += 1;
             continue;
+          }
+          if (isUserCustom) {
+            ruleMatchCount += 1;
+            if (
+              ruleMatchCount > MAX_CUSTOM_REGEX_MATCHES_PER_RULE ||
+              (nativeDateNow && nativeDateNow() - ruleStartMs > MAX_CUSTOM_REGEX_BUDGET_MS)
+            ) {
+              budgetExceeded = true;
+              break;
+            }
           }
           const out = rule.replace(...m, m.index, plain);
           if (out !== m[0]) {
@@ -4385,7 +5538,7 @@
   }
 
   const REDACTED_TAG_RE = /\[REDACTED_[A-Z0-9_]+\]/;
-  const REDACTED_TOKEN_GLOBAL_RE = /\[REDACTED_[A-Z0-9_]+(?:_\d+)?\]/g;
+  const REDACTED_TOKEN_GLOBAL_RE = /\\?\[REDACTED(?:\\?_[A-Z0-9]+)+\\?\]/g;
 
   function buildCustomWordsRule(customWordsStr) {
     const normalized = sanitizeCustomWords(customWordsStr);
@@ -4550,7 +5703,8 @@
       return { text, replaced: 0 };
     }
     let replaced = 0;
-    const out = text.replace(REDACTED_TOKEN_GLOBAL_RE, (tok) => {
+    const out = text.replace(REDACTED_TOKEN_GLOBAL_RE, (rawTok) => {
+      const tok = rawTok.includes('\\') ? rawTok.replace(/\\/g, '') : rawTok;
       if (mapHas(sessionTokenToRaw, tok)) {
         replaced += 1;
         const raw = mapGet(sessionTokenToRaw, tok);
@@ -4558,7 +5712,7 @@
         mapSet(sessionTokenToRaw, tok, raw);
         return raw;
       }
-      return tok;
+      return rawTok;
     });
     return { text: out, replaced };
   }
@@ -4569,6 +5723,46 @@
     sessionVaultChars = 0;
   }
 
+  /**
+   * Returns a safe masked snapshot of active session tokens (never exposes raw secrets).
+   * Deduplicates unnumbered/numbered_1 aliases created when only 1 entity of a type exists.
+   */
+  function getSessionTokensSnapshot() {
+    const keys = mapKeysToArray(sessionTokenToRaw);
+    const keySet = new NativeSet(keys);
+    const items = [];
+    for (let i = 0; i < keys.length; i += 1) {
+      const tok = keys[i];
+      const raw = mapGet(sessionTokenToRaw, tok);
+      if (typeof raw !== 'string') {
+        continue;
+      }
+      if (tok.endsWith('_1]')) {
+        const baseTok = `${tok.slice(0, -3)}]`;
+        if (setHas(keySet, baseTok) && mapGet(sessionTokenToRaw, baseTok) === raw) {
+          continue;
+        }
+      }
+      nativeArrayPush.call(items, {
+        token: tok,
+        preview: makeSafeSecretPreview(raw, tok),
+      });
+    }
+    return {
+      tokens: items,
+      totalCount: items.length,
+      maxEntries: MAX_SESSION_VAULT_ENTRIES,
+    };
+  }
+
+  function revealSessionTokenValue(token) {
+    if (typeof token !== 'string' || !mapHas(sessionTokenToRaw, token)) {
+      return null;
+    }
+    const raw = mapGet(sessionTokenToRaw, token);
+    return typeof raw === 'string' ? raw : null;
+  }
+
   function maskSensitiveText(input, opts) {
     if (typeof input !== 'string' || !input || input.length > MAX_SECRET_SCAN_CHARS) {
       return { text: input, count: 0, findings: [], totalFindings: 0, segments: [] };
@@ -4576,6 +5770,7 @@
     const useSecrets = opts ? Boolean(opts.secrets) : Boolean(state.maskSecrets);
     const usePii = opts ? Boolean(opts.pii) : Boolean(state.maskPii);
     const customRule = buildCustomWordsRule(state.customWords);
+    const customRegexList = buildCustomRegexRuleList(state.customRegexRules);
     const segments = [{ rawText: input, currentText: input, finding: null }];
     const counter = { count: 0 };
     if (useSecrets) {
@@ -4586,6 +5781,9 @@
     }
     if (customRule) {
       applyRedactionRuleList(segments, [customRule], counter);
+    }
+    if (customRegexList.length > 0) {
+      applyRedactionRuleList(segments, customRegexList, counter);
     }
     if (counter.count > 0) {
       assignConsistentSessionTokens(segments);
@@ -4605,8 +5803,7 @@
   }
 
   async function sanitizeTextFileSecrets(file) {
-    const hasCustomWords = Boolean(state.customWords && state.customWords.trim());
-    if (!state.maskSecrets && !state.maskPii && !hasCustomWords) {
+    if (!isTextSecretScanningActive()) {
       return null;
     }
     if (!isScannableTextFile(file) || !readBlobArrayBuffer || !sharedTextDecoder || !sharedTextEncoder) {
@@ -9495,9 +10692,7 @@
   function batchNeedsAction(files) {
     const seenBatchImageNames = new NativeSet();
     const skippedImages = [];
-    const textSecretScanActive = Boolean(
-      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
-    );
+    const textSecretScanActive = isTextSecretScanningActive();
     let needsSync = false;
     for (let i = 0; i < files.length; i += 1) {
       const f = files[i];
@@ -9513,6 +10708,8 @@
           // Exceeds SVG sanitization limit; avoid unnecessary async cloning.
         } else if (exifFmt === 'pdf' && f.size > MAX_PDF_BYTES) {
           // Exceeds PDF sanitization limit; avoid unnecessary async cloning.
+        } else if (exifFmt === 'office' && f.size > MAX_OFFICE_BYTES) {
+          // Exceeds Office ZIP sanitization limit; avoid unnecessary async cloning.
         } else {
           return 'async';
         }
@@ -9700,9 +10897,7 @@
     }
     const hasImageFile =
       nativeIsArray(files) && files.length > 0 && nativeArraySome.call(files, isImageFile);
-    const maskActive = Boolean(
-      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
-    );
+    const maskActive = isTextSecretScanningActive();
     if (!hasImageFile && !maskActive) {
       return { strings, changed: false, textSecretsMasked: false };
     }
@@ -10126,10 +11321,7 @@
       return;
     }
     if (files.length === 0) {
-      if (
-        eventName === 'drop' &&
-        (state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim()))
-      ) {
+      if (eventName === 'drop' && isTextSecretScanningActive()) {
         handleDropTextSecrets(event, original);
       }
       return;
@@ -10143,9 +11335,7 @@
     const origEffectAllowed = eventName === 'drop' ? readTransferEffect(original, 'effectAllowed') : null;
 
     const hasImageFile = nativeArraySome.call(files, isImageFile);
-    const maskActive = Boolean(
-      state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())
-    );
+    const maskActive = isTextSecretScanningActive();
     const action = batchNeedsAction(files);
     const mightSanitizeStrings =
       meta.stringTypes.length > 0 &&
@@ -10437,7 +11627,7 @@
     }
     const meta = snapshotDataTransferMeta(clipboardData);
     if (meta.files.length === 0) {
-      if (state.maskSecrets || state.maskPii || (state.customWords && state.customWords.trim())) {
+      if (isTextSecretScanningActive()) {
         handlePasteSecrets(event, clipboardData);
       }
       triggerProactiveBridgeCheck();
@@ -10446,27 +11636,16 @@
     handleTransferEvent(event, 'clipboardData', 'paste', meta);
   }
 
-  function isNodeEditableDirect(node) {
-    let cur = node && node.nodeType === 3 ? node.parentElement : node;
-    while (cur && cur.nodeType === 1) {
-      if (
-        (NativeHTMLTextAreaElement && cur instanceof NativeHTMLTextAreaElement) ||
-        (NativeHTMLInputElement && cur instanceof NativeHTMLInputElement)
-      ) {
-        return !cur.readOnly && !cur.disabled;
-      }
-      if (cur.isContentEditable) {
-        return true;
-      }
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-
   function showCopyTokensDetectedToast(restoredText) {
     if (typeof restoredText !== 'string' || !restoredText) {
       return;
     }
+    const now = Date.now();
+    if (restoredText === lastCopyRestoreText && now - lastCopyRestoreAt < 400) {
+      return;
+    }
+    lastCopyRestoreText = restoredText;
+    lastCopyRestoreAt = now;
     showToastNotice(
       i18n.tokensDetectedCopyTitle,
       i18n.tokensDetectedCopySub,
@@ -10483,6 +11662,100 @@
     );
   }
 
+  function offerDetokenizeIfMatched(copiedText) {
+    if (
+      isInstanceTornDown ||
+      isInternalClipboardWrite ||
+      !state.enabled ||
+      typeof copiedText !== 'string' ||
+      copiedText.length === 0 ||
+      copiedText.length > MAX_SECRET_SCAN_CHARS ||
+      mapSize(sessionTokenToRaw) === 0
+    ) {
+      return false;
+    }
+    try {
+      const restored = deTokenizeText(copiedText);
+      if (restored.replaced > 0 && restored.text !== copiedText) {
+        showCopyTokensDetectedToast(restored.text);
+        return true;
+      }
+    } catch {
+      // Never interfere with user copy operations on scan error.
+    }
+    return false;
+  }
+
+  function getSelectedTextFromElement(el) {
+    if (!el) {
+      return '';
+    }
+    try {
+      if (NativeHTMLTextAreaElement && el instanceof NativeHTMLTextAreaElement) {
+        const val =
+          textAreaValueDescriptor && typeof textAreaValueDescriptor.get === 'function'
+            ? textAreaValueDescriptor.get.call(el)
+            : el.value;
+        if (typeof val === 'string' && typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number' && el.selectionEnd > el.selectionStart) {
+          return val.slice(el.selectionStart, el.selectionEnd);
+        }
+      } else if (NativeHTMLInputElement && el instanceof NativeHTMLInputElement) {
+        const val =
+          inputValueDescriptor && typeof inputValueDescriptor.get === 'function'
+            ? inputValueDescriptor.get.call(el)
+            : el.value;
+        if (typeof val === 'string' && typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number' && el.selectionEnd > el.selectionStart) {
+          return val.slice(el.selectionStart, el.selectionEnd);
+        }
+      }
+    } catch {
+      // Ignore selectionStart restrictions on non-text input types.
+    }
+    return '';
+  }
+
+  function getCopiedSelectionText(event) {
+    const rawTarget = getEventPathTarget(event);
+    const fromTarget = getSelectedTextFromElement(rawTarget);
+    if (fromTarget) {
+      return fromTarget;
+    }
+    try {
+      let active = document.activeElement;
+      while (active && active.shadowRoot && active.shadowRoot.activeElement) {
+        active = active.shadowRoot.activeElement;
+      }
+      const fromActive = getSelectedTextFromElement(active);
+      if (fromActive) {
+        return fromActive;
+      }
+    } catch {
+      // Ignore activeElement access errors.
+    }
+    try {
+      const sel = window.getSelection();
+      const s = sel ? sel.toString() : '';
+      if (s) {
+        return s;
+      }
+    } catch {
+      // Ignore window selection errors.
+    }
+    try {
+      const rootNode = rawTarget && typeof rawTarget.getRootNode === 'function' ? rawTarget.getRootNode() : null;
+      if (rootNode && rootNode !== document && typeof rootNode.getSelection === 'function') {
+        const shadowSel = rootNode.getSelection();
+        const s = shadowSel ? shadowSel.toString() : '';
+        if (s) {
+          return s;
+        }
+      }
+    } catch {
+      // Ignore shadow selection access errors.
+    }
+    return '';
+  }
+
   function handleCopyDeTokenize(event) {
     if (
       isInstanceTornDown ||
@@ -10493,20 +11766,33 @@
     ) {
       return;
     }
-    const rawTarget = getEventPathTarget(event);
-    if (isNodeEditableDirect(rawTarget)) {
-      return;
+    const selectedText = getCopiedSelectionText(event);
+    if (selectedText) {
+      offerDetokenizeIfMatched(selectedText);
     }
-    const sel = window.getSelection();
-    const selectedText = sel ? sel.toString() : '';
-    if (!selectedText) {
-      return;
+    // Also spy on ephemeral event.clipboardData.setData('text/plain', ...) used by copy-to-clipboard buttons via execCommand('copy').
+    try {
+      const dt = event.clipboardData;
+      if (dt && typeof dt.setData === 'function' && !wsHas(wrappedWriteTextFns, dt.setData)) {
+        const nativeSet = dt.setData;
+        const wrappedSet = function setData(format, data) {
+          const ret = nativeSet.apply(this, arguments);
+          if (typeof format === 'string' && format.toLowerCase().startsWith('text/plain') && typeof data === 'string') {
+            offerDetokenizeIfMatched(data);
+          }
+          return ret;
+        };
+        wsAdd(wrappedWriteTextFns, wrappedSet);
+        defineProperty(dt, 'setData', {
+          configurable: true,
+          writable: true,
+          enumerable: false,
+          value: wrappedSet,
+        });
+      }
+    } catch {
+      // Ignore non-extensible clipboardData cleanly.
     }
-    const restored = deTokenizeText(selectedText);
-    if (restored.replaced <= 0 || restored.text === selectedText) {
-      return;
-    }
-    showCopyTokensDetectedToast(restored.text);
   }
 
   function handleDrop(event) {
@@ -10870,6 +12156,12 @@
         clipboardProtoWrappedFn,
         origClipboardProtoWriteTextDesc
       );
+      restoreWrappedDescriptor(
+        Clipboard.prototype,
+        'write',
+        clipboardProtoWriteWrappedFn,
+        origClipboardProtoWriteDesc
+      );
     }
     try {
       const clipObj = typeof navigator === 'object' && navigator ? navigator.clipboard : null;
@@ -10879,6 +12171,12 @@
           'writeText',
           navClipboardWrappedFn,
           origNavigatorClipboardWriteTextDesc
+        );
+        restoreWrappedDescriptor(
+          clipObj,
+          'write',
+          navClipboardWriteWrappedFn,
+          origNavigatorClipboardWriteDesc
         );
       }
     } catch {
@@ -10918,6 +12216,15 @@
       showOpenFilePickerWrappedFn,
       origShowOpenFilePickerDesc
     );
+
+    const workerJobIds = mapKeysToArray(pendingWorkerJobs);
+    for (let i = 0; i < workerJobIds.length; i += 1) {
+      const finishJob = mapGet(pendingWorkerJobs, workerJobIds[i]);
+      if (typeof finishJob === 'function') {
+        finishJob({ ok: false, modified: false, buffer: null });
+      }
+    }
+    mapClear(pendingWorkerJobs);
 
     if (bridgePort) {
       closePortSafe(bridgePort);
@@ -11064,6 +12371,22 @@
     }
 
     const { requestId, payload } = data;
+    if (payload.type === 'clipzero:worker-result') {
+      const finishJob =
+        typeof payload.jobId === 'number' ? mapGet(pendingWorkerJobs, payload.jobId) : null;
+      if (typeof finishJob === 'function') {
+        finishJob({
+          ok: Boolean(payload.ok),
+          modified: Boolean(payload.modified),
+          buffer:
+            NativeArrayBuffer && payload.buffer instanceof NativeArrayBuffer
+              ? payload.buffer
+              : null,
+        });
+      }
+      return true;
+    }
+
     if (payload.type === 'clipzero:pong') {
       const isAlive = payload.alive === true;
       for (let i = pendingPings.length - 1; i >= 0; i -= 1) {
@@ -11091,6 +12414,12 @@
     if (payload.type === 'clipzero:apply-stored-prefs') {
       if (!injectedAtDocumentStart) {
         return true;
+      }
+      if (typeof payload.supportsWorkerOffload === 'boolean') {
+        supportsWorkerOffload = payload.supportsWorkerOffload;
+      }
+      if (nativeIsArray(payload.customRegexRules)) {
+        state.customRegexRules = sanitizeCustomRegexRulesLocal(payload.customRegexRules);
       }
       if (payload.corrupt === true) {
         pendingLegacyMigrationPrefs = null;
@@ -11175,6 +12504,104 @@
         : { ...shortcuts, ...payload.shortcuts };
     }
 
+    const sendReplyObj = (replyObj) => {
+      if (replyPort) {
+        postPortMessageSafe(replyPort, replyObj);
+      } else if (bridgePort === null && targetOrigin && targetOrigin !== 'null') {
+        nativePostMessage(replyObj, targetOrigin);
+      }
+    };
+
+    if (payload.type === 'clipzero:get-session-tokens') {
+      if (requestId) {
+        const snap = getSessionTokensSnapshot();
+        sendReplyObj({
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId,
+          tokens: snap.tokens,
+          totalCount: snap.totalCount,
+          maxEntries: snap.maxEntries,
+        });
+      }
+      return true;
+    }
+
+    if (payload.type === 'clipzero:reveal-session-token') {
+      if (requestId) {
+        const revealedRaw = revealSessionTokenValue(payload.token);
+        sendReplyObj({
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId,
+          revealedRaw,
+        });
+      }
+      return true;
+    }
+
+    if (payload.type === 'clipzero:clear-session-tokens') {
+      clearSessionTokenVault();
+      clearEphemeralSecretDraft('vault-cleared');
+      if (requestId) {
+        sendReplyObj({
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId,
+          vaultCleared: true,
+        });
+      }
+      return true;
+    }
+
+    if (payload.type === 'clipzero:sync-rules') {
+      if (nativeIsArray(payload.customRegexRules)) {
+        state.customRegexRules = sanitizeCustomRegexRulesLocal(payload.customRegexRules);
+      }
+      if (payload.siteDeleted === true) {
+        state.saveSite = false;
+      } else if (
+        payload.sitePrefs &&
+        typeof payload.sitePrefs === 'object' &&
+        !nativeIsArray(payload.sitePrefs)
+      ) {
+        const nextValues = {};
+        let validCount = 0;
+        for (let i = 0; i < PERSISTED_KEYS.length; i += 1) {
+          const key = PERSISTED_KEYS[i];
+          if (nativeHasOwn(payload.sitePrefs, key) && typeof payload.sitePrefs[key] === 'boolean') {
+            nextValues[key] = payload.sitePrefs[key];
+            validCount += 1;
+          }
+        }
+        if (
+          nativeHasOwn(payload.sitePrefs, 'customWords') &&
+          typeof payload.sitePrefs.customWords === 'string'
+        ) {
+          nextValues.customWords = sanitizeCustomWords(payload.sitePrefs.customWords);
+        }
+        if (validCount > 0) {
+          if (nativeObjAssign) {
+            nativeObjAssign(state, nextValues);
+          } else {
+            Object.assign(state, nextValues);
+          }
+          state.saveSite = true;
+        }
+      }
+      clearEphemeralSecretDraft('rules-synced');
+      if (requestId) {
+        sendReplyObj({
+          __clipzero: TO_ISOLATED,
+          token: sessionBridgeToken,
+          requestId,
+          hostPrefix: FILE_PREFIX,
+          state: snapshotState(),
+        });
+      }
+      return true;
+    }
+
     if (payload.type === 'clipzero:command' && typeof payload.command === 'string') {
       applyCommand(payload.command);
     } else if (
@@ -11194,18 +12621,13 @@
     }
 
     if (requestId) {
-      const reply = {
+      sendReplyObj({
         __clipzero: TO_ISOLATED,
         token: sessionBridgeToken,
         requestId,
         hostPrefix: FILE_PREFIX,
         state: snapshotState(),
-      };
-      if (replyPort) {
-        postPortMessageSafe(replyPort, reply);
-      } else if (bridgePort === null && targetOrigin && targetOrigin !== 'null') {
-        nativePostMessage(reply, targetOrigin);
-      }
+      });
     }
     return true;
   }
@@ -11328,23 +12750,93 @@
   function createWriteTextWrapper(nativeWriteText) {
     const wrapped = function writeText(text) {
       const result = nativeWriteText.apply(this, arguments);
+      offerDetokenizeIfMatched(text);
+      return result;
+    };
+    wsAdd(wrappedWriteTextFns, wrapped);
+    return wrapped;
+  }
+
+  async function inspectClipboardWriteItems(items) {
+    if (
+      isInstanceTornDown ||
+      isInternalClipboardWrite ||
+      !state.enabled ||
+      mapSize(sessionTokenToRaw) === 0 ||
+      !items
+    ) {
+      return;
+    }
+    let list;
+    try {
+      list = nativeIsArray(items) ? items : nativeArrayFrom ? nativeArrayFrom(items) : [];
+    } catch {
+      return;
+    }
+    for (let i = 0; i < list.length && i < 8; i += 1) {
+      const item = list[i];
+      if (!item || typeof item !== 'object') {
+        continue;
+      }
+      let types;
+      try {
+        types = item.types;
+      } catch {
+        continue;
+      }
+      if (!types) {
+        continue;
+      }
+      let hasPlain = false;
+      for (let t = 0; t < types.length; t += 1) {
+        if (types[t] === 'text/plain') {
+          hasPlain = true;
+          break;
+        }
+      }
+      if (!hasPlain) {
+        continue;
+      }
+      try {
+        const getTypeFn =
+          nativeClipboardItemGetType && typeof ClipboardItem === 'function' && item instanceof ClipboardItem
+            ? nativeClipboardItemGetType
+            : typeof item.getType === 'function'
+              ? item.getType
+              : null;
+        if (!getTypeFn) {
+          continue;
+        }
+        const blob = await getTypeFn.call(item, 'text/plain');
+        if (!blob || typeof blob.size !== 'number' || blob.size === 0 || blob.size > MAX_SECRET_SCAN_CHARS) {
+          continue;
+        }
+        let plainText = '';
+        if (readBlobText) {
+          plainText = await readBlobText.call(blob);
+        } else if (typeof blob.text === 'function') {
+          plainText = await blob.text();
+        }
+        if (offerDetokenizeIfMatched(plainText)) {
+          return;
+        }
+      } catch {
+        // Ignore unreadable ClipboardItem entries cleanly.
+      }
+    }
+  }
+
+  function createClipboardWriteWrapper(nativeWrite) {
+    const wrapped = function write(items) {
+      const result = nativeWrite.apply(this, arguments);
       if (
         !isInstanceTornDown &&
         !isInternalClipboardWrite &&
         state.enabled &&
-        typeof text === 'string' &&
-        text.length > 0 &&
-        text.length <= MAX_SECRET_SCAN_CHARS &&
+        items &&
         mapSize(sessionTokenToRaw) > 0
       ) {
-        try {
-          const restored = deTokenizeText(text);
-          if (restored.replaced > 0 && restored.text !== text) {
-            showCopyTokensDetectedToast(restored.text);
-          }
-        } catch {
-          // Never fail page clipboard writes on scan/toast error.
-        }
+        Promise.resolve(inspectClipboardWriteItems(items)).catch(() => {});
       }
       return result;
     };
@@ -11352,27 +12844,38 @@
     return wrapped;
   }
 
-  function wrapClipboardWriteTextTarget(target, targetKind) {
+  function wrapClipboardMethodTarget(target, propName, targetKind) {
     if (!target || typeof nativeGetOwnPropDesc !== 'function') {
       return;
     }
     try {
-      const desc = nativeGetOwnPropDesc(target, 'writeText');
+      const desc = nativeGetOwnPropDesc(target, propName);
       if (!desc || typeof desc.value !== 'function' || wsHas(wrappedWriteTextFns, desc.value)) {
         return;
       }
       if (desc.configurable === false && desc.writable === false) {
         return;
       }
-      const wrapped = createWriteTextWrapper(desc.value);
-      if (targetKind === 'proto') {
+      const wrapped =
+        propName === 'write'
+          ? createClipboardWriteWrapper(desc.value)
+          : createWriteTextWrapper(desc.value);
+      if (propName === 'write') {
+        if (targetKind === 'proto') {
+          origClipboardProtoWriteDesc = desc;
+          clipboardProtoWriteWrappedFn = wrapped;
+        } else if (targetKind === 'instance') {
+          origNavigatorClipboardWriteDesc = desc;
+          navClipboardWriteWrappedFn = wrapped;
+        }
+      } else if (targetKind === 'proto') {
         origClipboardProtoWriteTextDesc = desc;
         clipboardProtoWrappedFn = wrapped;
       } else if (targetKind === 'instance') {
         origNavigatorClipboardWriteTextDesc = desc;
         navClipboardWrappedFn = wrapped;
       }
-      defineProperty(target, 'writeText', {
+      defineProperty(target, propName, {
         configurable: Boolean(desc.configurable),
         writable: Boolean(desc.writable),
         enumerable: Boolean(desc.enumerable),
@@ -11385,12 +12888,18 @@
 
   function hookClipboardWriteText() {
     if (typeof Clipboard === 'function' && Clipboard.prototype) {
-      wrapClipboardWriteTextTarget(Clipboard.prototype, 'proto');
+      wrapClipboardMethodTarget(Clipboard.prototype, 'writeText', 'proto');
+      wrapClipboardMethodTarget(Clipboard.prototype, 'write', 'proto');
     }
     try {
       const clipObj = typeof navigator === 'object' && navigator ? navigator.clipboard : null;
-      if (clipObj && nativeHasOwn(clipObj, 'writeText')) {
-        wrapClipboardWriteTextTarget(clipObj, 'instance');
+      if (clipObj) {
+        if (nativeHasOwn(clipObj, 'writeText')) {
+          wrapClipboardMethodTarget(clipObj, 'writeText', 'instance');
+        }
+        if (nativeHasOwn(clipObj, 'write')) {
+          wrapClipboardMethodTarget(clipObj, 'write', 'instance');
+        }
       }
     } catch {
       // Ignore restricted navigator.clipboard access in sandboxed contexts.

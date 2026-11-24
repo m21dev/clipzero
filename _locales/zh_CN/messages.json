@@ -1,6 +1,6 @@
 {
   "extDescription": {
-    "message": "AI 聊天与社交网页隐私助手，支持上传匿名重命名、EXIF/GPS/SVG/PDF 元数据清理、画布遮盖与可逆密钥脱敏。"
+    "message": "隐私上传重命名、无损清除 EXIF/SVG/PDF/Office 元数据、画布涂黑、自定义正则与密钥防护。"
   },
   "cmdToggleEnabled": {
     "message": "在当前标签页暂停或恢复 ClipZero"
@@ -139,7 +139,7 @@
     "message": "清除元数据"
   },
   "optExifDesc": {
-    "message": "JPEG EXIF/GPS、PNG、WebP、SVG 与 PDF 清理"
+    "message": "JPEG、PNG、WebP、SVG、PDF 与 Office"
   },
   "optRedactTitle": {
     "message": "上传前遮盖隐私"
@@ -160,7 +160,7 @@
     "message": "粘贴时自动脱敏邮箱、电话与 IP 地址"
   },
   "popupMoreSettings": {
-    "message": "更多设置"
+    "message": "设置"
   },
   "optOptimizeTitle": {
     "message": "缩放超大图片"
@@ -265,7 +265,7 @@
     "message": "清除元数据 · 开启"
   },
   "toastExifOnSub": {
-    "message": "EXIF、GPS 与 SVG 清理已启用"
+    "message": "已启用 EXIF、GPS、SVG、PDF 与 Office 元数据清除"
   },
   "toastExifOffTitle": {
     "message": "清除元数据 · 关闭"
@@ -503,5 +503,606 @@
   },
   "redactWeightThick": {
     "message": "粗"
+  },
+  "popupTabTokens": {
+    "message": "令牌"
+  },
+  "tokensSectionTitle": {
+    "message": "当前会话令牌"
+  },
+  "tokensClearBtn": {
+    "message": "清空保险库"
+  },
+  "tokensEmptyTitle": {
+    "message": "此标签页暂无隐藏令牌"
+  },
+  "tokensEmptyDesc": {
+    "message": "已隐藏的密钥、联系方式、自定义词与正则匹配项会显示在此，刷新或关闭标签页后自动清除。"
+  },
+  "tokensStandbyDesc": {
+    "message": "请打开支持的站点标签页以查看当前会话的隐藏令牌。"
+  },
+  "tokensFooterNote": {
+    "message": "仅存于标签页内存中 · 刷新或关闭即清除"
+  },
+  "tokensCopyBtn": {
+    "message": "复制"
+  },
+  "tokensCopiedBtn": {
+    "message": "已复制"
+  },
+  "popupRulesBtn": {
+    "message": "规则、正则与备份…"
+  },
+  "popupRulesCount": {
+    "message": "$COUNT$ 条已启用",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsTitle": {
+    "message": "规则与备份"
+  },
+  "optionsSubtitle": {
+    "message": "自定义正则规则、便携 JSON 导出/导入与已记住的站点 · 100% 本地运行"
+  },
+  "optionsRegexTitle": {
+    "message": "自定义正则规则"
+  },
+  "optionsRegexDesc": {
+    "message": "在所有支持的站点上自动脱敏自定义工号、单号或内部编号。"
+  },
+  "optionsLabelField": {
+    "message": "令牌标签"
+  },
+  "optionsLabelPlaceholder": {
+    "message": "EMPLOYEE_ID"
+  },
+  "optionsPatternField": {
+    "message": "正则表达式"
+  },
+  "optionsPatternPlaceholder": {
+    "message": "EMP-\\d{6}"
+  },
+  "optionsFlagCase": {
+    "message": "忽略大小写 (i)"
+  },
+  "optionsFlagMultiline": {
+    "message": "多行模式 (m)"
+  },
+  "optionsAddRuleBtn": {
+    "message": "添加规则"
+  },
+  "optionsDeleteBtn": {
+    "message": "删除"
+  },
+  "optionsRegexEmpty": {
+    "message": "暂无自定义规则。点击上方模板或使用引导生成器，几秒即可创建。"
+  },
+  "optionsSandboxLabel": {
+    "message": "本地实时测试器（已保存规则 + 当前草稿）"
+  },
+  "optionsSandboxPlaceholder": {
+    "message": "在此粘贴示例文本（如 EMP-104298）以预览脱敏结果…"
+  },
+  "optionsSandboxMatches": {
+    "message": "已脱敏 $COUNT$ 处匹配",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsSandboxNoMatch": {
+    "message": "无匹配"
+  },
+  "optionsErrInvalidLabel": {
+    "message": "标签必须以字母开头（仅限 A–Z、0–9、_，最多 24 个字符）。"
+  },
+  "optionsErrUnsafeRegex": {
+    "message": "出于安全考虑已拒绝该正则（嵌套量词、反向引用或 ReDoS 风险）。"
+  },
+  "optionsErrEmptyMatch": {
+    "message": "正则表达式不能匹配空文本。"
+  },
+  "optionsErrInvalidRegex": {
+    "message": "正则表达式语法无效。"
+  },
+  "optionsErrTooManyRules": {
+    "message": "已达到 20 条自定义正则规则上限。"
+  },
+  "optionsBackupTitle": {
+    "message": "便携 JSON 备份"
+  },
+  "optionsBackupDesc": {
+    "message": "在本地导出或导入自定义正则规则和各站点配置，数据绝不离开浏览器。"
+  },
+  "optionsCountRules": {
+    "message": "$COUNT$ 条正则规则",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsCountSites": {
+    "message": "$COUNT$ 个已保存站点",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsExportBtn": {
+    "message": "导出 .json"
+  },
+  "optionsCopyJsonBtn": {
+    "message": "复制 JSON"
+  },
+  "optionsImportBtn": {
+    "message": "导入 .json"
+  },
+  "optionsImportModeMerge": {
+    "message": "与现有合并"
+  },
+  "optionsImportModeReplace": {
+    "message": "替换现有配置"
+  },
+  "optionsExportDone": {
+    "message": "已在本地导出配置。"
+  },
+  "optionsCopyDone": {
+    "message": "配置 JSON 已复制到剪贴板。"
+  },
+  "optionsImportDone": {
+    "message": "配置已导入并同步至已打开的标签页。"
+  },
+  "optionsImportErrInvalid": {
+    "message": "导入被拒绝：无效或不兼容的 ClipZero JSON 文件。"
+  },
+  "optionsImportErrOrigin": {
+    "message": "导入被拒绝：文件包含不受支持的站点源。"
+  },
+  "optionsImportErrRule": {
+    "message": "导入被拒绝：文件包含不安全或无效的正则规则。"
+  },
+  "optionsSitesTitle": {
+    "message": "已记住的站点"
+  },
+  "optionsSitesDesc": {
+    "message": "已保存在扩展独立 IndexedDB 中的域名偏好设置。"
+  },
+  "optionsSitesEmpty": {
+    "message": "尚未记住任何站点。在支持站点的弹窗中启用“记住此站点”即可保存。"
+  },
+  "optionsForgetBtn": {
+    "message": "忘记"
+  },
+  "optionsFooterPrivacy": {
+    "message": "零 API 权限 · 零网络请求 · 仅存储在扩展本地 IndexedDB"
+  },
+  "welcomeTitle": {
+    "message": "欢迎使用 ClipZero"
+  },
+  "welcomeSubtitle": {
+    "message": "零配置本地隐私防火墙 · 已自动保护 55 个 AI 聊天、社交、开发与网页邮箱站点。"
+  },
+  "welcomeStatusReady": {
+    "message": "已受保护 · 开箱即用"
+  },
+  "welcomeStatusPerm": {
+    "message": "一键激活保护"
+  },
+  "welcomePermBanner": {
+    "message": "浏览器尚未授予 $COUNT$ 个支持站点的访问权限。授权一次即可自动运行保护。",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomePermBtn": {
+    "message": "允许所有支持站点 ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeTryTitle": {
+    "message": "立即体验（100% 本地运行）"
+  },
+  "welcomeTryDesc": {
+    "message": "选择一个模拟示例，然后点击“模拟粘贴”或在下方按 Ctrl+V / Cmd+V。"
+  },
+  "welcomeCopyFakeBtn": {
+    "message": "复制"
+  },
+  "welcomeCopiedFakeBtn": {
+    "message": "已复制 — 在下方按 Ctrl+V"
+  },
+  "welcomePastePlaceholder": {
+    "message": "在此粘贴测试密钥（Ctrl+V / Cmd+V），或点击“模拟粘贴”…"
+  },
+  "welcomePasteResultOk": {
+    "message": "已在本地脱敏 $COUNT$ 项敏感信息，网页无法读取原始值。",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeRestoreBtn": {
+    "message": "还原原始文本"
+  },
+  "welcomeRemaskBtn": {
+    "message": "保持脱敏"
+  },
+  "welcomeFileTitle": {
+    "message": "或测试文件元数据清理"
+  },
+  "welcomeFileDesc": {
+    "message": "拖放或选择任意图片、SVG、PDF 或 Office 文档（.docx/.xlsx/.pptx）— 仅在内存中检测，绝不上传。"
+  },
+  "welcomeFilePickBtn": {
+    "message": "选择测试文件"
+  },
+  "welcomeFileCleaned": {
+    "message": "已在本地清理：已清除元数据（移除 $SAVED$ 字节 · 0 字节上传）。",
+    "placeholders": {
+      "saved": {
+        "content": "$1"
+      }
+    }
+  },
+  "welcomeFileAlreadyClean": {
+    "message": "已在本地检查：该文件不含可追踪元数据（0 字节上传）。"
+  },
+  "welcomeFileUnsupported": {
+    "message": "已在本地检查：格式未修改（在支持的站点上传仍会自动匿名化文件名）。"
+  },
+  "welcomeOpenOptionsBtn": {
+    "message": "规则、正则与备份…"
+  },
+  "welcomeDoneBtn": {
+    "message": "知道了，关闭标签页"
+  },
+  "navStart": {
+    "message": "快速体验"
+  },
+  "navRules": {
+    "message": "规则与备份"
+  },
+  "navHelp": {
+    "message": "帮助与指南"
+  },
+  "popupHelpBtn": {
+    "message": "帮助与指南…"
+  },
+  "welcomePillar1Title": {
+    "message": "密钥与隐私防护"
+  },
+  "welcomePillar1Desc": {
+    "message": "在网页读取粘贴内容前自动遮罩 API 密钥、令牌、卡号和自定义规则。"
+  },
+  "welcomePillar2Title": {
+    "message": "无损元数据清理"
+  },
+  "welcomePillar2Desc": {
+    "message": "仅在内存中清除 EXIF、GPS、PDF、SVG 及 Office（.docx/.xlsx/.pptx）作者痕迹。"
+  },
+  "welcomePillar3Title": {
+    "message": "可视化画布打码"
+  },
+  "welcomePillar3Desc": {
+    "message": "上传前覆盖、不可逆马赛克或裁剪截图，绝不修改本地原文件。"
+  },
+  "welcomeLocalBadge": {
+    "message": "100% 本地"
+  },
+  "welcomeRamBadge": {
+    "message": "仅内存"
+  },
+  "welcomeSampleApi": {
+    "message": "API 密钥 + 邮箱"
+  },
+  "welcomeSampleToken": {
+    "message": "GitHub + JWT"
+  },
+  "welcomeSampleUrl": {
+    "message": "含密码的数据库 URL"
+  },
+  "welcomeTryPasteBtn": {
+    "message": "模拟粘贴"
+  },
+  "welcomeClearBtn": {
+    "message": "清空"
+  },
+  "welcomePasteNoSecret": {
+    "message": "未在此文本中检测到敏感信息。可点击上方示例进行测试。"
+  },
+  "welcomeDropHint": {
+    "message": "将文件拖放到此处，或从设备中选择文件"
+  },
+  "welcomeFileRenameLabel": {
+    "message": "上传文件名"
+  },
+  "welcomeFileSizeLabel": {
+    "message": "体积变化"
+  },
+  "welcomeOpenHelpBtn": {
+    "message": "帮助与指南"
+  },
+  "optionsTemplatesTitle": {
+    "message": "快捷模板（一键套用 · 无需懂正则）"
+  },
+  "optionsTplEmp": {
+    "message": "员工编号"
+  },
+  "optionsTplTicket": {
+    "message": "工单号"
+  },
+  "optionsTplClient": {
+    "message": "客户编码"
+  },
+  "optionsTplOrder": {
+    "message": "订单 / 发票号"
+  },
+  "optionsTplToken": {
+    "message": "内部令牌"
+  },
+  "optionsModeEasy": {
+    "message": "引导模式（无需正则）"
+  },
+  "optionsModeAdvanced": {
+    "message": "高级正则"
+  },
+  "optionsEasyHint": {
+    "message": "只需填写代码前缀和字符类型，ClipZero 将自动生成安全规则。"
+  },
+  "optionsEasyPrefix": {
+    "message": "固定前缀"
+  },
+  "optionsEasyPrefixPh": {
+    "message": "EMP-"
+  },
+  "optionsEasyType": {
+    "message": "后续字符类型"
+  },
+  "optionsEasyDigits": {
+    "message": "仅数字（0–9）"
+  },
+  "optionsEasyAlnum": {
+    "message": "字母和数字（A–Z, 0–9）"
+  },
+  "optionsEasyLetters": {
+    "message": "仅字母（A–Z）"
+  },
+  "optionsEasyLength": {
+    "message": "长度（最小 – 最大）"
+  },
+  "optionsEasyExample": {
+    "message": "匹配示例"
+  },
+  "optionsEasyGenerated": {
+    "message": "生成的正则"
+  },
+  "optionsCheatSummary": {
+    "message": "正则速查（安全语法）"
+  },
+  "optionsCheatDigit": {
+    "message": "任意数字（0–9）"
+  },
+  "optionsCheatLetter": {
+    "message": "任意字母（A–Z）"
+  },
+  "optionsCheatExact": {
+    "message": "正好 6 个字符"
+  },
+  "optionsCheatRange": {
+    "message": "4 到 8 个字符"
+  },
+  "optionsCheatChoice": {
+    "message": "匹配 INC 或 TKT"
+  },
+  "optionsCheatLiteral": {
+    "message": "字面小数点或特殊符号"
+  },
+  "optionsCheatSafety": {
+    "message": "为保障浏览器速度与安全，系统会自动拦截 (a+)+ 等嵌套量词、后行断言和反向引用。"
+  },
+  "optionsSandboxFillBtn": {
+    "message": "填入示例"
+  },
+  "helpPageTag": {
+    "message": "帮助与指南"
+  },
+  "helpSubtitle": {
+    "message": "Firefox 与 Chromium 离线使用指南 · 100% 本地运行，零网络请求"
+  },
+  "helpSearchLabel": {
+    "message": "筛选帮助主题"
+  },
+  "helpSearchPlaceholder": {
+    "message": "筛选主题（例如：正则、Office、马赛克、快捷键、令牌）…"
+  },
+  "helpSearchEmpty": {
+    "message": "没有匹配的帮助内容。清空搜索框即可查看完整指南。"
+  },
+  "helpJumpStart": {
+    "message": "快速入门"
+  },
+  "helpJumpSecrets": {
+    "message": "密钥与规则"
+  },
+  "helpJumpFiles": {
+    "message": "文件与 Office"
+  },
+  "helpJumpCanvas": {
+    "message": "画布打码"
+  },
+  "helpJumpShortcuts": {
+    "message": "快捷键"
+  },
+  "helpJumpFaq": {
+    "message": "常见问题"
+  },
+  "helpStartTitle": {
+    "message": "快速入门（3 步）"
+  },
+  "helpStartDesc": {
+    "message": "ClipZero 在 Firefox 与 Chromium 的 55 个 AI 聊天、社交、开发和网页邮箱站点上开箱即用。"
+  },
+  "helpStep1Title": {
+    "message": "打开受支持的站点"
+  },
+  "helpStep1Desc": {
+    "message": "ChatGPT、Claude、Gemini、Gmail、Outlook、WhatsApp Web、Discord、GitHub 等共 55 个站点默认受保护。"
+  },
+  "helpStep2Title": {
+    "message": "照常粘贴或上传文件"
+  },
+  "helpStep2Desc": {
+    "message": "ClipZero 在网页读取前于内存中拦截粘贴、拖拽与上传，绝不会改动你硬盘上的原文件。"
+  },
+  "helpStep3Title": {
+    "message": "查看、还原或自定义"
+  },
+  "helpStep3Desc": {
+    "message": "使用工具栏弹窗按标签页开关功能、查看会话令牌，或在“规则与备份”中自定义规则。"
+  },
+  "helpSecretsTitle": {
+    "message": "密钥、自定义词与自定义规则"
+  },
+  "helpSecretsDesc": {
+    "message": "根据你要在粘贴或上传文本/代码文件时隐藏的内容，选择最合适的方式："
+  },
+  "helpSecAutoTitle": {
+    "message": "自动密钥与隐私防护"
+  },
+  "helpSecAutoDesc": {
+    "message": "在 AI 聊天中默认开启。自动识别 API 密钥（OpenAI、Anthropic、Google、AWS、GitHub）、JWT、银行卡、IBAN、URL 密码，以及可选的邮箱、电话与 IP。"
+  },
+  "helpSecWordsTitle": {
+    "message": "自定义隐藏词（按站点）"
+  },
+  "helpSecWordsDesc": {
+    "message": "在弹窗的“设置”标签中用逗号分隔填写姓名、公司或项目名（每站最多 50 个），适合固定名称。"
+  },
+  "helpSecRegexTitle": {
+    "message": "自定义规则（全 55 站通用）"
+  },
+  "helpSecRegexDesc": {
+    "message": "在“规则与备份”中点击快捷模板或使用引导模式（无需懂正则），即可在所有站点隐藏 EMP-104298、INC-84920 等编号。"
+  },
+  "helpSecTokensTip": {
+    "message": "提示：类似 [REDACTED_OPENAI_KEY] 的占位符仅在当前标签页内存中可逆。可在弹窗“令牌”标签查看或清空，复制含占位符的回复时可一键“恢复原值”。"
+  },
+  "helpFilesTitle": {
+    "message": "文件与元数据清理"
+  },
+  "helpFilesDesc": {
+    "message": "在浏览器内存中无损清理（大型 PDF、Office 和 SVG 自动交由专用 Web Worker 后台处理）。"
+  },
+  "helpColFormat": {
+    "message": "格式"
+  },
+  "helpColRemoved": {
+    "message": "ClipZero 在本地清除的内容"
+  },
+  "helpFmtOffice": {
+    "message": "作者、公司、自定义属性、页面缩略图、批注与修订作者/日期、Word rsid 与本地模板路径、Excel 本地目录路径（absPath）、ZIP 时间戳/注释，以及嵌入照片的 EXIF。"
+  },
+  "helpFmtPdf": {
+    "message": "原地清除 /Info 作者/创建者字段与 XMP 元数据包，完整保留排版、书签与 xref 表（最高 50 MB）。"
+  },
+  "helpFmtImg": {
+    "message": "清除相机 EXIF、GPS 坐标、RGB 缩略图、XMP、PNG（tEXt/eXIf/C2PA/iDOT）块及 GIF 注释，保留方向与动图帧。"
+  },
+  "helpFmtSvgTxt": {
+    "message": "清除 SVG 中的脚本、事件处理器、注释与编辑器路径；在上传的文本/代码文件（最高 512 KB）内遮罩密钥、隐私、自定义词与规则。"
+  },
+  "helpCanvasTitle": {
+    "message": "可视化画布打码器（截图）"
+  },
+  "helpCanvasDesc": {
+    "message": "在弹窗开启“上传前打码”（或按 Alt+Shift+B），即可在隔离的 Shadow DOM 窗口中审查并涂抹敏感区域。"
+  },
+  "helpToolCover": {
+    "message": "覆盖 — 纯色不透明遮挡块"
+  },
+  "helpToolPixel": {
+    "message": "马赛克 — 不可逆量化像素块"
+  },
+  "helpToolOutline": {
+    "message": "框选 — 高亮边框（细 / 中 / 粗）"
+  },
+  "helpToolPen": {
+    "message": "画笔 — 自由手绘涂抹"
+  },
+  "helpToolCrop": {
+    "message": "裁剪 — 裁去边缘并实时显示输出尺寸"
+  },
+  "helpToolScroll": {
+    "message": "拖动 — 轻松浏览超长截图"
+  },
+  "helpCanvasKeysTip": {
+    "message": "编辑器按键：方向键 / Shift+方向键移动或缩放选框 · Del 删除 · Ctrl/Cmd+Z 撤销 · PageUp/PageDown 切换多图 · Enter 上传。"
+  },
+  "helpShortcutsTitle": {
+    "message": "键盘快捷键（Firefox 与 Chromium）"
+  },
+  "helpShortcutsDesc": {
+    "message": "Firefox 自动绑定全部 7 个快捷键；Chromium 限制最多 4 个默认绑定，其余 3 个可在 chrome://extensions/shortcuts 手动设置。"
+  },
+  "helpColShortcut": {
+    "message": "Windows / Linux（macOS）"
+  },
+  "helpColAction": {
+    "message": "功能"
+  },
+  "helpBindDefault": {
+    "message": "默认"
+  },
+  "helpBindManual": {
+    "message": "手动"
+  },
+  "helpFaqTitle": {
+    "message": "常见问题"
+  },
+  "helpFaq1Q": {
+    "message": "为什么 ClipZero 工具栏图标显示橙色“!”角标？"
+  },
+  "helpFaq1A": {
+    "message": "该标签页在安装或更新 ClipZero 前就已打开。出于安全考虑，ClipZero 在 document_start 时介入拦截，只需刷新该标签页一次（或在弹窗中点击“刷新标签页”）即可生效。"
+  },
+  "helpFaq2Q": {
+    "message": "为什么 Firefox 会提示授权访问受支持站点？"
+  },
+  "helpFaq2A": {
+    "message": "在 Firefox Manifest V3 中，站点访问权限可能默认未启用。在弹窗或欢迎页点击一次“允许”即可启用全部 55 个站点，ClipZero 依然保持零 API 权限。"
+  },
+  "helpFaq3Q": {
+    "message": "不懂正则表达式怎么隐藏自定义编号？"
+  },
+  "helpFaq3A": {
+    "message": "打开“规则与备份”，点击任意一键模板，或使用引导模式输入前缀、字符类型和长度，在实时测试器确认效果后保存即可。"
+  },
+  "helpFaq4Q": {
+    "message": "令牌和规则保存在哪里？会有数据离开设备吗？"
+  },
+  "helpFaq4A": {
+    "message": "遮罩后的会话令牌仅存在于标签页易失内存中，刷新、关闭或清空后即刻销毁；站点偏好与自定义规则仅存储在扩展隔离的 IndexedDB 中。零网络请求、零遥测。"
+  },
+  "helpFaq5Q": {
+    "message": "为什么旧版 .doc 或加密的 Office 文件没有被修改？"
+  },
+  "helpFaq5A": {
+    "message": "ClipZero 无损清理现代 OOXML 格式（.docx、.xlsx、.pptx）；旧版二进制 OLE2（.doc/.xls/.ppt）与加密文档会刻意原样放行以避免损坏文件（开启时仍会匿名化文件名）。"
+  },
+  "helpFooterTryBtn": {
+    "message": "打开交互体验页"
   }
 }

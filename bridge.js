@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // ClipZero — Isolated-world relay bridge (zero permissions).
-// Relays extension commands, localized strings, and popup state queries safely to MAIN world.
+// Relays extension commands, localized strings, worker offload jobs, token inspector queries,
+// and live rule updates safely between extension pages/background and MAIN world.
 
 (() => {
   'use strict';
@@ -25,6 +26,8 @@
   let storedPrefsPending = false;
   let latestStoredPrefs = null;
   let latestStoredCorrupt = false;
+  let latestCustomRegexRules = [];
+  let latestSupportsWorkerOffload = false;
   let storedPrefsSettled = false;
   let storedPrefsLoadPromise = null;
   const retryDelays = [90, 320];
@@ -70,7 +73,7 @@
       strictOffTitle: msg('toastStrictOffTitle', 'Rename all · OFF'),
       strictOffSub: msg('toastStrictOffSub', 'Custom unique names and documents kept'),
       exifOnTitle: msg('toastExifOnTitle', 'Strip metadata · ON'),
-      exifOnSub: msg('toastExifOnSub', 'EXIF, GPS, and SVG metadata cleaner enabled'),
+      exifOnSub: msg('toastExifOnSub', 'EXIF, GPS, SVG, PDF, and Office cleaner enabled'),
       exifOffTitle: msg('toastExifOffTitle', 'Strip metadata · OFF'),
       exifOffSub: msg('toastExifOffSub', 'Instant zero-delay upload restored'),
       redactOnTitle: msg('toastRedactOnTitle', 'Canvas redactor · ON'),
@@ -241,6 +244,8 @@
             type: 'clipzero:apply-stored-prefs',
             prefs: latestStoredPrefs,
             corrupt: latestStoredCorrupt,
+            customRegexRules: latestCustomRegexRules,
+            supportsWorkerOffload: latestSupportsWorkerOffload,
           },
         });
       } catch {
@@ -265,6 +270,74 @@
     } catch {
       return false;
     }
+  }
+
+  function handleWorkerScrubFromMain(req, replyPort) {
+    if (!req || typeof req.jobId !== 'number' || typeof req.op !== 'string') {
+      return;
+    }
+    const sendBack = (ok, modified, outBuf) => {
+      const port = replyPort || bridgePort;
+      if (!port) {
+        return;
+      }
+      const msgObj = {
+        __clipzero: TO_MAIN,
+        token: bridgeToken,
+        requestId: 0,
+        payload: {
+          type: 'clipzero:worker-result',
+          jobId: req.jobId,
+          ok: Boolean(ok),
+          modified: Boolean(modified),
+          buffer: outBuf instanceof ArrayBuffer ? outBuf : null,
+        },
+      };
+      try {
+        if (outBuf instanceof ArrayBuffer) {
+          port.postMessage(msgObj, [outBuf]);
+        } else {
+          port.postMessage(msgObj);
+        }
+      } catch {
+        // Ignore closed port errors cleanly.
+      }
+    };
+
+    if (!(req.buffer instanceof ArrayBuffer) || !ext?.runtime?.sendMessage) {
+      sendBack(false, false, null);
+      return;
+    }
+    Promise.resolve(
+      ext.runtime.sendMessage({
+        type: 'clipzero:worker-scrub',
+        op: req.op,
+        buffer: req.buffer,
+      })
+    )
+      .then((resp) => {
+        if (!resp || !resp.ok) {
+          sendBack(false, false, null);
+          return;
+        }
+        let outBuf = null;
+        if (resp.buffer instanceof ArrayBuffer) {
+          outBuf = resp.buffer;
+        } else if (ArrayBuffer.isView(resp.buffer) && resp.buffer.buffer instanceof ArrayBuffer) {
+          outBuf =
+            resp.buffer.byteOffset === 0 &&
+            resp.buffer.byteLength === resp.buffer.buffer.byteLength
+              ? resp.buffer.buffer
+              : resp.buffer.buffer.slice(
+                  resp.buffer.byteOffset,
+                  resp.buffer.byteOffset + resp.buffer.byteLength
+                );
+        }
+        sendBack(true, Boolean(resp.modified && outBuf), outBuf);
+      })
+      .catch(() => {
+        sendBack(false, false, null);
+      });
   }
 
   function deliverIsolatedReplyData(data, fromPort) {
@@ -310,6 +383,13 @@
       }
       return true;
     }
+    if (data.workerScrub && typeof data.workerScrub === 'object') {
+      if (fromPort) {
+        confirmChannelPort(fromPort);
+      }
+      handleWorkerScrubFromMain(data.workerScrub, fromPort);
+      return true;
+    }
     if (data.migratePrefs && typeof data.migratePrefs === 'object') {
       if (fromPort) {
         confirmChannelPort(fromPort);
@@ -333,6 +413,17 @@
       pendingRequests.delete(data.requestId);
       if (data.ok === false || data.needsReload === true) {
         resolve({ ok: false, needsReload: Boolean(data.needsReload), state: null });
+      } else if (Array.isArray(data.tokens)) {
+        resolve({
+          ok: true,
+          tokens: data.tokens,
+          totalCount: typeof data.totalCount === 'number' ? data.totalCount : data.tokens.length,
+          maxEntries: typeof data.maxEntries === 'number' ? data.maxEntries : 500,
+        });
+      } else if (Object.hasOwn(data, 'revealedRaw')) {
+        resolve({ ok: data.revealedRaw !== null, raw: data.revealedRaw });
+      } else if (data.vaultCleared === true) {
+        resolve({ ok: true, totalCount: 0 });
       } else {
         resolve({ ok: true, state: data.state || null, hostPrefix: data.hostPrefix || 'clip' });
       }
@@ -498,7 +589,11 @@
     if (
       message.type === 'clipzero:command' ||
       message.type === 'clipzero:get-state' ||
-      message.type === 'clipzero:set-custom-words'
+      message.type === 'clipzero:set-custom-words' ||
+      message.type === 'clipzero:get-session-tokens' ||
+      message.type === 'clipzero:reveal-session-token' ||
+      message.type === 'clipzero:clear-session-tokens' ||
+      message.type === 'clipzero:sync-rules'
     ) {
       handleExtensionMessage(message).then(sendResponse);
       return true;
@@ -568,11 +663,15 @@
       });
   }
 
-  // Load extension-isolated per-site preferences without touching host-page localStorage.
+  // Load extension-isolated per-site preferences + custom regex rules + worker capability.
   storedPrefsLoadPromise = ext?.runtime?.sendMessage
     ? Promise.resolve(ext.runtime.sendMessage({ type: 'clipzero:load-site-prefs' }))
         .then((resp) => {
           if (resp && resp.ok === true) {
+            const customRegexRules = Array.isArray(resp.customRegexRules)
+              ? resp.customRegexRules
+              : [];
+            const supportsWorkerOffload = Boolean(resp.supportsWorkerOffload);
             if (bridgePort && channelConfirmed) {
               try {
                 bridgePort.postMessage({
@@ -583,11 +682,15 @@
                     type: 'clipzero:apply-stored-prefs',
                     prefs: resp.prefs || null,
                     corrupt: Boolean(resp.corrupt),
+                    customRegexRules,
+                    supportsWorkerOffload,
                   },
                 });
                 storedPrefsPending = false;
                 latestStoredPrefs = null;
                 latestStoredCorrupt = false;
+                latestCustomRegexRules = customRegexRules;
+                latestSupportsWorkerOffload = supportsWorkerOffload;
                 return;
               } catch {
                 // Fall through and queue until re-confirmed.
@@ -596,6 +699,8 @@
             storedPrefsPending = true;
             latestStoredPrefs = resp.prefs || null;
             latestStoredCorrupt = Boolean(resp.corrupt);
+            latestCustomRegexRules = customRegexRules;
+            latestSupportsWorkerOffload = supportsWorkerOffload;
           }
         })
         .catch(() => {
